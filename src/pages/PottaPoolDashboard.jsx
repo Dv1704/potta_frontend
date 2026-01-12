@@ -120,6 +120,52 @@ export default function PottaPoolDashboard() {
     fetchData();
   }, [showToast]);
 
+  // Payment Verification logic
+  useEffect(() => {
+    const verifyPayment = async () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const reference = urlParams.get('reference');
+
+      if (reference) {
+        // Clear params to prevent re-verification on reload
+        window.history.replaceState({}, document.title, window.location.pathname);
+        showToast('Verifying deposit...', 'info');
+
+        try {
+          const token = localStorage.getItem('token');
+          const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+
+          const res = await fetch(`${apiUrl}/payments/verify/${reference}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+
+          const data = await res.json();
+
+          if (res.ok && (data.status === 'success' || data.status === 'already_processed')) {
+            const msg = data.status === 'success' ? 'Deposit confirmed! Balance updated.' : 'Transaction confirmed. Balance updated.';
+            showToast(msg, 'success');
+
+            // Refresh wallet balance
+            const balRes = await fetch(`${apiUrl}/wallet/balance`, {
+              headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (balRes.ok) {
+              const balData = await balRes.json();
+              setWallet(balData);
+            }
+          } else {
+            showToast(data.message || 'Payment verification failed.', 'error');
+          }
+        } catch (error) {
+          console.error(error);
+          showToast('Failed to verify payment.', 'error');
+        }
+      }
+    };
+
+    verifyPayment();
+  }, [showToast]);
+
   const availableBalanceGHS = wallet.available || 0;
   // Convert GHS balance to selected currency. Rates are per 1 USD.
   // 1 GHS = (1 / rates.GHS) USD.
@@ -209,7 +255,8 @@ export default function PottaPoolDashboard() {
           body: JSON.stringify({
             amount: parseFloat(amount),
             currency: selectedCurrency,
-            email: user?.email || 'test@example.com'
+            email: user?.email || 'test@example.com',
+            callbackUrl: window.location.href
           })
         });
         const data = await res.json();
