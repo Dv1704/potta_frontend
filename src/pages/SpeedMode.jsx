@@ -141,7 +141,7 @@ const SpeedMode = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {loading ? (
             <div className="col-span-full flex justify-center py-20">
-              <LoadingSpinner text="Loading Speed Arena..." />
+              <LoadingSpinner text="[Speed] Loading Arena..." />
             </div>
           ) : activeGames.length === 0 ? (
             <div className="col-span-full text-center py-20 bg-slate-800/50 rounded-2xl border border-dashed border-gray-600">
@@ -284,7 +284,7 @@ const SpeedMode = () => {
         >
           <p className="text-gray-400 mb-4">Don't see a match you like?</p>
           <motion.button
-            onClick={() => navigate('/quick-match')}
+            onClick={() => navigate('/quick-match?mode=speed')}
             className="px-8 py-4 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full font-bold text-lg hover:shadow-2xl hover:shadow-blue-500/50 transition-all duration-300"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { TfiAlignJustify, TfiAlignLeft } from "react-icons/tfi";
 import { IoGameControllerSharp } from "react-icons/io5";
 import { socket, connectSocket } from '../socket';
@@ -21,7 +21,6 @@ import {
 const QuickMatch = () => {
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [countdown, setCountdown] = useState(5);
   const [showPopup, setShowPopup] = useState(false);
   const [opponent, setOpponent] = useState(null);
   const [showSummary, setShowSummary] = useState(false);
@@ -30,16 +29,24 @@ const QuickMatch = () => {
   const { showToast } = useToast();
   const [loading, setLoading] = useState(true);
   const [userData, setUserData] = useState(null);
+  const location = useLocation();
 
-  // Hardcoded user data removed, will be derived from userData state
+  // Parse query params
+  const queryParams = new URLSearchParams(location.search);
+  const mode = queryParams.get('mode') || 'turn';
+  const stake = parseFloat(queryParams.get('stake')) || 10;
 
+  const [waitingTime, setWaitingTime] = useState(0);
+  const maxWaitTime = 60; // 60 seconds timeout
+
+  const modeDisplay = mode.charAt(0).toUpperCase() + mode.slice(1);
 
   const searchMessages = [
-    'Scanning the arena...',
-    'Finding worthy opponents...',
-    'Checking player skills...',
-    'Almost there...',
-    'Match found!'
+    `[${modeDisplay}] Scanning the arena...`,
+    `[${modeDisplay}] Finding worthy opponents...`,
+    `[${modeDisplay}] Checking player skills...`,
+    `[${modeDisplay}] Almost there...`,
+    `[${modeDisplay}] Match found!`
   ];
 
   const [matchData, setMatchData] = useState(null);
@@ -68,8 +75,8 @@ const QuickMatch = () => {
         const balance = await balRes.json();
         const stats = await statsRes.json(); // May be empty if fetch failed, handle gracefully if needed
 
-        if (balance.available < 10) {
-          showToast('Insufficient funds! Standard stake is ₵10.', 'error');
+        if (balance.available < stake) {
+          showToast(`Insufficient funds! Stake is ₵${stake}.`, 'error');
           navigate('/wallet');
           return;
         }
@@ -95,8 +102,8 @@ const QuickMatch = () => {
 
         socket.emit('joinQueue', {
           userId: enrichedUser.id,
-          stake: 10,
-          mode: 'turn'
+          stake: stake,
+          mode: mode
         });
 
       } catch (err) {
@@ -136,14 +143,32 @@ const QuickMatch = () => {
       setSearchPhase(prev => (prev + 1) % searchMessages.length);
     }, 1500);
 
+    // Timer for real-time wait duration
+    const timerInterval = setInterval(() => {
+      setWaitingTime(prev => {
+        if (prev >= maxWaitTime) {
+          clearInterval(timerInterval);
+          showToast('Matchmaking timeout. Please try again.', 'error');
+          navigate('/games');
+          return prev;
+        }
+        return prev + 1;
+      });
+    }, 1000);
+
     return () => {
       clearInterval(phaseInterval);
+      clearInterval(timerInterval);
       socket.off('matchFound');
       socket.off('waitingInQueue');
+      // Leave queue on unmount
+      if (userData?.id) {
+        socket.emit('leaveQueue', { userId: userData.id, mode });
+      }
     };
-  }, [navigate, showToast]);
+  }, [navigate, showToast, mode, stake, userData?.id]);
 
-  if (loading || !userData) return <LoadingSpinner text="Entering Arena..." />;
+  if (loading || !userData) return <LoadingSpinner text={`[${modeDisplay}] Entering Arena...`} />;
 
   // Alias userData to user for existing JSX compatibility
   const user = userData;
@@ -357,11 +382,16 @@ const QuickMatch = () => {
               </div>
 
               <motion.div
-                className="bg-slate-800/50 backdrop-blur-sm px-6 py-3 rounded-full border border-slate-700"
-                animate={{ scale: [1, 1.05, 1] }}
+                className="bg-slate-800/50 backdrop-blur-sm px-6 py-4 rounded-2xl border border-slate-700 shadow-lg shadow-blue-500/10"
+                animate={{ scale: [1, 1.02, 1] }}
                 transition={{ duration: 2, repeat: Infinity }}
               >
-                <p className="text-gray-400">Estimated time: <span className="text-white font-bold">{countdown}s</span></p>
+                <div className="flex flex-col items-center gap-2">
+                  <div className="text-gray-400 text-sm uppercase tracking-widest font-bold">Estimated Wait: ~15s</div>
+                  <div className="text-white text-2xl font-black">
+                    {waitingTime}s <span className="text-gray-500 text-lg">/ {maxWaitTime}s</span>
+                  </div>
+                </div>
               </motion.div>
             </motion.div>
           )}
@@ -451,11 +481,11 @@ const QuickMatch = () => {
               <div className="grid grid-cols-3 gap-4 mb-6 mt-8">
                 <div className="bg-slate-700/30 p-3 rounded-lg">
                   <p className="text-xs text-gray-400">Mode</p>
-                  <p className="font-bold">Quick Match</p>
+                  <p className="font-bold">{modeDisplay}</p>
                 </div>
                 <div className="bg-slate-700/30 p-3 rounded-lg">
                   <p className="text-xs text-gray-400">Stakes</p>
-                  <p className="font-bold text-yellow-400">₵10</p>
+                  <p className="font-bold text-yellow-400">₵{stake}</p>
                 </div>
                 <div className="bg-slate-700/30 p-3 rounded-lg">
                   <p className="text-xs text-gray-400">Best Of</p>
@@ -468,7 +498,10 @@ const QuickMatch = () => {
                 <motion.button
                   onClick={() => {
                     if (matchData) {
-                      navigate(`/${matchData.mode}-mode/${matchData.gameId}`);
+                      const path = matchData.mode === 'speed'
+                        ? `/speed-mode/arena/${matchData.gameId}`
+                        : `/turn-mode/${matchData.gameId}`;
+                      navigate(path);
                     }
                   }}
                   className="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 px-6 py-4 rounded-xl font-bold text-lg shadow-lg shadow-green-500/30 transition-all"

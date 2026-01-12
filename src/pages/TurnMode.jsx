@@ -68,7 +68,9 @@ const TurnMode = () => {
     });
   };
 
-  if (!gameState) return <LoadingSpinner text="Connecting to Arena..." />;
+  const mode = window.location.pathname.includes('/speed/') ? 'Speed' : 'Turn';
+
+  if (!gameState) return <LoadingSpinner text={`[${mode}] Connecting to Arena...`} />;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#0f172a] via-[#1e293b] to-[#0f172a] text-white p-4 md:p-8 pt-24 font-sans relative overflow-hidden">

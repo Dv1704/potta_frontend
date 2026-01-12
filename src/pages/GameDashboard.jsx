@@ -685,9 +685,16 @@ export default function GameDashboard() {
   }, [crashed, isPlaying, betAmount]);
 
   const GameCard = ({ game }) => {
+    const navigate = useNavigate();
     return (
       <button
-        onClick={() => setSelectedGame(game)}
+        onClick={() => {
+          if (game.type === 'pool') {
+            navigate(`/quick-match?mode=turn&stake=${game.minBet}`);
+          } else {
+            setSelectedGame(game);
+          }
+        }}
         className="relative bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl overflow-hidden border-2 border-gray-700 hover:border-green-500 transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-green-900/50 active:scale-95"
       >
         <div className="relative h-32 overflow-hidden">
