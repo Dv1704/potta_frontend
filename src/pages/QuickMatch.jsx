@@ -73,7 +73,7 @@ const QuickMatch = () => {
         const stats = await statsRes.json();
 
         if (balance.available < stake) {
-          showToast(`Insufficient funds! Need ${stake} GH₵.`, 'error');
+          showToast(`Insufficient funds! Need GH₵ ${stake.toLocaleString()}`, 'error');
           navigate('/dashboard');
           return;
         }
@@ -81,7 +81,7 @@ const QuickMatch = () => {
         const user = {
           id: profile.id,
           username: profile.name || profile.email.split('@')[0],
-          avatar: `https://ui-avatars.com/api/?name=${profile.name}&background=random&color=fff`,
+          avatar: `https://ui-avatars.com/api/?name=${profile.name}&background=6366f1&color=fff`,
           wins: stats.wins || 0,
           rank: stats.level || 'Rookie'
         };
@@ -146,198 +146,174 @@ const QuickMatch = () => {
 
   if (loading || !userData) return <LoadingSpinner text="Connecting to Matchmaker..." />;
 
+  const formatTime = (seconds) => {
+    const min = Math.floor(seconds / 60);
+    const sec = seconds % 60;
+    return `${min}:${sec < 10 ? '0' : ''}${sec}`;
+  };
+
   return (
-    <div className="min-h-screen bg-[#052e16] text-white flex flex-col items-center justify-center p-6 relative overflow-hidden font-sans">
+    <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-6 relative overflow-hidden">
 
       {/* Background Ambience */}
-      <div className="absolute inset-0 opacity-10 pointer-events-none">
-        <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/felt.pattern')]"></div>
+      <div className="fixed inset-0 pointer-events-none">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-screen h-screen bg-blue-600/5 rounded-full blur-[120px]"></div>
+        <div className="absolute inset-0 opacity-10" style={{
+          backgroundImage: 'radial-gradient(circle at 2px 2px, #475569 1px, transparent 0)',
+          backgroundSize: '40px 40px'
+        }}></div>
       </div>
 
-      <AnimatePresence mode="wait">
-        {!foundTriggered ? (
+      <div className="w-full max-w-4xl relative z-10">
+        <div className="text-center mb-12">
           <motion.div
-            key="searching"
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 1.1 }}
-            className="w-full max-w-xl text-center space-y-12 z-10"
+            initial={{ scale: 0.5, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-blue-500/10 rounded-full border border-blue-500/20 text-blue-400 font-black text-xs uppercase tracking-widest mb-4"
           >
-            {/* Header */}
-            <div className="space-y-4">
-              <motion.div
-                animate={{ y: [0, -5, 0] }}
-                transition={{ duration: 2, repeat: Infinity }}
-                className="inline-block bg-emerald-500/10 border border-emerald-500/30 px-4 py-1 rounded-full text-emerald-400 text-xs font-black tracking-widest uppercase"
-              >
-                System Authority: Online
-              </motion.div>
-              <h1 className="text-5xl font-black italic tracking-tighter uppercase">
-                Finding <span className="text-emerald-500">Opponent</span>
-              </h1>
-              <p className="text-gray-400 font-mono text-sm tracking-tight">
-                MODE: {mode.toUpperCase()} arena // STAKE: {stake} GH₵
+            <Timer size={14} className="animate-pulse" />
+            <span>Waiting Time: {formatTime(waitingTime)}</span>
+          </motion.div>
+          <h1 className="text-4xl md:text-5xl font-black italic uppercase tracking-tighter">
+            {foundTriggered ? "Opponent Found" : "Searching Arena"}
+          </h1>
+          <p className="text-gray-500 font-bold mt-2 uppercase tracking-[0.2em] h-6">
+            {foundTriggered ? "READY FOR COMBAT" : searchMessages[searchPhase]}
+          </p>
+        </div>
+
+        <div className="flex flex-col md:flex-row items-center justify-between gap-12 relative lg:px-20">
+
+          {/* PLAYER 1 */}
+          <motion.div
+            animate={{ x: foundTriggered ? 0 : 0 }}
+            className="flex flex-col items-center gap-6"
+          >
+            <div className={`relative p-1 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 shadow-2xl`}>
+              <div className="w-32 h-32 md:w-44 md:h-44 rounded-full overflow-hidden border-4 border-black">
+                <img src={userData.avatar} alt="Me" className="w-full h-full object-cover" />
+              </div>
+              <div className="absolute -bottom-2 right-4 bg-blue-500 p-2 rounded-xl border-2 border-black">
+                <Trophy size={18} />
+              </div>
+            </div>
+            <div className="text-center">
+              <h2 className="text-2xl font-black uppercase tracking-tighter">{userData.username}</h2>
+              <p className="text-blue-400 font-bold text-xs uppercase mt-1 tracking-widest">{userData.rank}</p>
+            </div>
+          </motion.div>
+
+          {/* VS CIRCLE */}
+          <div className="relative flex items-center justify-center">
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
+              className="w-24 h-24 md:w-32 md:h-32 border-2 border-dashed border-gray-700/50 rounded-full"
+            />
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className={`w-16 h-16 rounded-full bg-white flex items-center justify-center text-black font-black text-2xl italic border-4 ${foundTriggered ? 'border-blue-500' : 'border-gray-800'}`}>
+                VS
+              </div>
+            </div>
+
+            {/* Glowing Lines */}
+            <AnimatePresence>
+              {!foundTriggered && (
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: [1, 1.5, 1], opacity: [0.5, 0, 0.5] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                  className="absolute w-40 h-40 border-2 border-blue-500/20 rounded-full"
+                />
+              )}
+            </AnimatePresence>
+          </div>
+
+          {/* PLAYER 2 / SEARCHING */}
+          <div className="flex flex-col items-center gap-6">
+            <AnimatePresence mode="wait">
+              {foundTriggered ? (
+                <motion.div
+                  key="opponent"
+                  initial={{ x: 50, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  className="flex flex-col items-center gap-6"
+                >
+                  <div className={`relative p-1 rounded-full bg-gradient-to-br from-red-500 to-orange-500 shadow-2xl`}>
+                    <div className="w-32 h-32 md:w-44 md:h-44 rounded-full overflow-hidden border-4 border-black">
+                      <img src={opponent.avatar} alt="Opponent" className="w-full h-full object-cover" />
+                    </div>
+                    <div className="absolute -bottom-2 right-4 bg-orange-500 p-2 rounded-xl border-2 border-black">
+                      <Shield size={18} />
+                    </div>
+                  </div>
+                  <div className="text-center">
+                    <h2 className="text-2xl font-black uppercase tracking-tighter">{opponent.name}</h2>
+                    <p className="text-red-400 font-bold text-xs uppercase mt-1 tracking-widest">{opponent.rank}</p>
+                  </div>
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="searching"
+                  className="flex flex-col items-center gap-6"
+                >
+                  <div className="w-32 h-32 md:w-44 md:h-44 rounded-full bg-slate-900 border-4 border-dashed border-gray-700 flex items-center justify-center relative shadow-inner shadow-black overflow-hidden group">
+                    <Search className="text-gray-600 animate-pulse" size={48} />
+                    <motion.div
+                      animate={{ y: ["-100%", "100%"] }}
+                      transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
+                      className="absolute inset-0 bg-gradient-to-b from-blue-500/0 via-blue-500/10 to-blue-500/0"
+                    />
+                  </div>
+                  <div className="text-center">
+                    <h2 className="text-2xl font-black text-gray-700 uppercase tracking-tighter">FINDING...</h2>
+                    <p className="text-blue-500/30 font-bold text-xs mt-1 uppercase tracking-widest">Global Scan</p>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
+
+        {/* Stake Board */}
+        <motion.div
+          initial={{ y: 50, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          className="mt-16 bg-gray-900/40 backdrop-blur-xl p-6 rounded-3xl border border-white/10 max-w-lg mx-auto flex items-center justify-between"
+        >
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-white/5 rounded-2xl">
+              <CircleDot size={20} className="text-blue-400" />
+            </div>
+            <div>
+              <p className="text-gray-500 text-[10px] font-black uppercase tracking-widest">Tournament Stake</p>
+              <p className="text-3xl font-black tracking-tight flex items-center gap-1">
+                <span className="text-blue-500">GH₵</span>
+                <span>{stake.toLocaleString()}</span>
               </p>
             </div>
+          </div>
 
-            {/* Radar Animation */}
-            <div className="relative w-80 h-80 mx-auto">
-              <div className="absolute inset-0 rounded-full border border-emerald-500/10 animate-[ping_3s_linear_infinite]"></div>
-              <div className="absolute inset-4 rounded-full border border-emerald-500/20 animate-[ping_3s_linear_infinite_0.5s]"></div>
-              <div className="absolute inset-8 rounded-full border border-emerald-500/30 animate-[ping_3s_linear_infinite_1s]"></div>
+          <div className="text-right">
+            <p className="text-gray-500 text-[10px] font-black uppercase tracking-widest">Prize Pool</p>
+            <p className="text-3xl font-black text-emerald-400">GH₵ {(stake * 2 * 0.9).toLocaleString()}</p>
+          </div>
+        </motion.div>
 
-              {/* Rotating Hub */}
-              <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
-                className="absolute inset-0 flex flex-col items-center justify-center"
-              >
-                <div className="w-1.5 h-full bg-gradient-to-t from-emerald-500 via-transparent to-transparent opacity-50"></div>
-              </motion.div>
-
-              {/* Central Point */}
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="relative">
-                  <motion.div
-                    animate={{ scale: [1, 1.1, 1] }}
-                    transition={{ duration: 1, repeat: Infinity }}
-                    className="bg-emerald-500 p-6 rounded-full shadow-2xl shadow-emerald-500/50"
-                  >
-                    <CircleDot size={40} className="text-black" />
-                  </motion.div>
-
-                  {/* Orbiting Avatars (Fake Players) */}
-                  {[...Array(4)].map((_, i) => (
-                    <motion.div
-                      key={i}
-                      className="absolute top-1/2 left-1/2 w-8 h-8 rounded-full border-2 border-emerald-400/50 overflow-hidden"
-                      initial={{ rotate: i * 90 }}
-                      animate={{ rotate: i * 90 + 360 }}
-                      transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
-                      style={{ transformOrigin: '0 120px' }}
-                    >
-                      <img src={`https://i.pravatar.cc/50?u=${i}`} alt="" className="w-full h-full object-cover grayscale" />
-                    </motion.div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Status Messages */}
-            <div className="space-y-6">
-              <motion.div
-                key={searchPhase}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0 }}
-                className="text-emerald-400 font-mono text-xl font-black"
-              >
-                {searchMessages[searchPhase]}
-              </motion.div>
-
-              <div className="flex items-center justify-center gap-6">
-                <div className="text-left">
-                  <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Searching</p>
-                  <p className="text-2xl font-black">{waitingTime}s</p>
-                </div>
-                <div className="w-px h-10 bg-white/10"></div>
-                <div className="text-left">
-                  <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Global Wait</p>
-                  <p className="text-2xl font-black text-emerald-500">~14s</p>
-                </div>
-              </div>
-            </div>
-
+        {/* Action Controls */}
+        {!foundTriggered && (
+          <div className="mt-12 text-center">
             <button
               onClick={() => navigate('/dashboard')}
-              className="group flex items-center gap-2 mx-auto text-gray-500 hover:text-white transition-colors"
+              className="px-8 py-3 bg-white/5 hover:bg-white/10 rounded-2xl text-gray-400 hover:text-white transition-all font-bold flex items-center gap-2 mx-auto border border-white/10"
             >
               <ArrowLeft size={16} />
-              <span className="font-bold text-xs uppercase tracking-widest">Abort Matchmaking</span>
+              <span>CANCEL SEARCH</span>
             </button>
-
-          </motion.div>
-        ) : (
-          <motion.div
-            key="found"
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-3 items-center gap-8 relative z-10"
-          >
-            {/* Player 1 */}
-            <motion.div
-              initial={{ x: -100, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              className="bg-black/40 backdrop-blur-md p-8 rounded-[2rem] border-2 border-emerald-500/20 text-center"
-            >
-              <div className="relative inline-block mb-4">
-                <img src={userData.avatar} className="w-32 h-32 rounded-full border-4 border-emerald-500 shadow-2xl" />
-                <div className="absolute -bottom-2 -right-2 bg-emerald-500 text-black px-3 py-1 rounded-full text-[10px] font-black uppercase">YOU</div>
-              </div>
-              <h3 className="text-2xl font-black uppercase italic tracking-tighter">{userData.username}</h3>
-              <p className="text-emerald-400 text-xs font-bold uppercase tracking-widest mb-4">Rank: {userData.rank}</p>
-              <div className="flex gap-2 justify-center">
-                <div className="bg-emerald-900/40 px-3 py-1 rounded-lg text-xs font-bold">{userData.wins} Wins</div>
-              </div>
-            </motion.div>
-
-            {/* VS CENTER */}
-            <div className="text-center relative py-12 md:py-0">
-              <motion.div
-                animate={{ scale: [1, 1.5, 1], rotate: [0, -10, 10, 0] }}
-                className="text-8xl font-black italic tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-white to-gray-600 select-none"
-              >
-                VS
-              </motion.div>
-              <div className="mt-8 space-y-2">
-                <div className="bg-yellow-500 text-black font-black px-6 py-2 rounded-xl text-xl inline-block shadow-lg shadow-yellow-500/50">
-                  {stake} GH₵ POT
-                </div>
-              </div>
-            </div>
-
-            {/* Opponent */}
-            <motion.div
-              initial={{ x: 100, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              transition={{ delay: 0.1 }}
-              className="bg-black/40 backdrop-blur-md p-8 rounded-[2rem] border-2 border-red-500/20 text-center"
-            >
-              <div className="relative inline-block mb-4">
-                <img src={opponent.avatar} className="w-32 h-32 rounded-full border-4 border-red-500 shadow-2xl" />
-                <div className="absolute -bottom-2 -right-2 bg-red-500 text-white px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">LIVE</div>
-              </div>
-              <h3 className="text-2xl font-black uppercase italic tracking-tighter">{opponent.name}</h3>
-              <p className="text-red-400 text-xs font-bold uppercase tracking-widest mb-4">{opponent.rank}</p>
-              <div className="flex gap-2 justify-center">
-                <div className="bg-red-950/40 px-3 py-1 rounded-lg text-xs font-bold text-red-500">{opponent.winRate} Win Rate</div>
-              </div>
-            </motion.div>
-
-            {/* Bottom Status */}
-            <div className="col-span-1 md:col-span-3 text-center pt-8">
-              <motion.div
-                animate={{ opacity: [0.3, 1, 0.3] }}
-                transition={{ duration: 1.5, repeat: Infinity }}
-                className="flex flex-col items-center gap-3"
-              >
-                <div className="flex gap-2">
-                  <Shield className="text-emerald-500" />
-                  <span className="text-sm font-black uppercase tracking-widest italic">Server Authoritative Syncing...</span>
-                </div>
-                <div className="w-64 h-1 bg-white/10 rounded-full overflow-hidden">
-                  <motion.div
-                    initial={{ width: 0 }}
-                    animate={{ width: '100%' }}
-                    transition={{ duration: 3.5 }}
-                    className="h-full bg-emerald-500"
-                  />
-                </div>
-              </motion.div>
-            </div>
-          </motion.div>
+          </div>
         )}
-      </AnimatePresence>
+      </div>
+
     </div>
   );
 };

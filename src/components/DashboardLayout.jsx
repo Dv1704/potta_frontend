@@ -39,7 +39,7 @@ const DashboardLayout = ({ children }) => {
                 <div className="flex items-center justify-end gap-2 w-24">
                     <Link
                         to="/dashboard"
-                        className={`p-2 hover:bg-white/10 rounded-full transition-colors ${location.pathname === '/dashboard' ? 'text-green-400' : 'text-gray-300'}`}
+                        className={`p-2 hover:bg-white/10 rounded-full transition-colors ${location.pathname === '/dashboard' ? 'text-blue-400' : 'text-gray-300'}`}
                         aria-label="Home"
                     >
                         <Home className="w-6 h-6" />

@@ -1,113 +1,129 @@
-import { FaUserPlus, FaMoneyBillWave, FaTrophy, FaArrowRight, FaLock, FaBullseye, FaBolt } from 'react-icons/fa';
+import { FaUserPlus, FaMoneyBillWave, FaTrophy, FaArrowRight } from 'react-icons/fa';
 import { motion } from 'framer-motion';
 
 const steps = [
   {
-    icon: <FaUserPlus className="text-4xl" />,
-    title: "Secure Entry",
-    desc: "Register your pro profile. Every account is verified for fair PvP matchmaking.",
-    accent: "emerald",
-    number: "01"
+    icon: <FaUserPlus className="text-5xl" />,
+    title: "Create an Account",
+    desc: "Join the Potta community. It's fast, secure and easy to start.",
+    color: "blue",
+    gradient: "from-blue-500 to-cyan-500",
+    bgGradient: "from-blue-500/20 to-cyan-500/20",
+    borderColor: "border-blue-500/30",
+    glowColor: "shadow-blue-500/40",
+    number: "01",
   },
   {
-    icon: <FaMoneyBillWave className="text-4xl" />,
-    title: "Stake Escrow",
-    desc: "Fund your wallet via Paystack. Stakes are locked in secure escrow during play.",
-    accent: "yellow",
-    number: "02"
+    icon: <FaMoneyBillWave className="text-5xl" />,
+    title: "Deposit Funds",
+    desc: "Fund your wallet safely and stake in skill-based competitions.",
+    color: "green",
+    gradient: "from-green-500 to-emerald-500",
+    bgGradient: "from-green-500/20 to-emerald-500/20",
+    borderColor: "border-green-500/30",
+    glowColor: "shadow-green-500/40",
+    number: "02",
   },
   {
-    icon: <FaTrophy className="text-4xl" />,
-    title: "90% Payouts",
-    desc: "Win the match and receive 90% of the total pot instantly to your wallet.",
-    accent: "blue",
-    number: "03"
-  }
+    icon: <FaTrophy className="text-5xl" />,
+    title: "Compete & Win",
+    desc: "Pick your mode, challenge others, and win real cash prizes.",
+    color: "yellow",
+    gradient: "from-yellow-500 to-orange-500",
+    bgGradient: "from-yellow-500/20 to-orange-500/20",
+    borderColor: "border-yellow-500/30",
+    glowColor: "shadow-yellow-500/40",
+    number: "03",
+  },
 ];
 
 const HowItWorks = () => {
   return (
-    <section id="how" className="relative py-32 bg-[#022c22] text-white px-6 overflow-hidden">
-
-      {/* Background Ambience */}
-      <div className="absolute inset-0 opacity-5 pointer-events-none">
-        <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.pattern')]"></div>
+    <section
+      id="how"
+      className="relative py-24 bg-gradient-to-b from-[#0f172a] via-[#1e293b] to-[#0f172a] text-white px-6 overflow-hidden"
+    >
+      {/* Animated background grid */}
+      <div className="absolute inset-0 opacity-10">
+        <div className="absolute inset-0" style={{
+          backgroundImage: 'linear-gradient(rgba(59, 130, 246, 0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(59, 130, 246, 0.3) 1px, transparent 1px)',
+          backgroundSize: '50px 50px'
+        }}></div>
       </div>
 
-      <div className="max-w-7xl mx-auto relative z-10">
+      {/* Floating orbs */}
+      <div className="absolute top-20 left-10 w-72 h-72 bg-blue-500/20 rounded-full blur-3xl animate-pulse"></div>
+      <div className="absolute bottom-20 right-10 w-72 h-72 bg-purple-500/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1.5s' }}></div>
 
-        {/* Header */}
-        <div className="text-center mb-24 max-w-3xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            className="inline-block bg-emerald-500/10 border border-emerald-500/20 px-6 py-2 rounded-full text-emerald-500 text-xs font-black tracking-[0.4em] uppercase mb-8"
+      <div className="relative z-10 max-w-7xl mx-auto">
+        <motion.div
+          className="text-center mb-20"
+          initial={{ opacity: 0, y: -30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          viewport={{ once: true }}
+        >
+          <motion.span
+            className="inline-block text-blue-400 text-sm font-bold uppercase tracking-widest mb-4 px-4 py-2 bg-blue-400/10 rounded-full border border-blue-400/30"
           >
-            The Platform Protocol
-          </motion.div>
-          <h2 className="text-5xl md:text-7xl font-black italic uppercase tracking-tighter leading-none mb-6">
-            Three Steps to <br />
-            <span className="text-emerald-500 text-6xl md:text-8xl">Greatness</span>
+            Simple Process
+          </motion.span>
+          <h2 className="text-5xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+            How It Works
           </h2>
-          <p className="text-gray-400 text-xl font-medium italic">Professional skill-based wagering, simplified.</p>
-        </div>
+          <p className="text-gray-300 text-lg max-w-2xl mx-auto">
+            Three easy steps to start winning. No complicated setup, just pure competition.
+          </p>
+        </motion.div>
 
-        {/* Steps Grid */}
-        <div className="grid md:grid-cols-3 gap-12">
+        <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto relative">
           {steps.map((step, i) => (
             <motion.div
               key={i}
-              initial={{ opacity: 0, scale: 0.9 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              transition={{ delay: i * 0.2 }}
-              className="relative group lg:p-12 p-8 bg-black/40 backdrop-blur-3xl rounded-[3rem] border-2 border-white/5 hover:border-emerald-500/30 transition-all duration-500"
+              className="relative"
+              initial={{ opacity: 0, y: 50 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.2, duration: 0.6 }}
+              viewport={{ once: true }}
             >
-              <div className="absolute -top-6 -left-6 w-16 h-16 bg-emerald-500 text-emerald-950 flex items-center justify-center rounded-2xl font-black italic text-2xl shadow-2xl shadow-emerald-500/20 z-20">
-                {step.number}
-              </div>
+              <div className={`relative bg-[#1e293b]/90 backdrop-blur-xl p-8 rounded-3xl border ${step.borderColor} h-full flex flex-col group hover:scale-[1.02] transition-transform duration-300`}>
+                <div className="absolute -top-4 -right-4">
+                  <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${step.gradient} flex items-center justify-center font-bold text-xl text-white shadow-xl`}>
+                    {step.number}
+                  </div>
+                </div>
 
-              <div className="relative z-10">
-                <div className="text-emerald-500 mb-8 p-4 bg-emerald-500/5 inline-block rounded-2xl">
+                <div className={`mb-6 p-4 rounded-2xl bg-gradient-to-br ${step.bgGradient} w-fit text-white`}>
                   {step.icon}
                 </div>
-                <h3 className="text-3xl font-black italic uppercase tracking-tight mb-4 group-hover:text-emerald-400 transition-colors">
+
+                <h3 className={`text-2xl font-bold mb-4 group-hover:text-blue-400 transition-colors`}>
                   {step.title}
                 </h3>
-                <p className="text-gray-400 leading-relaxed text-lg">
+                <p className="text-gray-400 leading-relaxed mb-6">
                   {step.desc}
                 </p>
-              </div>
 
-              {/* Connecting line for desktop */}
-              {i < 2 && (
-                <div className="hidden lg:block absolute -right-6 top-1/2 -translate-y-1/2 z-0">
-                  <FaArrowRight className="text-white/5 text-4xl" />
-                </div>
-              )}
+                {i < steps.length - 1 && (
+                  <div className="hidden md:block absolute -right-4 top-1/2 transform -translate-y-1/2 z-20">
+                    <FaArrowRight className="text-gray-700 text-xl" />
+                  </div>
+                )}
+              </div>
             </motion.div>
           ))}
         </div>
 
-        {/* Trust Factors */}
-        <div className="mt-24 grid grid-cols-2 md:grid-cols-4 gap-8 py-12 border-y border-white/5">
-          <div className="flex flex-col items-center gap-3 text-center">
-            <FaLock className="text-emerald-500 text-2xl" />
-            <span className="text-[10px] font-black uppercase tracking-widest text-gray-500">Encrypted Escrow</span>
-          </div>
-          <div className="flex flex-col items-center gap-3 text-center">
-            <FaBullseye className="text-emerald-500 text-2xl" />
-            <span className="text-[10px] font-black uppercase tracking-widest text-gray-500">Skill-Only Physics</span>
-          </div>
-          <div className="flex flex-col items-center gap-3 text-center">
-            <FaBolt className="text-emerald-500 text-2xl" />
-            <span className="text-[10px] font-black uppercase tracking-widest text-gray-500">Instant Liquidity</span>
-          </div>
-          <div className="flex flex-col items-center gap-3 text-center">
-            <FaShieldAlt className="text-emerald-500 text-2xl" />
-            <span className="text-[10px] font-black uppercase tracking-widest text-gray-500">No House Edge</span>
-          </div>
-        </div>
-
+        <motion.div
+          className="text-center mt-20"
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          transition={{ delay: 0.6 }}
+        >
+          <button className="px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 rounded-full font-bold text-lg shadow-2xl transition-all hover:scale-105 active:scale-95">
+            Get Started Now
+          </button>
+        </motion.div>
       </div>
     </section>
   );
