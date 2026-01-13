@@ -19,6 +19,16 @@ const SpeedArena = () => {
   const [isMyTurn, setIsMyTurn] = useState(false);
   const [userId, setUserId] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [localTimer, setLocalTimer] = useState(60);
+
+  // Local Timer Countdown Effect
+  useEffect(() => {
+    if (!gameState || localTimer <= 0) return;
+    const interval = setInterval(() => {
+      setLocalTimer((prev) => Math.max(0, prev - 1));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [gameState, localTimer]);
 
   useEffect(() => {
     const initGame = async () => {
@@ -51,11 +61,13 @@ const SpeedArena = () => {
 
     const handleGameState = (state) => {
       setGameState(state);
+      setLocalTimer(state.timer || 60);
       setLoading(false);
     };
 
     const handleShotResult = (data) => {
       setGameState(data.gameState);
+      setLocalTimer(data.gameState.timer || 60);
     };
 
     const handleGameEnded = (data) => {
@@ -92,7 +104,7 @@ const SpeedArena = () => {
 
   if (loading || !gameState) return <LoadingSpinner text="Connecting to High-Speed Arena..." />;
 
-  const isCritical = (gameState.timer || 60) < 15;
+  const isCritical = localTimer < 15;
   const potAmount = gameState.stake * 2 * 0.9;
 
   return (
@@ -136,7 +148,7 @@ const SpeedArena = () => {
                 <FaStopwatch size={24} className={isCritical ? 'text-white' : 'text-red-500'} />
                 <div className="text-left">
                   <p className={`text-[10px] font-bold uppercase tracking-widest ${isCritical ? 'text-white/80' : 'text-gray-500'}`}>Clock</p>
-                  <p className="text-4xl font-black font-mono leading-none">{gameState.timer || 0}s</p>
+                  <p className="text-4xl font-black font-mono leading-none">{localTimer}s</p>
                 </div>
               </div>
             </div>
@@ -166,6 +178,20 @@ const SpeedArena = () => {
               ))}
 
               <div className="relative w-full h-full">
+                {/* Visual Cue Stick for Aiming */}
+                {gameState.balls['0']?.onTable && isMyTurn && (
+                  <motion.div
+                    className="absolute h-1 bg-gradient-to-r from-orange-500/0 via-orange-500/50 to-orange-500 origin-right rounded-full pointer-events-none z-10"
+                    style={{
+                      width: '30%',
+                      top: `${gameState.balls['0'].y}%`,
+                      left: `${gameState.balls['0'].x}%`,
+                      transform: `translate(-100%, -50%) rotate(${shotParams.angle}deg)`,
+                      opacity: 0.8
+                    }}
+                  />
+                )}
+
                 {Object.entries(gameState.balls).map(([num, ball]) => (
                   ball.onTable && (
                     <motion.div
