@@ -111,8 +111,8 @@ const TurnMode = () => {
             <div className="bg-black/40 px-6 py-3 rounded-2xl border border-white/5 text-center">
               <p className="text-gray-500 text-[10px] font-bold uppercase tracking-widest mb-1 text-center">Prize Pool</p>
               <div className="text-2xl font-black flex items-center gap-1 justify-center">
-                <span className="text-blue-500">GHGHC </span>
-                <span>{potAmount.toLocaleString()}</span>
+                <span className="text-blue-500">GHC </span>
+                <span>{(potAmount || 0).toLocaleString()}</span>
               </div>
             </div>
 
@@ -148,6 +148,19 @@ const TurnMode = () => {
 
               {/* Balls View */}
               <div className="relative w-full h-full">
+                {/* Visual Cue Stick for Aiming */}
+                {gameState.balls['0']?.onTable && isMyTurn && (
+                  <motion.div
+                    className="absolute h-1 bg-gradient-to-r from-blue-500/0 via-blue-500/50 to-blue-500 origin-right rounded-full pointer-events-none z-10"
+                    style={{
+                      width: '30%',
+                      top: `${gameState.balls['0'].y}%`,
+                      left: `${gameState.balls['0'].x}%`,
+                      transform: `translate(-100%, -50%) rotate(${shotParams.angle}deg)`,
+                      opacity: 0.8
+                    }}
+                  />
+                )}
                 {Object.entries(gameState.balls).map(([num, ball]) => (
                   ball.onTable && (
                     <motion.div
