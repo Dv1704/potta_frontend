@@ -148,20 +148,27 @@ const TurnMode = () => {
 
               {/* Balls View */}
               <div className="relative w-full h-full">
-                {/* Visual Cue Stick for Aiming - Always visible */}
-                {gameState.balls['0']?.onTable && (
-                  <motion.div
-                    animate={{ rotate: shotParams.angle }}
-                    transition={{ duration: 0.1 }}
-                    className="absolute h-2 bg-gradient-to-r from-blue-500/0 via-blue-500/80 to-blue-500 origin-right rounded-full pointer-events-none z-10 shadow-lg shadow-blue-500/50"
+                {/* Visual Cue Stick for Aiming - ALWAYS VISIBLE */}
+                {gameState.balls?.['0']?.onTable && (
+                  <div
+                    className="absolute pointer-events-none z-20"
                     style={{
-                      width: '50%',
-                      top: `${gameState.balls['0'].y}%`,
                       left: `${gameState.balls['0'].x}%`,
-                      transform: `translate(-100%, -50%) rotate(${shotParams.angle}deg)`,
-                      opacity: isMyTurn ? 1 : 0.3
+                      top: `${gameState.balls['0'].y}%`,
+                      transform: 'translate(-50%, -50%)'
                     }}
-                  />
+                  >
+                    <div
+                      className="absolute h-3 bg-blue-500 rounded-full shadow-2xl"
+                      style={{
+                        width: '200px',
+                        transformOrigin: 'left center',
+                        transform: `rotate(${shotParams.angle}deg)`,
+                        opacity: isMyTurn ? 1 : 0.5,
+                        boxShadow: '0 0 20px rgba(59, 130, 246, 0.8)'
+                      }}
+                    />
+                  </div>
                 )}
                 {Object.entries(gameState.balls).map(([num, ball]) => (
                   ball.onTable && (
