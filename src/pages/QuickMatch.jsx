@@ -81,7 +81,7 @@ const QuickMatch = () => {
         const user = {
           id: profile.id,
           username: profile.name || profile.email.split('@')[0],
-          avatar: `https://ui-avatars.com/api/?name=${profile.name}&background=6366f1&color=fff`,
+          avatar: `https://api.dicebear.com/7.x/adventurer/svg?seed=${profile.name}`,
           wins: stats.wins || 0,
           rank: stats.level || 'Rookie'
         };
@@ -114,8 +114,8 @@ const QuickMatch = () => {
 
       setTimeout(() => {
         setOpponent({
-          name: `Pro_${data.opponentId.slice(0, 4)}`,
-          avatar: `https://i.pravatar.cc/100?u=${data.opponentId}`,
+          name: data.opponentName || `Pro_${data.opponentId.slice(0, 4)}`,
+          avatar: `https://api.dicebear.com/7.x/adventurer/svg?seed=${data.opponentName || data.opponentId}`,
           rank: "Pool Elite",
           winRate: "68%"
         });
@@ -190,7 +190,7 @@ const QuickMatch = () => {
             className="flex flex-col items-center gap-6"
           >
             <div className={`relative p-1 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 shadow-2xl`}>
-              <div className="w-32 h-32 md:w-44 md:h-44 rounded-full overflow-hidden border-4 border-black">
+              <div className="w-32 h-32 md:w-44 md:h-44 rounded-full overflow-hidden border-4 border-black bg-white">
                 <img src={userData.avatar} alt="Me" className="w-full h-full object-cover" />
               </div>
               <div className="absolute -bottom-2 right-4 bg-blue-500 p-2 rounded-xl border-2 border-black">
@@ -240,7 +240,7 @@ const QuickMatch = () => {
                   className="flex flex-col items-center gap-6"
                 >
                   <div className={`relative p-1 rounded-full bg-gradient-to-br from-red-500 to-orange-500 shadow-2xl`}>
-                    <div className="w-32 h-32 md:w-44 md:h-44 rounded-full overflow-hidden border-4 border-black">
+                    <div className="w-32 h-32 md:w-44 md:h-44 rounded-full overflow-hidden border-4 border-black bg-white">
                       <img src={opponent.avatar} alt="Opponent" className="w-full h-full object-cover" />
                     </div>
                     <div className="absolute -bottom-2 right-4 bg-orange-500 p-2 rounded-xl border-2 border-black">
@@ -288,7 +288,7 @@ const QuickMatch = () => {
             <div>
               <p className="text-gray-500 text-[10px] font-black uppercase tracking-widest">Tournament Stake</p>
               <p className="text-3xl font-black tracking-tight flex items-center gap-1">
-                <span className="text-blue-500">GHGHC </span>
+                <span className="text-blue-500">GHC </span>
                 <span>{stake.toLocaleString()}</span>
               </p>
             </div>
@@ -296,7 +296,7 @@ const QuickMatch = () => {
 
           <div className="text-right">
             <p className="text-gray-500 text-[10px] font-black uppercase tracking-widest">Prize Pool</p>
-            <p className="text-3xl font-black text-emerald-400">GHGHC  {(stake * 2 * 0.9).toLocaleString()}</p>
+            <p className="text-3xl font-black text-emerald-400">GHC  {(stake * 2 * 0.9).toLocaleString()}</p>
           </div>
         </motion.div>
 
