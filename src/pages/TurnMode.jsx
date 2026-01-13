@@ -148,8 +148,8 @@ const TurnMode = () => {
 
               {/* Balls View */}
               <div className="relative w-full h-full">
-                {/* Visual Cue Stick for Aiming */}
-                {gameState.balls['0']?.onTable && isMyTurn && (
+                {/* Visual Cue Stick for Aiming - Always visible */}
+                {gameState.balls['0']?.onTable && (
                   <motion.div
                     animate={{ rotate: shotParams.angle }}
                     transition={{ duration: 0.1 }}
@@ -159,7 +159,7 @@ const TurnMode = () => {
                       top: `${gameState.balls['0'].y}%`,
                       left: `${gameState.balls['0'].x}%`,
                       transform: `translate(-100%, -50%) rotate(${shotParams.angle}deg)`,
-                      opacity: 1
+                      opacity: isMyTurn ? 1 : 0.3
                     }}
                   />
                 )}
