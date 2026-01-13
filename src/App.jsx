@@ -16,10 +16,8 @@ const ForgotPassword = React.lazy(() => import('./pages/ForgotPassword'));
 const ResetPassword = React.lazy(() => import('./pages/ResetPassword'));
 const Success = React.lazy(() => import('./pages/Success'));
 const Leaderboards = React.lazy(() => import('./components/Leaderboards'));
-const SpeedMode = React.lazy(() => import('./pages/SpeedMode'));
 const TurnMode = React.lazy(() => import('./pages/TurnMode'));
 const SpeedArena = React.lazy(() => import('./pages/SpeedArena'));
-const SpeedArenaDashboard = React.lazy(() => import('./pages/SpeedArenaDashboard'));
 const QuickMatch = React.lazy(() => import('./pages/QuickMatch'));
 const AdminDashboard = React.lazy(() => import('./pages/AdminDashboard'));
 const PottaPoolDashboard = React.lazy(() => import('./pages/PottaPoolDashboard'));
@@ -57,14 +55,15 @@ function AppContent() {
         <Route path="/dashboard" element={
           <ProtectedRoute>
             <DashboardLayout>
-              <SpeedArenaDashboard />
+              <GameDashboard />
             </DashboardLayout>
           </ProtectedRoute>
         } />
-        <Route path="/speed-mode" element={
+        {/* Alias for /games to /dashboard */}
+        <Route path="/games" element={
           <ProtectedRoute>
             <DashboardLayout>
-              <SpeedMode />
+              <GameDashboard />
             </DashboardLayout>
           </ProtectedRoute>
         } />
@@ -130,13 +129,7 @@ function AppContent() {
             </DashboardLayout>
           </ProtectedRoute>
         } />
-        <Route path="/games" element={
-          <ProtectedRoute>
-            <DashboardLayout>
-              <GameDashboard />
-            </DashboardLayout>
-          </ProtectedRoute>
-        } />
+
         <Route path="/match/:id" element={
           <ProtectedRoute>
             <DashboardLayout>

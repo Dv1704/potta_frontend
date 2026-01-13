@@ -1,58 +1,55 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { TfiAlignJustify, TfiAlignLeft } from "react-icons/tfi";
-import { IoGameControllerSharp } from "react-icons/io5";
 import { socket, connectSocket } from '../socket';
 import { useToast } from '../context/ToastContext';
 import LoadingSpinner from '../components/LoadingSpinner';
 import {
-  FaUser,
-  FaWallet,
-  FaGamepad,
-  FaSignOutAlt,
-  FaTrophy,
-  FaCrown,
-  FaBolt,
-  FaFire,
-  FaStar,
-} from 'react-icons/fa';
+  Zap,
+  Target,
+  Trophy,
+  Users,
+  Shield,
+  Search,
+  Timer,
+  ArrowLeft,
+  CircleDot,
+  Dna,
+  Cpu
+} from 'lucide-react';
 
 const QuickMatch = () => {
   const navigate = useNavigate();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [showPopup, setShowPopup] = useState(false);
-  const [opponent, setOpponent] = useState(null);
-  const [showSummary, setShowSummary] = useState(false);
-  const [searchPhase, setSearchPhase] = useState(0);
-
+  const location = useLocation();
   const { showToast } = useToast();
+
   const [loading, setLoading] = useState(true);
   const [userData, setUserData] = useState(null);
-  const location = useLocation();
+  const [opponent, setOpponent] = useState(null);
+  const [searchPhase, setSearchPhase] = useState(0);
+  const [waitingTime, setWaitingTime] = useState(0);
+  const [matchData, setMatchData] = useState(null);
+  const [foundTriggered, setFoundTriggered] = useState(false);
+  const [showSummary, setShowSummary] = useState(false);
 
-  // Parse query params
   const queryParams = new URLSearchParams(location.search);
   const mode = queryParams.get('mode') || 'turn';
   const stake = parseFloat(queryParams.get('stake')) || 10;
 
-  const [waitingTime, setWaitingTime] = useState(0);
-  const maxWaitTime = 60; // 60 seconds timeout
-
-  const modeDisplay = mode.charAt(0).toUpperCase() + mode.slice(1);
+  const matchedRef = useRef(false);
 
   const searchMessages = [
-    `[${modeDisplay}] Scanning the arena...`,
-    `[${modeDisplay}] Finding worthy opponents...`,
-    `[${modeDisplay}] Checking player skills...`,
-    `[${modeDisplay}] Almost there...`,
-    `[${modeDisplay}] Match found!`
+    "SCANNING GLOBAL LOBBY...",
+    "CALIBRATING SKILL BRACKETS...",
+    "MATCHING WITH ACTIVE PROS...",
+    "HANDSHAKING ENCRYPTION...",
+    "LOCKING STAKES IN ESCROW...",
+    "POOL TABLE DETECTED...",
+    "READYING CUE STICKS...",
   ];
 
-  const [matchData, setMatchData] = useState(null);
-
   useEffect(() => {
-    const fetchData = async () => {
+    const initMatchmaking = async () => {
       const token = localStorage.getItem('token');
       if (!token) {
         navigate('/login');
@@ -69,515 +66,275 @@ const QuickMatch = () => {
           fetch(`${apiUrl}/game/stats`, { headers })
         ]);
 
-        if (!profRes.ok || !balRes.ok) throw new Error('Failed to load user data');
+        if (!profRes.ok || !balRes.ok) throw new Error('Auth failed');
 
         const profile = await profRes.json();
         const balance = await balRes.json();
-        const stats = await statsRes.json(); // May be empty if fetch failed, handle gracefully if needed
+        const stats = await statsRes.json();
 
         if (balance.available < stake) {
-          showToast(`Insufficient funds! Stake is ₵${stake}.`, 'error');
-          navigate('/wallet');
+          showToast(`Insufficient funds! Need ${stake} GH₵.`, 'error');
+          navigate('/dashboard');
           return;
         }
 
-        // Construct User Object
-        const enrichedUser = {
+        const user = {
           id: profile.id,
           username: profile.name || profile.email.split('@')[0],
-          avatar: `https://ui-avatars.com/api/?name=${profile.name}&background=random`,
-          wallet: balance.available,
-          currency: balance.currency,
+          avatar: `https://ui-avatars.com/api/?name=${profile.name}&background=random&color=fff`,
           wins: stats.wins || 0,
-          losses: stats.losses || 0,
-          winRate: stats.winRate ? Math.round(stats.winRate) : 0,
-          rank: (stats.wins > 50) ? 'Diamond' : (stats.wins > 20) ? 'Platinum' : 'Gold',
-          level: Math.floor((stats.totalGames || 0) / 5) + 1
+          rank: stats.level || 'Rookie'
         };
+        setUserData(user);
 
-        setUserData(enrichedUser);
+        connectSocket(profile.id);
 
-        // Connect Socket
-        connectSocket(enrichedUser.id);
-
-        socket.emit('joinQueue', {
-          userId: enrichedUser.id,
-          stake: stake,
-          mode: mode
-        });
+        // DELAYED JOIN: Prove we are "searching"
+        setTimeout(() => {
+          socket.emit('joinQueue', { userId: profile.id, stake, mode });
+        }, 1000);
 
       } catch (err) {
-        console.error(err);
-        showToast('Failed to join matchmaking queue', 'error');
-        navigate('/games');
+        showToast('System Error: Matchmaking offline', 'error');
+        navigate('/dashboard');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchData();
+    initMatchmaking();
 
     socket.on('matchFound', (data) => {
-      setOpponent({
-        name: data.opponentId, // In real app, we might need to fetch opponent details or backend sends name
-        avatar: `https://i.pravatar.cc/100?img=${Math.floor(Math.random() * 70)}`,
-        rank: "Opponent",
-        wins: '?',
-        winRate: '?'
-      });
+      if (matchedRef.current) return;
+      matchedRef.current = true;
+
       setMatchData(data);
-      setShowPopup(true);
+      // Artificial delay of 3-5 seconds as requested to prove "live" status
+      const fakeSearchDelay = 3000 + Math.random() * 2000;
 
       setTimeout(() => {
-        setShowPopup(false);
-        setShowSummary(true);
-      }, 2500);
+        setOpponent({
+          name: `Pro_${data.opponentId.slice(0, 4)}`,
+          avatar: `https://i.pravatar.cc/100?u=${data.opponentId}`,
+          rank: "Pool Elite",
+          winRate: "68%"
+        });
+        setFoundTriggered(true);
+
+        // Auto-redirect to game after 3s exposure of opponent
+        setTimeout(() => {
+          const path = data.mode === 'speed'
+            ? `/speed-mode/arena/${data.gameId}`
+            : `/turn-mode/${data.gameId}`;
+          navigate(path);
+        }, 3500);
+      }, fakeSearchDelay);
     });
 
-    socket.on('waitingInQueue', (data) => {
-      console.log('Waiting...', data.message);
-    });
-
-    // Search phase animation
-    const phaseInterval = setInterval(() => {
-      setSearchPhase(prev => (prev + 1) % searchMessages.length);
-    }, 1500);
-
-    // Timer for real-time wait duration
-    const timerInterval = setInterval(() => {
-      setWaitingTime(prev => {
-        if (prev >= maxWaitTime) {
-          clearInterval(timerInterval);
-          showToast('Matchmaking timeout. Please try again.', 'error');
-          navigate('/games');
-          return prev;
-        }
-        return prev + 1;
-      });
-    }, 1000);
+    const timer = setInterval(() => setWaitingTime(p => p + 1), 1000);
+    const phaseTimer = setInterval(() => setSearchPhase(p => (p + 1) % searchMessages.length), 2000);
 
     return () => {
-      clearInterval(phaseInterval);
-      clearInterval(timerInterval);
+      clearInterval(timer);
+      clearInterval(phaseTimer);
       socket.off('matchFound');
-      socket.off('waitingInQueue');
-      // Leave queue on unmount
-      if (userData?.id) {
-        socket.emit('leaveQueue', { userId: userData.id, mode });
+      if (!matchedRef.current && userData?.id) {
+        socket.emit('leaveQueue', { userId: userData.id });
       }
     };
-  }, [navigate, showToast, mode, stake, userData?.id]);
+  }, [navigate, stake, mode]);
 
-  if (loading || !userData) return <LoadingSpinner text={`[${modeDisplay}] Entering Arena...`} />;
-
-  // Alias userData to user for existing JSX compatibility
-  const user = userData;
-
-  const getRankColor = (rank) => {
-    const colors = {
-      Diamond: 'from-cyan-400 to-blue-500',
-      Platinum: 'from-gray-300 to-gray-500',
-      Gold: 'from-yellow-400 to-yellow-600',
-    };
-    return colors[rank] || 'from-gray-400 to-gray-600';
-  };
-
-  const getRankIcon = (rank) => {
-    if (rank === 'Diamond') return <FaCrown className="text-cyan-400" />;
-    if (rank === 'Platinum') return <FaStar className="text-gray-300" />;
-    return <FaTrophy className="text-yellow-400" />;
-  };
+  if (loading || !userData) return <LoadingSpinner text="Connecting to Matchmaker..." />;
 
   return (
-    <div className="min-h-screen bg-black text-white flex pt-20 relative overflow-hidden">
+    <div className="min-h-screen bg-[#052e16] text-white flex flex-col items-center justify-center p-6 relative overflow-hidden font-sans">
 
-      {/* Animated Background Elements */}
-      <motion.div
-        className="absolute top-20 left-20 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl"
-        animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }}
-        transition={{ duration: 4, repeat: Infinity }}
-      />
-      <motion.div
-        className="absolute bottom-20 right-20 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl"
-        animate={{ scale: [1, 1.3, 1], opacity: [0.2, 0.4, 0.2] }}
-        transition={{ duration: 5, repeat: Infinity, delay: 1 }}
-      />
+      {/* Background Ambience */}
+      <div className="absolute inset-0 opacity-10 pointer-events-none">
+        <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/felt.pattern')]"></div>
+      </div>
 
-      {/* Enhanced Sidebar */}
-      <motion.aside
-        initial={false}
-        animate={{ x: sidebarOpen ? 0 : -256 }}
-        className={`fixed md:static top-16 md:top-0 left-0 h-full w-64 bg-gradient-to-b from-slate-800 to-slate-900 border-r border-slate-700/50 p-6 flex flex-col justify-between transition-transform z-40 md:translate-x-0`}
-      >
-        <div className="space-y-8">
-          {/* User Profile Card */}
+      <AnimatePresence mode="wait">
+        {!foundTriggered ? (
           <motion.div
-            className="bg-gradient-to-br from-slate-700/50 to-slate-800/50 p-4 rounded-xl border border-slate-600/30"
-            whileHover={{ scale: 1.02 }}
+            key="searching"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 1.1 }}
+            className="w-full max-w-xl text-center space-y-12 z-10"
           >
-            <div className="flex items-center gap-3 mb-3">
-              <div className="relative">
-                <img src={user.avatar} alt="avatar" className="w-12 h-12 rounded-full ring-2 ring-blue-500" />
-                <motion.div
-                  className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-slate-800"
-                  animate={{ scale: [1, 1.2, 1] }}
-                  transition={{ duration: 2, repeat: Infinity }}
-                />
-              </div>
-              <div>
-                <h2 className="text-lg font-bold">{user.username}</h2>
-                <div className="flex items-center gap-1">
-                  {getRankIcon(user.rank)}
-                  <p className="text-xs text-gray-300">{user.rank} • Lvl {user.level}</p>
+            {/* Header */}
+            <div className="space-y-4">
+              <motion.div
+                animate={{ y: [0, -5, 0] }}
+                transition={{ duration: 2, repeat: Infinity }}
+                className="inline-block bg-emerald-500/10 border border-emerald-500/30 px-4 py-1 rounded-full text-emerald-400 text-xs font-black tracking-widest uppercase"
+              >
+                System Authority: Online
+              </motion.div>
+              <h1 className="text-5xl font-black italic tracking-tighter uppercase">
+                Finding <span className="text-emerald-500">Opponent</span>
+              </h1>
+              <p className="text-gray-400 font-mono text-sm tracking-tight">
+                MODE: {mode.toUpperCase()} arena // STAKE: {stake} GH₵
+              </p>
+            </div>
+
+            {/* Radar Animation */}
+            <div className="relative w-80 h-80 mx-auto">
+              <div className="absolute inset-0 rounded-full border border-emerald-500/10 animate-[ping_3s_linear_infinite]"></div>
+              <div className="absolute inset-4 rounded-full border border-emerald-500/20 animate-[ping_3s_linear_infinite_0.5s]"></div>
+              <div className="absolute inset-8 rounded-full border border-emerald-500/30 animate-[ping_3s_linear_infinite_1s]"></div>
+
+              {/* Rotating Hub */}
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+                className="absolute inset-0 flex flex-col items-center justify-center"
+              >
+                <div className="w-1.5 h-full bg-gradient-to-t from-emerald-500 via-transparent to-transparent opacity-50"></div>
+              </motion.div>
+
+              {/* Central Point */}
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="relative">
+                  <motion.div
+                    animate={{ scale: [1, 1.1, 1] }}
+                    transition={{ duration: 1, repeat: Infinity }}
+                    className="bg-emerald-500 p-6 rounded-full shadow-2xl shadow-emerald-500/50"
+                  >
+                    <CircleDot size={40} className="text-black" />
+                  </motion.div>
+
+                  {/* Orbiting Avatars (Fake Players) */}
+                  {[...Array(4)].map((_, i) => (
+                    <motion.div
+                      key={i}
+                      className="absolute top-1/2 left-1/2 w-8 h-8 rounded-full border-2 border-emerald-400/50 overflow-hidden"
+                      initial={{ rotate: i * 90 }}
+                      animate={{ rotate: i * 90 + 360 }}
+                      transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
+                      style={{ transformOrigin: '0 120px' }}
+                    >
+                      <img src={`https://i.pravatar.cc/50?u=${i}`} alt="" className="w-full h-full object-cover grayscale" />
+                    </motion.div>
+                  ))}
                 </div>
               </div>
             </div>
 
-            {/* Win Rate Progress */}
-            <div className="mt-3">
-              <div className="flex justify-between text-xs mb-1">
-                <span className="text-gray-400">Win Rate</span>
-                <span className="text-green-400 font-bold">{user.winRate}%</span>
-              </div>
-              <div className="w-full bg-slate-700 rounded-full h-2">
-                <motion.div
-                  className="bg-gradient-to-r from-green-500 to-emerald-400 h-2 rounded-full"
-                  initial={{ width: 0 }}
-                  animate={{ width: `${user.winRate}%` }}
-                  transition={{ duration: 1, delay: 0.5 }}
-                />
-              </div>
-            </div>
-          </motion.div>
-
-          {/* Stats Grid */}
-          <div className="grid grid-cols-2 gap-3">
-            <motion.div
-              className="bg-slate-700/30 p-3 rounded-lg border border-slate-600/30"
-              whileHover={{ scale: 1.05, borderColor: 'rgb(34 197 94)' }}
-            >
-              <FaTrophy className="text-green-400 mb-1" />
-              <p className="text-2xl font-bold">{user.wins}</p>
-              <p className="text-xs text-gray-400">Wins</p>
-            </motion.div>
-            <motion.div
-              className="bg-slate-700/30 p-3 rounded-lg border border-slate-600/30"
-              whileHover={{ scale: 1.05, borderColor: 'rgb(239 68 68)' }}
-            >
-              <FaFire className="text-red-400 mb-1" />
-              <p className="text-2xl font-bold">{user.losses}</p>
-              <p className="text-xs text-gray-400">Losses</p>
-            </motion.div>
-          </div>
-
-          {/* Menu Items */}
-          <div className="space-y-3">
-            <motion.div
-              className="flex items-center gap-3 p-3 rounded-lg bg-slate-700/30 hover:bg-slate-700/50 transition-colors cursor-pointer"
-              whileHover={{ x: 5 }}
-            >
-              <FaWallet className="text-blue-400" />
-              <div>
-                <p className="text-xs text-gray-400">Wallet Balance</p>
-                <p className="font-bold text-blue-400">{user.currency || '₵'}{user.wallet.toLocaleString()}</p>
-              </div>
-            </motion.div>
-
-            <motion.div
-              className="flex items-center gap-3 p-3 rounded-lg bg-blue-600/20 border border-blue-500/30"
-              whileHover={{ x: 5 }}
-            >
-              <FaGamepad className="text-blue-400" />
-              <p className="font-medium">Quick Match</p>
-              <FaBolt className="ml-auto text-yellow-400" />
-            </motion.div>
-          </div>
-        </div>
-
-        <motion.button
-          className="flex items-center gap-2 text-red-400 hover:text-red-500 transition p-3 rounded-lg hover:bg-red-500/10"
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-        >
-          <FaSignOutAlt /> Logout
-        </motion.button>
-      </motion.aside>
-
-      {/* Mobile Toggle Button */}
-      <motion.button
-        onClick={() => setSidebarOpen(!sidebarOpen)}
-        className="md:hidden p-4 absolute top-4 right-4 z-50 text-white bg-slate-800 rounded-full shadow-lg"
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.9 }}
-      >
-        {sidebarOpen ? <TfiAlignLeft /> : <TfiAlignJustify />}
-      </motion.button>
-
-      {/* Main Content */}
-      <main className="flex-1 p-6 md:p-12 flex flex-col items-center justify-center text-center gap-8 relative z-10">
-        <AnimatePresence mode="wait">
-          {!showSummary && (
-            <motion.div
-              key="searching"
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9 }}
-              className="space-y-6"
-            >
-              {/* Animated Radar */}
-              <div className="relative w-64 h-64 mx-auto">
-                <motion.div
-                  className="absolute inset-0 border-4 border-blue-500/30 rounded-full"
-                  animate={{ scale: [1, 1.3, 1], opacity: [0.3, 0, 0.3] }}
-                  transition={{ duration: 2, repeat: Infinity }}
-                />
-                <motion.div
-                  className="absolute inset-0 border-4 border-purple-500/30 rounded-full"
-                  animate={{ scale: [1, 1.3, 1], opacity: [0.3, 0, 0.3] }}
-                  transition={{ duration: 2, repeat: Infinity, delay: 0.5 }}
-                />
-                <motion.div
-                  className="absolute inset-0 border-4 border-cyan-500/30 rounded-full"
-                  animate={{ scale: [1, 1.3, 1], opacity: [0.3, 0, 0.3] }}
-                  transition={{ duration: 2, repeat: Infinity, delay: 1 }}
-                />
-
-                {/* Center Icon */}
-                <motion.div
-                  className="absolute inset-0 flex items-center justify-center"
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-                >
-                  <FaGamepad className="text-6xl text-blue-400" />
-                </motion.div>
-              </div>
-
+            {/* Status Messages */}
+            <div className="space-y-6">
               <motion.div
                 key={searchPhase}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
+                exit={{ opacity: 0 }}
+                className="text-emerald-400 font-mono text-xl font-black"
               >
-                <h2 className="text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-                  {searchMessages[searchPhase]}
-                </h2>
+                {searchMessages[searchPhase]}
               </motion.div>
 
-              <div className="flex items-center justify-center gap-2">
-                {[...Array(5)].map((_, i) => (
-                  <motion.div
-                    key={i}
-                    className="w-3 h-3 bg-blue-500 rounded-full"
-                    animate={{
-                      scale: [1, 1.5, 1],
-                      opacity: [0.3, 1, 0.3]
-                    }}
-                    transition={{
-                      duration: 1,
-                      repeat: Infinity,
-                      delay: i * 0.2
-                    }}
-                  />
-                ))}
-              </div>
-
-              <motion.div
-                className="bg-slate-800/50 backdrop-blur-sm px-6 py-4 rounded-2xl border border-slate-700 shadow-lg shadow-blue-500/10"
-                animate={{ scale: [1, 1.02, 1] }}
-                transition={{ duration: 2, repeat: Infinity }}
-              >
-                <div className="flex flex-col items-center gap-2">
-                  <div className="text-gray-400 text-sm uppercase tracking-widest font-bold">Estimated Wait: ~15s</div>
-                  <div className="text-white text-2xl font-black">
-                    {waitingTime}s <span className="text-gray-500 text-lg">/ {maxWaitTime}s</span>
-                  </div>
+              <div className="flex items-center justify-center gap-6">
+                <div className="text-left">
+                  <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Searching</p>
+                  <p className="text-2xl font-black">{waitingTime}s</p>
                 </div>
-              </motion.div>
-            </motion.div>
-          )}
+                <div className="w-px h-10 bg-white/10"></div>
+                <div className="text-left">
+                  <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Global Wait</p>
+                  <p className="text-2xl font-black text-emerald-500">~14s</p>
+                </div>
+              </div>
+            </div>
 
-          {showSummary && opponent && (
-            <motion.div
-              key="summary"
-              initial={{ opacity: 0, scale: 0.8, y: 50 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              transition={{ type: "spring", damping: 20 }}
-              className="bg-gradient-to-br from-slate-800/90 to-slate-900/90 backdrop-blur-xl p-8 rounded-2xl shadow-2xl max-w-2xl w-full border border-slate-700/50"
+            <button
+              onClick={() => navigate('/dashboard')}
+              className="group flex items-center gap-2 mx-auto text-gray-500 hover:text-white transition-colors"
             >
-              <motion.h3
-                className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-emerald-400 mb-6"
-                animate={{ scale: [1, 1.05, 1] }}
-                transition={{ duration: 2, repeat: Infinity }}
-              >
-                🎯 Match Found!
-              </motion.h3>
+              <ArrowLeft size={16} />
+              <span className="font-bold text-xs uppercase tracking-widest">Abort Matchmaking</span>
+            </button>
 
-              {/* VS Section */}
-              <div className="flex items-center justify-center gap-8 my-8">
-                {/* User */}
-                <motion.div
-                  className="text-center"
-                  initial={{ x: -100, opacity: 0 }}
-                  animate={{ x: 0, opacity: 1 }}
-                  transition={{ delay: 0.2 }}
-                >
-                  <div className="relative">
-                    <motion.img
-                      src={user.avatar}
-                      className="w-24 h-24 rounded-full mx-auto ring-4 ring-blue-500 shadow-lg shadow-blue-500/50"
-                      whileHover={{ scale: 1.1, rotate: 5 }}
-                    />
-                    <div className="absolute -top-2 -right-2 bg-blue-600 rounded-full p-2">
-                      {getRankIcon(user.rank)}
-                    </div>
-                  </div>
-                  <p className="text-white mt-3 font-bold text-lg">{user.username}</p>
-                  <p className="text-sm text-blue-400">{user.rank}</p>
-                  <div className="mt-2 space-y-1">
-                    <p className="text-xs text-gray-400">{user.wins}W • {user.losses}L</p>
-                    <p className="text-xs text-green-400 font-semibold">{user.winRate}% WR</p>
-                  </div>
-                </motion.div>
-
-                {/* VS Badge */}
-                <motion.div
-                  className="relative"
-                  animate={{ rotate: [0, 360] }}
-                  transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                >
-                  <div className="absolute inset-0 bg-gradient-to-r from-red-500 to-orange-500 rounded-full blur-xl opacity-50" />
-                  <div className="relative bg-gradient-to-r from-red-600 to-orange-600 text-white font-black text-2xl w-16 h-16 rounded-full flex items-center justify-center shadow-xl">
-                    VS
-                  </div>
-                </motion.div>
-
-                {/* Opponent */}
-                <motion.div
-                  className="text-center"
-                  initial={{ x: 100, opacity: 0 }}
-                  animate={{ x: 0, opacity: 1 }}
-                  transition={{ delay: 0.2 }}
-                >
-                  <div className="relative">
-                    <motion.img
-                      src={opponent.avatar}
-                      className="w-24 h-24 rounded-full mx-auto ring-4 ring-red-500 shadow-lg shadow-red-500/50"
-                      whileHover={{ scale: 1.1, rotate: -5 }}
-                    />
-                    <div className="absolute -top-2 -right-2 bg-red-600 rounded-full p-2">
-                      {getRankIcon(opponent.rank)}
-                    </div>
-                  </div>
-                  <p className="text-white mt-3 font-bold text-lg">{opponent.name}</p>
-                  <p className="text-sm text-red-400">{opponent.rank}</p>
-                  <div className="mt-2 space-y-1">
-                    <p className="text-xs text-gray-400">{opponent.wins}W</p>
-                    <p className="text-xs text-green-400 font-semibold">{opponent.winRate}% WR</p>
-                  </div>
-                </motion.div>
-              </div>
-
-              {/* Match Details */}
-              <div className="grid grid-cols-3 gap-4 mb-6 mt-8">
-                <div className="bg-slate-700/30 p-3 rounded-lg">
-                  <p className="text-xs text-gray-400">Mode</p>
-                  <p className="font-bold">{modeDisplay}</p>
-                </div>
-                <div className="bg-slate-700/30 p-3 rounded-lg">
-                  <p className="text-xs text-gray-400">Stakes</p>
-                  <p className="font-bold text-yellow-400">₵{stake}</p>
-                </div>
-                <div className="bg-slate-700/30 p-3 rounded-lg">
-                  <p className="text-xs text-gray-400">Best Of</p>
-                  <p className="font-bold">3 Games</p>
-                </div>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex gap-4">
-                <motion.button
-                  onClick={() => {
-                    if (matchData) {
-                      const path = matchData.mode === 'speed'
-                        ? `/speed-mode/arena/${matchData.gameId}`
-                        : `/turn-mode/${matchData.gameId}`;
-                      navigate(path);
-                    }
-                  }}
-                  className="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 px-6 py-4 rounded-xl font-bold text-lg shadow-lg shadow-green-500/30 transition-all"
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <span>Start Game</span><IoGameControllerSharp size={25} />
-
-                </motion.button>
-                <motion.button
-                  className="px-6 py-4 rounded-xl font-bold border-2 border-slate-600 hover:bg-slate-700/50 transition-colors"
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  Decline
-                </motion.button>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </main>
-
-      {/* Enhanced Opponent Found Popup */}
-      <AnimatePresence>
-        {showPopup && opponent && (
+          </motion.div>
+        ) : (
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed top-0 left-0 w-full h-full flex items-center justify-center bg-black/90 backdrop-blur-sm z-50"
+            key="found"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-3 items-center gap-8 relative z-10"
           >
+            {/* Player 1 */}
             <motion.div
-              initial={{ scale: 0, rotate: -180 }}
-              animate={{ scale: 1, rotate: 0 }}
-              exit={{ scale: 0, rotate: 180 }}
-              transition={{ type: "spring", damping: 15 }}
-              className="bg-gradient-to-br from-slate-800 to-slate-900 text-center p-10 rounded-2xl shadow-2xl border border-green-500/30 relative overflow-hidden"
+              initial={{ x: -100, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              className="bg-black/40 backdrop-blur-md p-8 rounded-[2rem] border-2 border-emerald-500/20 text-center"
             >
-              {/* Animated background glow */}
-              <motion.div
-                className="absolute inset-0 bg-gradient-to-r from-green-500/20 to-emerald-500/20 rounded-2xl"
-                animate={{ opacity: [0.2, 0.5, 0.2] }}
-                transition={{ duration: 1.5, repeat: Infinity }}
-              />
-
-              <motion.div
-                animate={{ scale: [1, 1.2, 1] }}
-                transition={{ duration: 0.5, repeat: Infinity }}
-              >
-                <h3 className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-emerald-400 relative z-10">
-                  Opponent Found!
-                </h3>
-              </motion.div>
-
-              <motion.img
-                src={opponent.avatar}
-                alt="opponent"
-                className="w-28 h-28 rounded-full mx-auto mt-6 ring-4 ring-green-500 shadow-xl shadow-green-500/50 relative z-10"
-                animate={{ rotate: [0, 360] }}
-                transition={{ duration: 2, ease: "linear" }}
-              />
-
-              <p className="text-white mt-4 font-bold text-2xl relative z-10">{opponent.name}</p>
-              <p className="text-gray-300 text-sm mt-2 relative z-10 flex items-center justify-center gap-2">
-                {getRankIcon(opponent.rank)}
-                {opponent.rank} • {opponent.winRate}% Win Rate
-              </p>
-
-              <motion.p
-                className="text-yellow-400 text-sm mt-4 font-semibold relative z-10"
-                animate={{ opacity: [0.5, 1, 0.5] }}
-                transition={{ duration: 1.5, repeat: Infinity }}
-              >
-                Entering arena...
-              </motion.p>
+              <div className="relative inline-block mb-4">
+                <img src={userData.avatar} className="w-32 h-32 rounded-full border-4 border-emerald-500 shadow-2xl" />
+                <div className="absolute -bottom-2 -right-2 bg-emerald-500 text-black px-3 py-1 rounded-full text-[10px] font-black uppercase">YOU</div>
+              </div>
+              <h3 className="text-2xl font-black uppercase italic tracking-tighter">{userData.username}</h3>
+              <p className="text-emerald-400 text-xs font-bold uppercase tracking-widest mb-4">Rank: {userData.rank}</p>
+              <div className="flex gap-2 justify-center">
+                <div className="bg-emerald-900/40 px-3 py-1 rounded-lg text-xs font-bold">{userData.wins} Wins</div>
+              </div>
             </motion.div>
+
+            {/* VS CENTER */}
+            <div className="text-center relative py-12 md:py-0">
+              <motion.div
+                animate={{ scale: [1, 1.5, 1], rotate: [0, -10, 10, 0] }}
+                className="text-8xl font-black italic tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-white to-gray-600 select-none"
+              >
+                VS
+              </motion.div>
+              <div className="mt-8 space-y-2">
+                <div className="bg-yellow-500 text-black font-black px-6 py-2 rounded-xl text-xl inline-block shadow-lg shadow-yellow-500/50">
+                  {stake} GH₵ POT
+                </div>
+              </div>
+            </div>
+
+            {/* Opponent */}
+            <motion.div
+              initial={{ x: 100, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              transition={{ delay: 0.1 }}
+              className="bg-black/40 backdrop-blur-md p-8 rounded-[2rem] border-2 border-red-500/20 text-center"
+            >
+              <div className="relative inline-block mb-4">
+                <img src={opponent.avatar} className="w-32 h-32 rounded-full border-4 border-red-500 shadow-2xl" />
+                <div className="absolute -bottom-2 -right-2 bg-red-500 text-white px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">LIVE</div>
+              </div>
+              <h3 className="text-2xl font-black uppercase italic tracking-tighter">{opponent.name}</h3>
+              <p className="text-red-400 text-xs font-bold uppercase tracking-widest mb-4">{opponent.rank}</p>
+              <div className="flex gap-2 justify-center">
+                <div className="bg-red-950/40 px-3 py-1 rounded-lg text-xs font-bold text-red-500">{opponent.winRate} Win Rate</div>
+              </div>
+            </motion.div>
+
+            {/* Bottom Status */}
+            <div className="col-span-1 md:col-span-3 text-center pt-8">
+              <motion.div
+                animate={{ opacity: [0.3, 1, 0.3] }}
+                transition={{ duration: 1.5, repeat: Infinity }}
+                className="flex flex-col items-center gap-3"
+              >
+                <div className="flex gap-2">
+                  <Shield className="text-emerald-500" />
+                  <span className="text-sm font-black uppercase tracking-widest italic">Server Authoritative Syncing...</span>
+                </div>
+                <div className="w-64 h-1 bg-white/10 rounded-full overflow-hidden">
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: '100%' }}
+                    transition={{ duration: 3.5 }}
+                    className="h-full bg-emerald-500"
+                  />
+                </div>
+              </motion.div>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

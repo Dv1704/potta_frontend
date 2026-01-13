@@ -24,6 +24,9 @@ export const AuthProvider = ({ children }) => {
         setUser(userData);
         localStorage.setItem('token', authToken);
         localStorage.setItem('user', JSON.stringify(userData));
+        if (userData.id) {
+            localStorage.setItem('userId', userData.id);
+        }
     };
 
     const logout = () => {
@@ -31,6 +34,7 @@ export const AuthProvider = ({ children }) => {
         setUser(null);
         localStorage.removeItem('token');
         localStorage.removeItem('user');
+        localStorage.removeItem('userId');
     };
 
     return (

@@ -10,7 +10,7 @@ const DashboardLayout = ({ children }) => {
     // Don't show layout on specific full-screen game paths if needed, 
     // but for now user requested global consistency.
     // We can hide back button on root dashboard if we want.
-    const isRoot = location.pathname === '/games' || location.pathname === '/dashboard';
+    const isRoot = location.pathname === '/dashboard' || location.pathname === '/games';
 
     return (
         <div className="min-h-screen bg-slate-900 text-white">
@@ -31,15 +31,15 @@ const DashboardLayout = ({ children }) => {
                 </div>
 
                 {/* Center: Logo/Home */}
-                <Link to="/games" className="flex items-center gap-2">
+                <Link to="/dashboard" className="flex items-center gap-2">
                     <img src={logo} alt="Potta" className="h-8 w-auto object-contain" />
                 </Link>
 
                 {/* Right: Home / Menu */}
                 <div className="flex items-center justify-end gap-2 w-24">
                     <Link
-                        to="/games"
-                        className={`p-2 hover:bg-white/10 rounded-full transition-colors ${location.pathname === '/games' ? 'text-green-400' : 'text-gray-300'}`}
+                        to="/dashboard"
+                        className={`p-2 hover:bg-white/10 rounded-full transition-colors ${location.pathname === '/dashboard' ? 'text-green-400' : 'text-gray-300'}`}
                         aria-label="Home"
                     >
                         <Home className="w-6 h-6" />

@@ -1,4 +1,4 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 
@@ -7,6 +7,7 @@ import LoadingSpinner from '../components/LoadingSpinner';
 
 const Login = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { login } = useAuth();
   const { showToast } = useToast();
   const [formData, setFormData] = useState({ email: '', password: '' });
@@ -66,8 +67,9 @@ const Login = () => {
 
       showToast(`Welcome back, ${userData.name || 'Hustler'}!`, 'success');
 
-      // 4. Navigate to dashboard
-      navigate('/success');
+      // 4. Navigate back to intended page or success
+      const from = location.state?.from?.pathname || '/success';
+      navigate(from, { replace: true });
     } catch (err) {
       console.error('🚨 Login error:', err);
       showToast(err.message, 'error');

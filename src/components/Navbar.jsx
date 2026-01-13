@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useAuth } from '../context/AuthContext';
 import logo from '../assets/Logo.png';
 import { RiShareCircleLine } from "react-icons/ri";
 
@@ -12,9 +13,13 @@ import {
   FaBars,
   FaTimes,
   FaUserPlus,
+  FaTrophy,
+  FaWallet
 } from 'react-icons/fa';
 
 const Navbar = () => {
+  const { token, logout, user } = useAuth();
+  const navigate = useNavigate();
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -81,7 +86,7 @@ const Navbar = () => {
         initial="hidden"
         animate="visible"
         className={`fixed top-0 left-0 w-full z-50 transition-all duration-500 ${scrolled || menuOpen
-          ? 'bg-gray-900/95 backdrop-blur-xl text-white shadow-2xl border-b border-purple-500/20'
+          ? 'bg-black/90 backdrop-blur-2xl text-white shadow-2xl border-b border-emerald-500/20'
           : 'bg-transparent text-white'
           }`}
       >
@@ -96,7 +101,7 @@ const Navbar = () => {
               <motion.img
                 src={logo}
                 alt="POTTA Logo"
-                className="h-32 w-auto object-contain filter brightness-110"
+                className="h-28 w-auto object-contain brightness-110"
                 whileHover={{ rotate: [0, -5, 5, 0] }}
                 transition={{ duration: 0.5 }}
               />
@@ -105,237 +110,163 @@ const Navbar = () => {
 
           {/* Desktop Navigation Links */}
           <motion.ul
-            className="hidden md:flex gap-8 font-semibold items-center"
+            className="hidden md:flex gap-6 font-black items-center italic uppercase tracking-tighter"
             initial="hidden"
             animate="visible"
           >
             {[
-              { to: "/", icon: FaHome, text: "Home" },
-              { href: "#how", icon: FaInfoCircle, text: "How It Works" },
-              { href: "#modes", icon: FaGamepad, text: "Game Modes" },
+              { to: "/", icon: FaHome, text: "Arena" },
+              { href: "/#how", icon: FaInfoCircle, text: "Protocol" },
+              { href: "/#modes", icon: FaGamepad, text: "Lobby" },
             ].map((item, index) => (
               <motion.li key={item.text}>
                 {item.to ? (
                   <Link
                     to={item.to}
                     onClick={handleLinkClick}
-                    className="flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-white/10 transition-all duration-300 group relative"
+                    className="flex items-center gap-2 px-3 py-1 rounded-lg hover:text-emerald-400 transition-all duration-300 group relative"
                   >
-                    <item.icon className="text-blue-400 group-hover:text-cyan-400 transition-colors" />
-                    <span className="relative">
-                      {item.text}
-                      <motion.span
-                        className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-400 to-cyan-400 group-hover:w-full transition-all duration-300"
-                        initial={{ width: 0 }}
-                        whileHover={{ width: '100%' }}
-                      />
-                    </span>
+                    <item.icon className="text-emerald-500" />
+                    <span>{item.text}</span>
                   </Link>
                 ) : (
                   <a
                     href={item.href}
                     onClick={handleLinkClick}
-                    className="flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-white/10 transition-all duration-300 group relative"
+                    className="flex items-center gap-2 px-3 py-1 rounded-lg hover:text-emerald-400 transition-all duration-300 group relative"
                   >
-                    <item.icon className="text-blue-400 group-hover:text-cyan-400 transition-colors" />
-                    <span className="relative">
-                      {item.text}
-                      <motion.span
-                        className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-400 to-cyan-400 group-hover:w-full transition-all duration-300"
-                        initial={{ width: 0 }}
-                        whileHover={{ width: '100%' }}
-                      />
-                    </span>
+                    <item.icon className="text-emerald-500" />
+                    <span>{item.text}</span>
                   </a>
                 )}
               </motion.li>
             ))}
 
-            {/* Enhanced Join Now Button */}
+            {/* Wallet Quick Link for Auth Users */}
+            {token && (
+              <motion.li>
+                <Link to="/wallet" className="flex items-center gap-2 px-3 py-1 hover:text-emerald-400 text-yellow-500 transition-all">
+                  <FaWallet />
+                  <span>Wallet</span>
+                </Link>
+              </motion.li>
+            )}
+
+            {/* Dashboard / Auth Actions */}
             <motion.li
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
-              <Link
-                to="/signup"
-                onClick={handleLinkClick}
-                className="group relative flex items-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 transition-all duration-300 px-6 py-3 rounded-xl text-white font-bold shadow-2xl hover:shadow-purple-500/30 overflow-hidden"
-              >
-                <motion.span
-                  className="absolute inset-0 bg-gradient-to-r from-cyan-500 to-blue-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                  animate={{ x: ['0%', '100%', '0%'] }}
-                  transition={{ duration: 3, repeat: Infinity }}
-                />
-                <FaUserPlus className="relative z-10" />
-                <span className="relative z-10">Join Now</span>
-              </Link>
+              {token ? (
+                <Link
+                  to="/dashboard"
+                  onClick={handleLinkClick}
+                  className="flex items-center gap-2 bg-emerald-500 text-black px-6 py-2.5 rounded-xl font-black shadow-[0_0_20px_rgba(16,185,129,0.3)] transition-all hover:bg-emerald-400"
+                >
+                  <FaTrophy />
+                  <span>Dashboard</span>
+                </Link>
+              ) : (
+                <Link
+                  to="/signup"
+                  onClick={handleLinkClick}
+                  className="flex items-center gap-2 bg-white text-black px-6 py-2.5 rounded-xl font-black shadow-xl transition-all hover:bg-emerald-400"
+                >
+                  <FaUserPlus />
+                  <span>Join Club</span>
+                </Link>
+              )}
             </motion.li>
 
-            <motion.li
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <Link
-                to="/invite"
-                onClick={handleLinkClick}
-                className="group relative flex items-center gap-1 underline transition-all duration-300 px-6 py-3 rounded-xl text-white font-bold shadow-2xl hover:shadow-purple-500/30 overflow-hidden"
-              >
-                <motion.span
-                  className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                  animate={{ x: ['0%', '100%', '0%'] }}
-                  transition={{ duration: 3, repeat: Infinity }}
-                />
-                <FaUserPlus className="relative z-10" />
-                <span className="relative z-10 pl-2">Invite</span>
-              </Link>
-            </motion.li>
+            {token && (
+              <motion.li>
+                <button
+                  onClick={() => {
+                    logout();
+                    handleLinkClick();
+                    navigate('/');
+                  }}
+                  className="text-gray-400 hover:text-red-400 px-3 transition-colors"
+                >
+                  ESC
+                </button>
+              </motion.li>
+            )}
           </motion.ul>
 
           {/* Enhanced Mobile Menu Toggle Button */}
           <motion.button
             onClick={() => setMenuOpen(!menuOpen)}
-            className="md:hidden text-2xl z-[100] relative p-2 rounded-lg bg-white/10 backdrop-blur-sm"
-            whileHover={{ scale: 1.1, backgroundColor: 'rgba(255,255,255,0.2)' }}
+            className="md:hidden text-2xl z-[100] relative p-2 rounded-lg bg-emerald-500/10"
+            whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
-            aria-label="Toggle menu"
           >
-            <AnimatePresence mode="wait">
-              {menuOpen ? (
-                <motion.div
-                  key="close"
-                  initial={{ rotate: -90, opacity: 0 }}
-                  animate={{ rotate: 0, opacity: 1 }}
-                  exit={{ rotate: 90, opacity: 0 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <FaTimes className="text-cyan-400" />
-                </motion.div>
-              ) : (
-                <motion.div
-                  key="open"
-                  initial={{ rotate: 90, opacity: 0 }}
-                  animate={{ rotate: 0, opacity: 1 }}
-                  exit={{ rotate: -90, opacity: 0 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <FaBars className="text-blue-400" />
-                </motion.div>
-              )}
-            </AnimatePresence>
+            {menuOpen ? <FaTimes className="text-emerald-400" /> : <FaBars className="text-emerald-500" />}
           </motion.button>
         </div>
       </motion.nav>
 
-      {/* Enhanced Mobile Menu - Glass Morphism Overlay */}
+      {/* Mobile Menu */}
       <AnimatePresence>
         {menuOpen && (
           <>
-            {/* Backdrop */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setMenuOpen(false)}
-              className="md:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
+              className="md:hidden fixed inset-0 bg-black/80 backdrop-blur-md z-40"
             />
 
-            {/* Menu Content */}
             <motion.div
               variants={staggerContainer}
               initial="closed"
               animate="open"
               exit="closed"
-              className="md:hidden fixed top-0 left-0 w-80 h-full bg-gray-900/95 backdrop-blur-xl text-white p-8 z-40 border-r border-purple-500/20 shadow-2xl"
+              className="md:hidden fixed top-0 right-0 w-72 h-full bg-[#052e16] p-8 z-40 border-l border-emerald-500/20 shadow-2xl flex flex-col pt-24"
             >
-              {/* Menu Header */}
-              <motion.div
-                variants={menuItemVariants}
-                className="mb-12"
-              >
-                <Link to="/" onClick={handleLinkClick}>
-
-                </Link>
-              </motion.div>
-
-              {/* Menu Items */}
-              <motion.ul
-                variants={staggerContainer}
-                className="space-y-6 text-xl font-semibold"
-              >
+              <ul className="space-y-6 text-2xl font-black italic uppercase tracking-tighter">
                 {[
-                  { to: "/", icon: FaHome, text: "Home" },
-                  { href: "#how", icon: FaInfoCircle, text: "How It Works" },
-                  { href: "#modes", icon: FaGamepad, text: "Game Modes" },
+                  { to: "/", icon: FaHome, text: "Arena" },
+                  { href: "/#how", icon: FaInfoCircle, text: "Protocol" },
+                  { href: "/#modes", icon: FaGamepad, text: "Lobby" },
                 ].map((item) => (
                   <motion.li key={item.text} variants={menuItemVariants}>
                     {item.to ? (
-                      <Link
-                        to={item.to}
-                        onClick={handleLinkClick}
-                        className="flex items-center gap-4 p-4 rounded-xl hover:bg-white/10 transition-all duration-300 group"
-                      >
-                        <item.icon className="text-2xl text-blue-400 group-hover:text-cyan-400 transition-colors" />
+                      <Link to={item.to} onClick={handleLinkClick} className="flex items-center gap-4 text-white hover:text-emerald-400">
+                        <item.icon className="text-emerald-500" />
                         <span>{item.text}</span>
                       </Link>
                     ) : (
-                      <a
-                        href={item.href}
-                        onClick={handleLinkClick}
-                        className="flex items-center gap-5 p-4 rounded-xl hover:bg-white/10 transition-all duration-300 group"
-                      >
-                        <item.icon className="text-2xl text-blue-400 group-hover:text-cyan-400 transition-colors" />
+                      <a href={item.href} onClick={handleLinkClick} className="flex items-center gap-4 text-white hover:text-emerald-400">
+                        <item.icon className="text-emerald-500" />
                         <span>{item.text}</span>
                       </a>
                     )}
                   </motion.li>
                 ))}
 
-                {/* Mobile Join Now Button */}
-                <div>
+                <motion.li variants={menuItemVariants}>
+                  <Link
+                    to={token ? "/dashboard" : "/signup"}
+                    onClick={handleLinkClick}
+                    className="flex items-center justify-center gap-3 bg-emerald-500 text-black p-4 rounded-2xl w-full mt-8"
+                  >
+                    <span>{token ? 'Go to Dashboard' : 'Join Now'}</span>
+                  </Link>
+                </motion.li>
+
+                {token && (
                   <motion.li variants={menuItemVariants}>
-                    <Link
-                      to="/invite"
-                      onClick={handleLinkClick}
-                      className="group relative flex items-center gap-1 underline transition-all duration-300 px-6 py-3 rounded-xl text-white font-bold shadow-2xl hover:shadow-purple-500/30 overflow-hidden"
+                    <button
+                      onClick={() => { logout(); handleLinkClick(); navigate('/'); }}
+                      className="w-full text-red-500 border-2 border-red-500/20 p-4 rounded-2xl"
                     >
-                      <motion.span
-                        className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                        animate={{ x: ['0%', '100%', '0%'] }}
-                        transition={{ duration: 3, repeat: Infinity }}
-                      />
-                      <RiShareCircleLine className="relative z-10" />
-                  
-                      <span className="relative z-10 pl-2">Invite</span>
-                    </Link>
-
+                      LOGOUT
+                    </button>
                   </motion.li>
-
-                  <motion.li variants={menuItemVariants}>
-                    <Link
-                      to="/signup"
-                      onClick={handleLinkClick}
-                      className="flex items-center justify-center gap-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 transition-all duration-300 p-4 rounded-xl text-white font-bold mt-8 shadow-2xl hover:shadow-purple-500/30"
-                    >
-                      <FaUserPlus />
-                      <span>Join Now</span>
-                    </Link>
-                  </motion.li>
-
-
-                </div>
-
-
-              </motion.ul>
-
-              {/* Footer Text */}
-              <motion.div
-                variants={menuItemVariants}
-                className="absolute bottom-8 left-8 right-8 text-center"
-              >
-                <p className="text-gray-400 text-sm">
-                  Where Skill Meets Stakes
-                </p>
-              </motion.div>
+                )}
+              </ul>
             </motion.div>
           </>
         )}
