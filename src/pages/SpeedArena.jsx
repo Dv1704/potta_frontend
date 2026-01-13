@@ -201,14 +201,14 @@ const SpeedArena = () => {
                 <div>
                   <p className="text-gray-500 text-[10px] font-black uppercase tracking-widest">Potential Winnings</p>
                   <h3 className="text-3xl font-black flex items-center gap-1">
-                    <span className="text-gray-500">GHGHC </span>
-                    <span>{potAmount.toLocaleString()}</span>
+                    <span className="text-gray-500">GHC </span>
+                    <span>{(potAmount || 0).toLocaleString()}</span>
                   </h3>
                 </div>
               </div>
               <div className="text-right">
                 <p className="text-gray-500 text-[10px] font-black uppercase tracking-widest">Platform Fee (10%)</p>
-                <p className="text-xl font-bold text-red-500/50">GHGHC  {(gameState.stake * 2 * 0.1).toLocaleString()}</p>
+                <p className="text-xl font-bold text-red-500/50">GHC  {((gameState.stake * 2 * 0.1) || 0).toLocaleString()}</p>
               </div>
             </div>
           </div>
@@ -254,8 +254,8 @@ const SpeedArena = () => {
                   onClick={handleTakeShot}
                   disabled={!isMyTurn}
                   className={`w-full py-6 rounded-2xl font-black text-xl transition-all flex items-center justify-center gap-3 shadow-xl ${isMyTurn
-                      ? 'bg-gradient-to-r from-orange-600 to-yellow-500 text-white shadow-orange-500/20 hover:scale-102 active:scale-98'
-                      : 'bg-gray-800 text-gray-600 cursor-not-allowed'
+                    ? 'bg-gradient-to-r from-orange-600 to-yellow-500 text-white shadow-orange-500/20 hover:scale-102 active:scale-98'
+                    : 'bg-gray-800 text-gray-600 cursor-not-allowed'
                     }`}
                 >
                   <FaBullseye />
