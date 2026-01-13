@@ -186,8 +186,8 @@ const SpeedArena = () => {
                   <div
                     className="absolute pointer-events-none z-20"
                     style={{
-                      left: `${gameState.balls['0'].x}%`,
-                      top: `${gameState.balls['0'].y}%`,
+                      left: `${(gameState.balls['0'].x / 1280) * 100}%`,
+                      top: `${(gameState.balls['0'].y / 720) * 100}%`,
                       transform: 'translate(-50%, -50%)'
                     }}
                   >
