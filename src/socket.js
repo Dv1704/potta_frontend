@@ -1,10 +1,12 @@
 import { io } from 'socket.io-client';
 
-const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:3000';
+const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || import.meta.env.VITE_API_URL || 'http://localhost:3000';
+// Remove trailing slashes if any to prevent connection issues
+const sanitizedUrl = SOCKET_URL.replace(/\/$/, "");
 
-export const socket = io(SOCKET_URL, {
+export const socket = io(sanitizedUrl, {
     autoConnect: false,
-    transports: ['websocket'],
+    transports: ['websocket', 'polling'], // Allow polling as fallback
 });
 
 export const connectSocket = (userId) => {

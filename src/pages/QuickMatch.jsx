@@ -73,7 +73,7 @@ const QuickMatch = () => {
         const stats = await statsRes.json();
 
         if (balance.available < stake) {
-          showToast(`Insufficient funds! Need GHGHC  ${stake.toLocaleString()}`, 'error');
+          showToast(`Insufficient balance! Need GHC ${stake.toLocaleString()}`, 'error');
           navigate('/dashboard');
           return;
         }
