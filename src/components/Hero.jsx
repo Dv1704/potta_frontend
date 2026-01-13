@@ -104,7 +104,7 @@ const Hero = () => {
             transition={{ duration: 0.8 }}
           >
             <h1 className="text-5xl md:text-7xl font-black text-white leading-tight mb-6">
-              Win GH₵ while <br />
+              Win GHGHC  while <br />
               <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
                 playing pool.
               </span>

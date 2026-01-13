@@ -225,7 +225,7 @@ export default function GameDashboard() {
               className="group bg-[#0c111d] rounded-[2.5rem] overflow-hidden border border-white/5 hover:border-blue-500/40 transition-all duration-500 shadow-2xl"
             >
               <div className="relative h-60 overflow-hidden bg-slate-900">
-                <img src={game.image} alt={game.name} className="w-full h-full object-cover grayscale-[0.2] transition-transform duration-700 group-hover:scale-110 group-hover:grayscale-0" />
+                <img src={game.image} alt="" className="w-full h-full object-cover grayscale-[0.2] transition-transform duration-700 group-hover:scale-110 group-hover:grayscale-0" />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#0c111d] via-[#0c111d]/20 to-transparent"></div>
 
                 {/* Status Tag */}

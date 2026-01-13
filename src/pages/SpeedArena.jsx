@@ -201,14 +201,14 @@ const SpeedArena = () => {
                 <div>
                   <p className="text-gray-500 text-[10px] font-black uppercase tracking-widest">Potential Winnings</p>
                   <h3 className="text-3xl font-black flex items-center gap-1">
-                    <span className="text-gray-500">GH₵</span>
+                    <span className="text-gray-500">GHGHC </span>
                     <span>{potAmount.toLocaleString()}</span>
                   </h3>
                 </div>
               </div>
               <div className="text-right">
                 <p className="text-gray-500 text-[10px] font-black uppercase tracking-widest">Platform Fee (10%)</p>
-                <p className="text-xl font-bold text-red-500/50">GH₵ {(gameState.stake * 2 * 0.1).toLocaleString()}</p>
+                <p className="text-xl font-bold text-red-500/50">GHGHC  {(gameState.stake * 2 * 0.1).toLocaleString()}</p>
               </div>
             </div>
           </div>

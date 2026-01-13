@@ -16,14 +16,15 @@ const Leaderboards = () => {
   useEffect(() => {
     const fetchLeaderboard = async () => {
       try {
-        const response = await api.get('/game/leaderboard');
+        const token = localStorage.getItem('token');
+        const response = await api.get('/game/leaderboard', token);
         const data = await response.json();
 
         if (response.ok) {
           // Map backend data to frontend format
           const mappedPlayers = data.topPlayers.map((player, index) => ({
             name: player.name,
-            score: `₵${player.earnings.toLocaleString()}`,
+            score: `GHC ${player.earnings.toLocaleString()}`,
             avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(player.name)}&background=random&size=150`,
             streak: player.streak,
             games: player.totalGames
@@ -90,7 +91,7 @@ const Leaderboards = () => {
         >
           {[
             { icon: Users, label: "Active Players", value: platformStats.activePlayers.toLocaleString() },
-            { icon: TrendingUp, label: "Total Winnings", value: `₵${platformStats.totalWinnings.toLocaleString()}` },
+            { icon: TrendingUp, label: "Total Winnings", value: `GHC ${platformStats.totalWinnings.toLocaleString()}` },
             { icon: Zap, label: "Games Today", value: platformStats.gamesToday.toString() },
           ].map((stat, i) => (
             <div
@@ -251,7 +252,7 @@ const Leaderboards = () => {
             </p>
             <div className="flex items-center justify-center gap-6 mt-6 text-sm">
               <div className="text-center">
-                <p className="text-2xl font-bold text-white">₵{platformStats.totalWinnings.toLocaleString()}</p>
+                <p className="text-2xl font-bold text-white">GHC {platformStats.totalWinnings.toLocaleString()}</p>
                 <p className="text-gray-500">Paid Out</p>
               </div>
               <div className="w-px h-12 bg-gray-700"></div>

@@ -111,7 +111,7 @@ const TurnMode = () => {
             <div className="bg-black/40 px-6 py-3 rounded-2xl border border-white/5 text-center">
               <p className="text-gray-500 text-[10px] font-bold uppercase tracking-widest mb-1 text-center">Prize Pool</p>
               <div className="text-2xl font-black flex items-center gap-1 justify-center">
-                <span className="text-blue-500">GH₵</span>
+                <span className="text-blue-500">GHGHC </span>
                 <span>{potAmount.toLocaleString()}</span>
               </div>
             </div>

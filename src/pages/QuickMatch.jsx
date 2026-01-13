@@ -73,7 +73,7 @@ const QuickMatch = () => {
         const stats = await statsRes.json();
 
         if (balance.available < stake) {
-          showToast(`Insufficient funds! Need GH₵ ${stake.toLocaleString()}`, 'error');
+          showToast(`Insufficient funds! Need GHGHC  ${stake.toLocaleString()}`, 'error');
           navigate('/dashboard');
           return;
         }
@@ -288,7 +288,7 @@ const QuickMatch = () => {
             <div>
               <p className="text-gray-500 text-[10px] font-black uppercase tracking-widest">Tournament Stake</p>
               <p className="text-3xl font-black tracking-tight flex items-center gap-1">
-                <span className="text-blue-500">GH₵</span>
+                <span className="text-blue-500">GHGHC </span>
                 <span>{stake.toLocaleString()}</span>
               </p>
             </div>
@@ -296,7 +296,7 @@ const QuickMatch = () => {
 
           <div className="text-right">
             <p className="text-gray-500 text-[10px] font-black uppercase tracking-widest">Prize Pool</p>
-            <p className="text-3xl font-black text-emerald-400">GH₵ {(stake * 2 * 0.9).toLocaleString()}</p>
+            <p className="text-3xl font-black text-emerald-400">GHGHC  {(stake * 2 * 0.9).toLocaleString()}</p>
           </div>
         </motion.div>
 

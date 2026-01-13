@@ -19,7 +19,7 @@ export default function AdminDashboard() {
     monthlySummary: { totalDeposits: 0, totalWithdrawals: 0, netGrowth: 0 }
   });
   const [currencies, setCurrencies] = useState([
-    { code: 'GHS', symbol: '₵', rate: 1, name: 'Ghanaian Cedi' },
+    { code: 'GHS', symbol: 'GHC ', rate: 1, name: 'Ghanaian Cedi' },
     { code: 'USD', symbol: '$', rate: 0.062, name: 'US Dollar' },
   ]);
 
@@ -45,7 +45,7 @@ export default function AdminDashboard() {
           if (ratesResponse.ok) {
             // Convert to currency format, only keep GHS and USD
             const liveCurrencies = [
-              { code: 'GHS', symbol: '₵', rate: ratesData.GHS || 1, name: 'Ghanaian Cedi' },
+              { code: 'GHS', symbol: 'GHC ', rate: ratesData.GHS || 1, name: 'Ghanaian Cedi' },
               { code: 'USD', symbol: '$', rate: ratesData.USD || 0.062, name: 'US Dollar' },
             ];
             setCurrencies(liveCurrencies);
