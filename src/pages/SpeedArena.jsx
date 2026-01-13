@@ -60,6 +60,9 @@ const SpeedArena = () => {
     initGame();
 
     const handleGameState = (state) => {
+      console.log('🎱 Game State Received:', state);
+      console.log('🎱 Balls:', state.balls);
+      console.log('🎱 White Ball (0):', state.balls?.['0']);
       setGameState(state);
       setLocalTimer(state.timer || 60);
       setLoading(false);
