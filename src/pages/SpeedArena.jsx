@@ -182,7 +182,7 @@ const SpeedArena = () => {
 
               <div className="relative w-full h-full">
                 {/* Visual Cue Stick for Aiming - ALWAYS VISIBLE */}
-                {gameState.balls?.['0']?.onTable && (
+                {gameState.balls?.['0']?.onTable ? (
                   <div
                     className="absolute pointer-events-none z-20"
                     style={{
@@ -201,6 +201,30 @@ const SpeedArena = () => {
                         boxShadow: '0 0 20px rgba(249, 115, 22, 0.8)'
                       }}
                     />
+                  </div>
+                ) : (
+                  /* Fallback stick at center if no ball data */
+                  <div
+                    className="absolute pointer-events-none z-20"
+                    style={{
+                      left: '25%',
+                      top: '50%',
+                      transform: 'translate(-50%, -50%)'
+                    }}
+                  >
+                    <div
+                      className="absolute h-3 bg-yellow-500 rounded-full shadow-2xl"
+                      style={{
+                        width: '200px',
+                        transformOrigin: 'left center',
+                        transform: `rotate(${shotParams.angle}deg)`,
+                        opacity: 0.8,
+                        boxShadow: '0 0 20px rgba(234, 179, 8, 0.8)'
+                      }}
+                    />
+                    <div className="absolute -top-8 left-0 text-yellow-500 text-xs font-bold whitespace-nowrap">
+                      ⚠️ DEBUG: No ball data
+                    </div>
                   </div>
                 )}
 
