@@ -439,7 +439,7 @@ export default function PottaPoolDashboard() {
                   step="0.01"
                   min="10"
                   required
-                  className={`w-full pl-12 pr-4 py-4 rounded-xl border ${borderColor} ${darkMode ? 'bg-slate-700' : 'bg-gray-50'} focus:outline-none focus:ring-2 focus:ring-green-500 text-lg font-medium`}
+                  className={`w-full pl-24 pr-4 py-4 rounded-xl border ${borderColor} ${darkMode ? 'bg-slate-700' : 'bg-gray-50'} focus:outline-none focus:ring-2 focus:ring-green-500 text-lg font-medium`}
                 />
               </div>
               {type === 'withdraw' && (
