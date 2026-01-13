@@ -1,5 +1,7 @@
 import { FaUserPlus, FaMoneyBillWave, FaTrophy, FaArrowRight } from 'react-icons/fa';
 import { motion } from 'framer-motion';
+import { Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 const steps = [
   {
@@ -38,6 +40,7 @@ const steps = [
 ];
 
 const HowItWorks = () => {
+  const { token } = useAuth();
   return (
     <section
       id="how"
@@ -50,10 +53,6 @@ const HowItWorks = () => {
           backgroundSize: '50px 50px'
         }}></div>
       </div>
-
-      {/* Floating orbs */}
-      <div className="absolute top-20 left-10 w-72 h-72 bg-blue-500/20 rounded-full blur-3xl animate-pulse"></div>
-      <div className="absolute bottom-20 right-10 w-72 h-72 bg-purple-500/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1.5s' }}></div>
 
       <div className="relative z-10 max-w-7xl mx-auto">
         <motion.div
@@ -120,9 +119,12 @@ const HowItWorks = () => {
           whileInView={{ opacity: 1 }}
           transition={{ delay: 0.6 }}
         >
-          <button className="px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 rounded-full font-bold text-lg shadow-2xl transition-all hover:scale-105 active:scale-95">
-            Get Started Now
-          </button>
+          <Link
+            to={token ? "/dashboard" : "/signup"}
+            className="inline-block px-10 py-5 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 rounded-full font-black text-xl shadow-2xl transition-all hover:scale-105 active:scale-95 text-white"
+          >
+            {token ? "Enter Arena" : "Get Started Now"}
+          </Link>
         </motion.div>
       </div>
     </section>
