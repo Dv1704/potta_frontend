@@ -151,13 +151,15 @@ const TurnMode = () => {
                 {/* Visual Cue Stick for Aiming */}
                 {gameState.balls['0']?.onTable && isMyTurn && (
                   <motion.div
-                    className="absolute h-1 bg-gradient-to-r from-blue-500/0 via-blue-500/50 to-blue-500 origin-right rounded-full pointer-events-none z-10"
+                    animate={{ rotate: shotParams.angle }}
+                    transition={{ duration: 0.1 }}
+                    className="absolute h-2 bg-gradient-to-r from-blue-500/0 via-blue-500/80 to-blue-500 origin-right rounded-full pointer-events-none z-10 shadow-lg shadow-blue-500/50"
                     style={{
-                      width: '30%',
+                      width: '50%',
                       top: `${gameState.balls['0'].y}%`,
                       left: `${gameState.balls['0'].x}%`,
                       transform: `translate(-100%, -50%) rotate(${shotParams.angle}deg)`,
-                      opacity: 0.8
+                      opacity: 1
                     }}
                   />
                 )}
@@ -167,7 +169,7 @@ const TurnMode = () => {
                       key={num}
                       initial={false}
                       animate={{ x: `${ball.x}%`, y: `${ball.y}%` }}
-                      transition={{ duration: 0.5, ease: "easeOut" }}
+                      transition={{ duration: 0.8, ease: "easeOut" }}
                       className="absolute w-8 h-8 rounded-full flex items-center justify-center shadow-lg border border-white/20"
                       style={{
                         backgroundColor: num === '0' ? '#fff' : num === '8' ? '#000' : ball.color,
