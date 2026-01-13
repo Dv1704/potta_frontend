@@ -12,6 +12,16 @@ class ErrorBoundary extends React.Component {
 
     componentDidCatch(error, errorInfo) {
         console.error("Uncaught error:", error, errorInfo);
+
+        // Handle chunk load errors (failed to fetch dynamically imported module)
+        if (error.name === 'TypeError' &&
+            (error.message.includes('Failed to fetch dynamically imported module') ||
+                error.message.includes('importing module'))) {
+            console.log('Detected chunk load error, reloading page...');
+            window.location.reload();
+            return;
+        }
+
         this.setState({ error, errorInfo });
     }
 

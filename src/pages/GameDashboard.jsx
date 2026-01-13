@@ -279,9 +279,18 @@ export default function GameDashboard() {
                   <h3 className="text-3xl font-black uppercase tracking-tighter italic">Set Stake</h3>
                   <button onClick={() => setShowBetModal(false)} className="w-10 h-10 bg-white/5 rounded-full flex items-center justify-center text-gray-500 hover:text-white transition-all"><X size={24} /></button>
                 </div>
-                <div className="bg-black/40 rounded-3xl p-10 border border-white/5 mb-8 text-center">
-                  <p className="text-gray-500 text-xs font-black uppercase tracking-widest mb-2">STAKING AMOUNT</p>
-                  <p className="text-6xl font-black tracking-tighter">GHC {betAmount}</p>
+                <div className="bg-black/40 rounded-3xl p-8 border border-white/5 mb-8 text-center">
+                  <p className="text-gray-500 text-[10px] font-black uppercase tracking-widest mb-2">STAKING AMOUNT</p>
+                  <div className="flex items-center justify-center gap-2">
+                    <span className="text-3xl font-bold text-blue-500">GHC</span>
+                    <input
+                      type="number"
+                      value={betAmount}
+                      onChange={(e) => setBetAmount(e.target.value)}
+                      className="bg-transparent text-5xl font-black tracking-tighter w-40 text-center outline-none border-b-2 border-transparent focus:border-blue-500 transition-all"
+                      placeholder="10"
+                    />
+                  </div>
                 </div>
                 <div className="grid grid-cols-4 gap-4 mb-10">
                   {[50, 100, 200, 500].map(v => (
