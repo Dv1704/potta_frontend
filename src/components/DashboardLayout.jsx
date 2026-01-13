@@ -9,7 +9,7 @@ const DashboardLayout = ({ children }) => {
     const location = useLocation();
 
     // Paths where the back button should NOT show
-    const isRoot = location.pathname === '/dashboard' || location.pathname === '/';
+    const isRoot = location.pathname === '/success' || location.pathname === '/';
 
     return (
         <div className="min-h-screen bg-black text-white">
@@ -36,9 +36,9 @@ const DashboardLayout = ({ children }) => {
                     </AnimatePresence>
                 </div>
 
-                {/* Center: Centered Logo/Branding */}
+                {/* Center: Centered Logo/Branding - Links to Stats (Success) Page if logged in */}
                 <Link
-                    to={localStorage.getItem('token') ? "/dashboard" : "/"}
+                    to={localStorage.getItem('token') ? "/success" : "/"}
                     className="flex items-center transition-transform hover:scale-105 active:scale-95"
                 >
                     <img src={logo} alt="Potta" className="h-12 md:h-14 w-auto object-contain filter brightness-110" />
@@ -47,9 +47,9 @@ const DashboardLayout = ({ children }) => {
                 {/* Right: Quick Action Group */}
                 <div className="flex items-center justify-end gap-3 w-32">
                     <Link
-                        to="/dashboard"
-                        className={`p-3 rounded-xl transition-all ${location.pathname === '/dashboard' ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30' : 'text-gray-400 hover:bg-white/5 border border-transparent'}`}
-                        title="Arena Home"
+                        to="/success"
+                        className={`p-3 rounded-xl transition-all ${location.pathname === '/success' ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30' : 'text-gray-400 hover:bg-white/5 border border-transparent'}`}
+                        title="User Stats"
                     >
                         <Home className="w-6 h-6" />
                     </Link>

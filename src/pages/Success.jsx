@@ -29,7 +29,7 @@ const Success = () => {
   const [userData, setUserData] = useState({
     username: location.state?.username || 'Guest',
     wallet: location.state?.wallet || 0,
-    currency: 'GH₵',
+    currency: 'GHC',
     role: 'USER'
   });
   const [statsData, setStatsData] = useState({
@@ -69,7 +69,7 @@ const Success = () => {
           setUserData({
             username: profile.name || profile.email.split('@')[0],
             wallet: wallet.available,
-            currency: wallet.currency === 'GHS' ? 'GH₵' : wallet.currency,
+            currency: 'GHC',
             role: profile.role
           });
 
