@@ -22,7 +22,7 @@ const TurnMode = () => {
 
   useEffect(() => {
     if (!userId) {
-      navigate('/quick-match');
+      navigate('/login');
       return;
     }
 
@@ -220,8 +220,8 @@ const TurnMode = () => {
                   onClick={handleTakeShot}
                   disabled={!isMyTurn}
                   className={`w-full py-6 rounded-2xl font-black text-xl transition-all flex items-center justify-center gap-3 shadow-xl ${isMyTurn
-                      ? 'bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow-blue-500/20 hover:scale-105 active:scale-95'
-                      : 'bg-gray-800 text-gray-600 cursor-not-allowed'
+                    ? 'bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow-blue-500/20 hover:scale-105 active:scale-95'
+                    : 'bg-gray-800 text-gray-600 cursor-not-allowed'
                     }`}
                 >
                   <FaBullseye />
