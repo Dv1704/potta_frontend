@@ -275,7 +275,7 @@ const QuickMatch = () => {
           </div>
         </div>
 
-        {/* Stake Board */}
+        {/* Stake Board - Only show prize pool after match */}
         <motion.div
           initial={{ y: 50, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -286,7 +286,7 @@ const QuickMatch = () => {
               <CircleDot size={20} className="text-blue-400" />
             </div>
             <div>
-              <p className="text-gray-500 text-[10px] font-black uppercase tracking-widest">Tournament Stake</p>
+              <p className="text-gray-500 text-[10px] font-black uppercase tracking-widest">Your Stake</p>
               <p className="text-3xl font-black tracking-tight flex items-center gap-1">
                 <span className="text-blue-500">GHC </span>
                 <span>{stake.toLocaleString()}</span>
@@ -294,10 +294,12 @@ const QuickMatch = () => {
             </div>
           </div>
 
-          <div className="text-right">
-            <p className="text-gray-500 text-[10px] font-black uppercase tracking-widest">Prize Pool</p>
-            <p className="text-3xl font-black text-emerald-400">GHC  {(stake * 2 * 0.9).toLocaleString()}</p>
-          </div>
+          {foundTriggered && matchData && (
+            <div className="text-right">
+              <p className="text-gray-500 text-[10px] font-black uppercase tracking-widest">Prize Pool</p>
+              <p className="text-3xl font-black text-emerald-400">GHC  {(matchData.stake * 2 * 0.9).toLocaleString()}</p>
+            </div>
+          )}
         </motion.div>
 
         {/* Action Controls */}
