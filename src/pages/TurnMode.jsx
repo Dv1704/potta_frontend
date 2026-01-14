@@ -155,17 +155,20 @@ const TurnMode = () => {
                     style={{
                       left: `${(gameState.balls['0'].x / 1280) * 100}%`,
                       top: `${(gameState.balls['0'].y / 720) * 100}%`,
-                      transform: 'translate(-50%, -50%)'
+                      transform: 'translate(-50%, -50%)',
+                      width: '0px',
+                      height: '0px'
                     }}
                   >
                     <div
-                      className="absolute h-3 bg-blue-500 rounded-full shadow-2xl"
+                      className="absolute h-1.5 bg-blue-500 rounded-full shadow-[0_0_15px_rgba(59,130,246,0.6)]"
                       style={{
                         width: '200px',
-                        transformOrigin: 'left center',
+                        left: '20px',
+                        top: '-3px',
+                        transformOrigin: '-20px center',
                         transform: `rotate(${shotParams.angle}deg)`,
                         opacity: isMyTurn ? 1 : 0.5,
-                        boxShadow: '0 0 20px rgba(59, 130, 246, 0.8)'
                       }}
                     />
                   </div>
