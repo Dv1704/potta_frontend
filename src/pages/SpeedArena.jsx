@@ -184,11 +184,11 @@ const SpeedArena = () => {
                 {/* Visual Cue Stick for Aiming - ALWAYS VISIBLE */}
                 {gameState.balls?.['0']?.onTable ? (
                   <div
-                    className="absolute pointer-events-none z-20"
+                    className="absolute pointer-events-none z-0" // Lower z-index to 0 (Background is usually -1 or 0, Balls are 10)
                     style={{
                       left: `${(gameState.balls['0'].x / 1280) * 100}%`,
                       top: `${(gameState.balls['0'].y / 720) * 100}%`,
-                      transform: `translate(-50%, -50%) rotate(${shotParams.angle}deg)`,
+                      transform: `translate(-50%, -50%) rotate(${shotParams.angle || 0}deg)`,
                       width: '0px',
                       height: '0px'
                     }}
@@ -199,10 +199,10 @@ const SpeedArena = () => {
                       style={{
                         width: '400px',
                         height: '8px',
-                        right: '18px', // Tighter gap (Start 18px from center)
-                        top: '0px',   // Pivot line
-                        transform: 'translateY(-50%)', // Perfect vertical centering
-                        background: 'linear-gradient(to right, #271a0c, #78350f, #eab308)', // Dark Oak to Gold wood
+                        right: '15px', // Start CLOSE (15px from center). Z-index will hide overlap behind ball.
+                        top: '0px',
+                        transform: 'translateY(-50%)',
+                        background: 'linear-gradient(to right, #271a0c, #78350f, #eab308)',
                         opacity: isMyTurn ? 1 : 0.6,
                       }}
                     >
