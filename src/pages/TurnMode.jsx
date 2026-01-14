@@ -162,20 +162,21 @@ const TurnMode = () => {
                   >
                     {/* Cue Stick Graphic */}
                     <div
-                      className="absolute rounded-r-sm shadow-xl"
+                      className="absolute rounded-l-sm shadow-xl flex items-center justify-end"
                       style={{
-                        width: '350px',
+                        width: '400px',
                         height: '8px',
-                        right: '25px', // Start 25px away from center (Behind ball)
-                        top: '-4px',   // Center vertically
-                        background: 'linear-gradient(to right, #451a03, #92400e, #fcd34d)', // Wood gradient (Dark handle -> Light Tip)
+                        right: '18px', // Tighter gap (Start 18px from center)
+                        top: '0px',   // Pivot line
+                        transform: 'translateY(-50%)', // Perfect vertical centering
+                        background: 'linear-gradient(to right, #271a0c, #78350f, #eab308)', // Dark Oak to Gold wood
                         opacity: isMyTurn ? 1 : 0.6,
-                        borderTopLeftRadius: '4px',
-                        borderBottomLeftRadius: '4px'
                       }}
                     >
-                      {/* Cue Tip (Blue Chalk) */}
-                      <div className="absolute right-0 top-0 bottom-0 w-2 bg-blue-400 rounded-r-sm" />
+                      {/* White Ferrule */}
+                      <div className="w-4 h-full bg-slate-200" />
+                      {/* Blue Tip */}
+                      <div className="w-1.5 h-full bg-blue-500 rounded-r-[1px]" />
                     </div>
                   </div>
                 )}
