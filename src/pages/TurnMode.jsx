@@ -155,22 +155,28 @@ const TurnMode = () => {
                     style={{
                       left: `${(gameState.balls['0'].x / 1280) * 100}%`,
                       top: `${(gameState.balls['0'].y / 720) * 100}%`,
-                      transform: 'translate(-50%, -50%)',
+                      transform: `translate(-50%, -50%) rotate(${shotParams.angle}deg)`,
                       width: '0px',
                       height: '0px'
                     }}
                   >
+                    {/* Cue Stick Graphic */}
                     <div
-                      className="absolute h-1.5 bg-blue-500 rounded-full shadow-[0_0_15px_rgba(59,130,246,0.6)]"
+                      className="absolute rounded-r-sm shadow-xl"
                       style={{
-                        width: '200px',
-                        left: '20px',
-                        top: '-3px',
-                        transformOrigin: '-20px center',
-                        transform: `rotate(${shotParams.angle}deg)`,
-                        opacity: isMyTurn ? 1 : 0.5,
+                        width: '350px',
+                        height: '8px',
+                        right: '25px', // Start 25px away from center (Behind ball)
+                        top: '-4px',   // Center vertically
+                        background: 'linear-gradient(to right, #451a03, #92400e, #fcd34d)', // Wood gradient (Dark handle -> Light Tip)
+                        opacity: isMyTurn ? 1 : 0.6,
+                        borderTopLeftRadius: '4px',
+                        borderBottomLeftRadius: '4px'
                       }}
-                    />
+                    >
+                      {/* Cue Tip (Blue Chalk) */}
+                      <div className="absolute right-0 top-0 bottom-0 w-2 bg-blue-400 rounded-r-sm" />
+                    </div>
                   </div>
                 )}
                 {Object.entries(gameState.balls).map(([num, ball]) => (
