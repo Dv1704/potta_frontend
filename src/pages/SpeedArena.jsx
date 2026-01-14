@@ -184,32 +184,37 @@ const SpeedArena = () => {
                 {/* Visual Cue Stick for Aiming - ALWAYS VISIBLE */}
                 {gameState.balls?.['0']?.onTable ? (
                   <div
-                    className="absolute pointer-events-none z-0" // Lower z-index to 0 (Background is usually -1 or 0, Balls are 10)
+                    className="absolute w-8 h-8 pointer-events-none z-0" // Match Ball Size (w-8 h-8)
                     style={{
-                      left: `${(gameState.balls['0'].x / 1280) * 100}%`,
-                      top: `${(gameState.balls['0'].y / 720) * 100}%`,
-                      transform: `translate(-50%, -50%) rotate(${shotParams.angle || 0}deg)`,
-                      width: '0px',
-                      height: '0px'
+                      left: 0,
+                      top: 0,
+                      transform: `translate(${gameState.balls['0'].x}%, ${gameState.balls['0'].y}%)`, // Match Ball Positioning Logic
                     }}
                   >
-                    {/* Cue Stick Graphic */}
+                    {/* Rotator Container - Centers stick on ball */}
                     <div
-                      className="absolute rounded-l-sm shadow-xl flex items-center justify-end"
+                      className="w-full h-full flex items-center justify-center"
                       style={{
-                        width: '400px',
-                        height: '8px',
-                        right: '15px', // Start CLOSE (15px from center). Z-index will hide overlap behind ball.
-                        top: '0px',
-                        transform: 'translateY(-50%)',
-                        background: 'linear-gradient(to right, #271a0c, #78350f, #eab308)',
-                        opacity: isMyTurn ? 1 : 0.6,
+                        transform: `rotate(${shotParams.angle || 0}deg)`
                       }}
                     >
-                      {/* White Ferrule */}
-                      <div className="w-4 h-full bg-slate-200" />
-                      {/* Blue Tip */}
-                      <div className="w-1.5 h-full bg-blue-500 rounded-r-[1px]" />
+                      {/* Cue Stick Graphic */}
+                      <div
+                        className="absolute rounded-l-sm shadow-xl flex items-center justify-end"
+                        style={{
+                          width: '400px',
+                          height: '8px',
+                          right: '50%', // Start from Center of Ball
+                          marginRight: '18px', // Offset by Radius (16px) + Gap (2px)
+                          background: 'linear-gradient(to right, #271a0c, #78350f, #eab308)',
+                          opacity: isMyTurn ? 1 : 0.6,
+                        }}
+                      >
+                        {/* White Ferrule */}
+                        <div className="w-4 h-full bg-slate-200" />
+                        {/* Blue Tip */}
+                        <div className="w-1.5 h-full bg-blue-500 rounded-r-[1px]" />
+                      </div>
                     </div>
                   </div>
                 ) : (
