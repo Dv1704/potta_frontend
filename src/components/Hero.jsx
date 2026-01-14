@@ -1,9 +1,12 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { TypeAnimation } from 'react-type-animation';
+import { Link } from 'react-router-dom';
 import { FaPlayCircle, FaGamepad, FaTimes, FaComments, FaPaperPlane } from 'react-icons/fa';
 import { useState, useRef, useEffect } from 'react';
+import { useAuth } from '../context/AuthContext';
 
 const Hero = () => {
+  const { token } = useAuth();
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [messages, setMessages] = useState([
     { type: 'bot', text: 'Hey! Welcome to POTTA 🎮 How can I help you today?' }
@@ -194,15 +197,15 @@ const Hero = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.9 }}
         >
-          <a
-            href="#signup"
+          <Link
+            to={token ? "/dashboard" : "/signup"}
             aria-label="Get Started"
             className="group relative flex items-center justify-center gap-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white px-8 py-4 rounded-lg font-semibold overflow-hidden transition-all duration-300 hover:scale-105 shadow-2xl hover:shadow-blue-500/50"
           >
             <span className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
             <FaPlayCircle className="relative z-10 text-xl" />
-            <span className="relative z-10">Get Started</span>
-          </a>
+            <span className="relative z-10">{token ? "Play Now" : "Get Started"}</span>
+          </Link>
 
           <a
             href="#modes"
