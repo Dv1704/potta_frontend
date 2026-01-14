@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useAuth } from '../context/AuthContext';
 import logo from '../assets/Logo.png';
 import { RiShareCircleLine } from "react-icons/ri";
+
 
 import {
   FaHome,
@@ -15,8 +15,6 @@ import {
 } from 'react-icons/fa';
 
 const Navbar = () => {
-  const { token, logout, user } = useAuth();
-  const navigate = useNavigate();
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -98,7 +96,7 @@ const Navbar = () => {
               <motion.img
                 src={logo}
                 alt="POTTA Logo"
-                className="h-28 w-auto object-contain filter brightness-110"
+                className="h-32 w-auto object-contain filter brightness-110"
                 whileHover={{ rotate: [0, -5, 5, 0] }}
                 transition={{ duration: 0.5 }}
               />
@@ -153,49 +151,25 @@ const Navbar = () => {
               </motion.li>
             ))}
 
-            {/* Enhanced Join Now / Dashboard Button */}
+            {/* Enhanced Join Now Button */}
             <motion.li
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
-              {token ? (
-                <Link
-                  to="/dashboard"
-                  onClick={handleLinkClick}
-                  className="group relative flex items-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 transition-all duration-300 px-6 py-3 rounded-xl text-white font-bold shadow-2xl hover:shadow-purple-500/30 overflow-hidden"
-                >
-                  <FaGamepad className="relative z-10" />
-                  <span className="relative z-10">Play Now</span>
-                </Link>
-              ) : (
-                <Link
-                  to="/signup"
-                  onClick={handleLinkClick}
-                  className="group relative flex items-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 transition-all duration-300 px-6 py-3 rounded-xl text-white font-bold shadow-2xl hover:shadow-purple-500/30 overflow-hidden"
-                >
-                  <FaUserPlus className="relative z-10" />
-                  <span className="relative z-10">Join Now</span>
-                </Link>
-              )}
-            </motion.li>
-
-            {token && (
-              <motion.li
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+              <Link
+                to="/signup"
+                onClick={handleLinkClick}
+                className="group relative flex items-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 transition-all duration-300 px-6 py-3 rounded-xl text-white font-bold shadow-2xl hover:shadow-purple-500/30 overflow-hidden"
               >
-                <button
-                  onClick={() => {
-                    logout();
-                    handleLinkClick();
-                    navigate('/');
-                  }}
-                  className="text-gray-300 hover:text-white font-bold px-4 py-2"
-                >
-                  Logout
-                </button>
-              </motion.li>
-            )}
+                <motion.span
+                  className="absolute inset-0 bg-gradient-to-r from-cyan-500 to-blue-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                  animate={{ x: ['0%', '100%', '0%'] }}
+                  transition={{ duration: 3, repeat: Infinity }}
+                />
+                <FaUserPlus className="relative z-10" />
+                <span className="relative z-10">Join Now</span>
+              </Link>
+            </motion.li>
 
             <motion.li
               whileHover={{ scale: 1.05 }}
@@ -204,10 +178,15 @@ const Navbar = () => {
               <Link
                 to="/invite"
                 onClick={handleLinkClick}
-                className="group relative flex items-center gap-1 transition-all duration-300 px-6 py-3 rounded-xl text-white font-bold shadow-2xl hover:shadow-purple-500/30 overflow-hidden"
+                className="group relative flex items-center gap-1 underline transition-all duration-300 px-6 py-3 rounded-xl text-white font-bold shadow-2xl hover:shadow-purple-500/30 overflow-hidden"
               >
-                <RiShareCircleLine className="relative z-10 text-xl" />
-                <span className="relative z-10 pl-1">Invite</span>
+                <motion.span
+                  className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                  animate={{ x: ['0%', '100%', '0%'] }}
+                  transition={{ duration: 3, repeat: Infinity }}
+                />
+                <FaUserPlus className="relative z-10" />
+                <span className="relative z-10 pl-2">Invite</span>
               </Link>
             </motion.li>
           </motion.ul>
@@ -274,7 +253,7 @@ const Navbar = () => {
                 className="mb-12"
               >
                 <Link to="/" onClick={handleLinkClick}>
-                  <img src={logo} alt="Potta" className="w-24 h-auto" />
+
                 </Link>
               </motion.div>
 
@@ -311,56 +290,41 @@ const Navbar = () => {
                   </motion.li>
                 ))}
 
-                {/* Mobile Extra Links */}
+                {/* Mobile Join Now Button */}
                 <div>
                   <motion.li variants={menuItemVariants}>
                     <Link
                       to="/invite"
                       onClick={handleLinkClick}
-                      className="flex items-center gap-4 p-4 rounded-xl hover:bg-white/10 transition-all duration-300 group"
+                      className="group relative flex items-center gap-1 underline transition-all duration-300 px-6 py-3 rounded-xl text-white font-bold shadow-2xl hover:shadow-purple-500/30 overflow-hidden"
                     >
-                      <RiShareCircleLine className="text-2xl text-purple-400" />
-                      <span>Invite</span>
+                      <motion.span
+                        className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                        animate={{ x: ['0%', '100%', '0%'] }}
+                        transition={{ duration: 3, repeat: Infinity }}
+                      />
+                      <RiShareCircleLine className="relative z-10" />
+
+                      <span className="relative z-10 pl-2">Invite</span>
                     </Link>
+
                   </motion.li>
 
                   <motion.li variants={menuItemVariants}>
-                    {token ? (
-                      <Link
-                        to="/dashboard"
-                        onClick={handleLinkClick}
-                        className="flex items-center justify-center gap-3 bg-gradient-to-r from-blue-600 to-purple-600 p-4 rounded-xl text-white font-bold mt-8 shadow-2xl"
-                      >
-                        <FaGamepad />
-                        <span>Play Now</span>
-                      </Link>
-                    ) : (
-                      <Link
-                        to="/signup"
-                        onClick={handleLinkClick}
-                        className="flex items-center justify-center gap-3 bg-gradient-to-r from-blue-600 to-purple-600 p-4 rounded-xl text-white font-bold mt-8 shadow-2xl"
-                      >
-                        <FaUserPlus />
-                        <span>Join Now</span>
-                      </Link>
-                    )}
+                    <Link
+                      to="/signup"
+                      onClick={handleLinkClick}
+                      className="flex items-center justify-center gap-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 transition-all duration-300 p-4 rounded-xl text-white font-bold mt-8 shadow-2xl hover:shadow-purple-500/30"
+                    >
+                      <FaUserPlus />
+                      <span>Join Now</span>
+                    </Link>
                   </motion.li>
 
-                  {token && (
-                    <motion.li variants={menuItemVariants}>
-                      <button
-                        onClick={() => {
-                          logout();
-                          handleLinkClick();
-                          navigate('/');
-                        }}
-                        className="w-full flex items-center justify-center gap-3 bg-gray-800 hover:bg-gray-700 p-4 rounded-xl text-white font-bold mt-4 transition-all"
-                      >
-                        Logout
-                      </button>
-                    </motion.li>
-                  )}
+
                 </div>
+
+
               </motion.ul>
 
               {/* Footer Text */}
@@ -369,7 +333,7 @@ const Navbar = () => {
                 className="absolute bottom-8 left-8 right-8 text-center"
               >
                 <p className="text-gray-400 text-sm">
-                  The Ultimate Pool Arena
+                  Where Skill Meets Stakes
                 </p>
               </motion.div>
             </motion.div>
