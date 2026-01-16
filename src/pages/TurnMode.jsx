@@ -77,9 +77,7 @@ const TurnMode = () => {
         const frames = data.shotResult.animationFrames;
         const totalFrames = frames.length;
 
-        // Playback speed: The server sends every 2nd frame (30fps), we want to play at ~30fps/60fps
-        // Let's iterate smoothly.
-        // We can just use a simple loop with requestAnimationFrame
+        console.log(`[Animation] Playing ${totalFrames} frames`);
 
         let frameIdx = 0;
 
@@ -90,49 +88,32 @@ const TurnMode = () => {
               // Apply final state
               setGameState(data.gameState);
               setIsMyTurn(data.gameState.turn === userId);
+              console.log('[Animation] Complete');
               resolve();
               return;
             }
 
             const frameBalls = frames[frameIdx];
-            // Update local visual state only for balls
-            // We need to merge this with existing ball props (color, etc.)
-            // But the PoolTable only needs { x, y, onTable } usually.
-            // We'll construct a sparse ball object that overrides positions.
 
-            // We need a way to map this efficiently. 
-            // Let's create a temporary "display" state.
-
-            // Reconstruct full ball state for the view?
-            // Actually the frame data matches the 'balls' structure expected by PoolTable 
-            // but might lack 'color' or 'number' if not sent.
-            // The server sends { [num]: {x, y} }.
-
-            // We merge with current gameState.balls to keep colors/static info
+            // Merge with current gameState.balls to keep colors/static info
             setAnimatingBalls((prev) => {
               const base = prev || gameState?.balls || {};
               const next = { ...base };
               Object.entries(frameBalls).forEach(([num, pos]) => {
-                if (next[num]) {
-                  next[num] = { ...next[num], x: pos.x, y: pos.y };
+                if (base[num]) {
+                  next[num] = { ...base[num], x: pos.x, y: pos.y, onTable: true };
                 }
               });
               return next;
             });
 
             frameIdx++;
-            // Throttle? frameData is 30fps. requestAnimationFrame is 60fps.
-            // We should update every 2 frames of requestAnimationFrame, OR just play fast.
-            // Playing every RAF frame means 2x speed if data is 30fps.
-            // If the user wants dynamic movement, regular speed is best.
-            // Server recorded every 2nd frame of 60fps => 30fps data.
-            // If we play one data-frame per RAF-frame, we play at 60fps => 2x speed.
-            // Let's try 1:1 first (2x speed might feel snappy/good).
             requestAnimationFrame(playFrame);
           };
           playFrame();
         });
       } else {
+        console.log('[Animation] No frames received, using final state directly');
         setGameState(data.gameState);
         setIsMyTurn(data.gameState.turn === userId);
       }

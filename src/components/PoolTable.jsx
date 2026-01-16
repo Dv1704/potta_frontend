@@ -67,7 +67,7 @@ const PoolTable = ({
 
     // Universal Aiming Handler (Mouse, Trackpad, Touch, Pen)
     const handleAimingMove = (e) => {
-        if (!isMyTurn || !cueBall || !cueBall.onTable || !tableRef.current) return;
+        if (!isMyTurn || !cueBall || !tableRef.current) return;
 
         // Get client coordinates from either pointer or touch event
         const clientX = e.clientX ?? e.touches?.[0]?.clientX;

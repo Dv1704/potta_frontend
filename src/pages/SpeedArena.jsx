@@ -102,6 +102,8 @@ const SpeedArena = () => {
       if (data.shotResult.animationFrames && data.shotResult.animationFrames.length > 0) {
         const frames = data.shotResult.animationFrames;
         const totalFrames = frames.length;
+
+        console.log(`[Animation] Playing ${totalFrames} frames`);
         let frameIdx = 0;
 
         const playFrame = () => {
@@ -110,6 +112,7 @@ const SpeedArena = () => {
             // Apply final state
             setGameState(data.gameState);
             setLocalTimer(data.gameState.timer || 60);
+            console.log('[Animation] Complete');
             return;
           }
 
@@ -118,8 +121,8 @@ const SpeedArena = () => {
             const base = prev || gameState?.balls || {};
             const next = { ...base };
             Object.entries(frameBalls).forEach(([num, pos]) => {
-              if (next[num]) {
-                next[num] = { ...next[num], x: pos.x, y: pos.y };
+              if (base[num]) {
+                next[num] = { ...base[num], x: pos.x, y: pos.y, onTable: true };
               }
             });
             return next;
@@ -130,6 +133,7 @@ const SpeedArena = () => {
         };
         playFrame();
       } else {
+        console.log('[Animation] No frames received, using final state directly');
         setGameState(data.gameState);
         setLocalTimer(data.gameState.timer || 60);
       }
