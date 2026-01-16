@@ -51,6 +51,8 @@ const TurnMode = () => {
   }, []);
 
   // ... (Keep useEffect logic)
+  const [animatingBalls, setAnimatingBalls] = useState(null);
+
   useEffect(() => {
     if (!userId) {
       navigate('/login');
@@ -61,14 +63,79 @@ const TurnMode = () => {
     socket.emit('joinGame', { gameId });
 
     const handleGameState = (state) => {
+      // If we are animating, don't interrupt with intermediate state updates unless necessary
+      // But for simplicity, we treat simple state updates as overrides
       setGameState(state);
       setIsMyTurn(state.turn === userId);
     };
 
-    const handleShotResult = (data) => {
+    const handleShotResult = async (data) => {
       setLastShotResult(data.shotResult);
-      setGameState(data.gameState);
-      setIsMyTurn(data.gameState.turn === userId);
+
+      // Play Animation if available
+      if (data.shotResult.animationFrames && data.shotResult.animationFrames.length > 0) {
+        const frames = data.shotResult.animationFrames;
+        const totalFrames = frames.length;
+
+        // Playback speed: The server sends every 2nd frame (30fps), we want to play at ~30fps/60fps
+        // Let's iterate smoothly.
+        // We can just use a simple loop with requestAnimationFrame
+
+        let frameIdx = 0;
+
+        return new Promise((resolve) => {
+          const playFrame = () => {
+            if (frameIdx >= totalFrames) {
+              setAnimatingBalls(null);
+              // Apply final state
+              setGameState(data.gameState);
+              setIsMyTurn(data.gameState.turn === userId);
+              resolve();
+              return;
+            }
+
+            const frameBalls = frames[frameIdx];
+            // Update local visual state only for balls
+            // We need to merge this with existing ball props (color, etc.)
+            // But the PoolTable only needs { x, y, onTable } usually.
+            // We'll construct a sparse ball object that overrides positions.
+
+            // We need a way to map this efficiently. 
+            // Let's create a temporary "display" state.
+
+            // Reconstruct full ball state for the view?
+            // Actually the frame data matches the 'balls' structure expected by PoolTable 
+            // but might lack 'color' or 'number' if not sent.
+            // The server sends { [num]: {x, y} }.
+
+            // We merge with current gameState.balls to keep colors/static info
+            setAnimatingBalls((prev) => {
+              const base = prev || gameState.balls;
+              const next = { ...base };
+              Object.entries(frameBalls).forEach(([num, pos]) => {
+                if (next[num]) {
+                  next[num] = { ...next[num], x: pos.x, y: pos.y };
+                }
+              });
+              return next;
+            });
+
+            frameIdx++;
+            // Throttle? frameData is 30fps. requestAnimationFrame is 60fps.
+            // We should update every 2 frames of requestAnimationFrame, OR just play fast.
+            // Playing every RAF frame means 2x speed if data is 30fps.
+            // If the user wants dynamic movement, regular speed is best.
+            // Server recorded every 2nd frame of 60fps => 30fps data.
+            // If we play one data-frame per RAF-frame, we play at 60fps => 2x speed.
+            // Let's try 1:1 first (2x speed might feel snappy/good).
+            requestAnimationFrame(playFrame);
+          };
+          playFrame();
+        });
+      } else {
+        setGameState(data.gameState);
+        setIsMyTurn(data.gameState.turn === userId);
+      }
     };
 
     const handleGameEnded = (data) => {
@@ -87,7 +154,7 @@ const TurnMode = () => {
       socket.off('shotResult');
       socket.off('gameEnded');
     };
-  }, [gameId, userId, navigate, showToast]);
+  }, [gameId, userId, navigate, showToast]); // remove gameState dependency to avoid re-binding loop
 
   const handleTakeShot = () => {
     if (!isMyTurn) return;
@@ -143,7 +210,7 @@ const TurnMode = () => {
       {/* Main Game Area */}
       <div className="flex-1 relative flex items-center justify-center p-0 md:p-0">
         <PoolTable
-          balls={gameState.balls || {}}
+          balls={animatingBalls || gameState.balls || {}}
           angle={shotParams.angle}
           setAngle={(a) => setShotParams(prev => ({ ...prev, angle: a }))}
           power={shotParams.power}
