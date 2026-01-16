@@ -38,6 +38,13 @@ const SpeedArena = () => {
   const [loading, setLoading] = useState(true);
   const [localTimer, setLocalTimer] = useState(60);
   const [is3D, setIs3D] = useState(true);
+  const [isPortrait, setIsPortrait] = useState(window.innerHeight > window.innerWidth);
+
+  useEffect(() => {
+    const handleResize = () => setIsPortrait(window.innerHeight > window.innerWidth);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Local Timer Countdown
   useEffect(() => {
@@ -126,21 +133,36 @@ const SpeedArena = () => {
 
   const isCritical = localTimer < 15;
 
+  // Determine Names
+  const opponentPlayer = gameState.players?.find(p => p.id !== userId);
+  const myName = "YOU";
+  const opponentName = opponentPlayer?.name?.toUpperCase() || "OPPONENT";
+
   return (
     <div className="relative w-full h-screen bg-[#121212] overflow-hidden flex flex-col font-sans select-none">
+
+      {/* Mobile Orientation Warning */}
+      {isPortrait && (
+        <div className="absolute inset-0 z-[100] bg-black/90 flex flex-col items-center justify-center text-white p-8 text-center backdrop-blur-sm">
+          <div className="text-6xl mb-4">↻</div>
+          <h2 className="text-2xl font-bold mb-2">Please Rotate Your Device</h2>
+          <p className="text-gray-400">For the best experience, flip your phone to landscape mode.</p>
+        </div>
+      )}
+
       {/* Background Ambience */}
       <div className={`absolute inset-0 bg-[url('/assets/pool/bg_game.jpg')] bg-cover bg-center transition-colors duration-1000 ${isCritical ? 'contrast-125 saturate-150' : ''}`}></div>
       {isCritical && <div className="absolute inset-0 bg-red-900/20 mix-blend-overlay pointer-events-none animate-pulse"></div>}
 
       {/* HUD Layers */}
       <PlayerGUI
-        name="YOU"
+        name={myName}
         score={0} // Speed mode score logic?
         isTurn={isMyTurn}
         align="left"
       />
       <PlayerGUI
-        name="OPPONENT"
+        name={opponentName}
         score={0}
         isTurn={!isMyTurn}
         align="right"

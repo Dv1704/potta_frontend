@@ -41,6 +41,13 @@ const TurnMode = () => {
   const [isMyTurn, setIsMyTurn] = useState(false);
   const [is3D, setIs3D] = useState(true);
   const userId = localStorage.getItem('userId');
+  const [isPortrait, setIsPortrait] = useState(window.innerHeight > window.innerWidth);
+
+  useEffect(() => {
+    const handleResize = () => setIsPortrait(window.innerHeight > window.innerWidth);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // ... (Keep useEffect logic)
   useEffect(() => {
@@ -95,24 +102,38 @@ const TurnMode = () => {
 
   if (!gameState) return <LoadingSpinner text="Connecting..." />;
 
-  const isPlayer1 = userId === (gameState.player1Id || userId); // Simplified assumption for match
-  // Actually need to distinguish which player index we are to set names correctly
-  // Assume generic "You" vs "Opponent" for now or use data if available
+
+  // Determine Names
+  const myPlayer = gameState.players?.find(p => p.id === userId);
+  const opponentPlayer = gameState.players?.find(p => p.id !== userId);
+
+  const myName = "YOU"; // Always show YOU for self
+  const opponentName = opponentPlayer?.name?.toUpperCase() || "OPPONENT";
 
   return (
     <div className="relative w-full h-screen bg-[#121212] overflow-hidden flex flex-col font-sans select-none">
+
+      {/* Mobile Orientation Warning */}
+      {isPortrait && (
+        <div className="absolute inset-0 z-[100] bg-black/90 flex flex-col items-center justify-center text-white p-8 text-center backdrop-blur-sm">
+          <div className="text-6xl mb-4">↻</div>
+          <h2 className="text-2xl font-bold mb-2">Please Rotate Your Device</h2>
+          <p className="text-gray-400">For the best experience, flip your phone to landscape mode.</p>
+        </div>
+      )}
+
       {/* Background Ambience */}
       <div className="absolute inset-0 bg-[url('/assets/pool/bg_game.jpg')] bg-cover bg-center"></div>
 
       {/* HUD Layers */}
       <PlayerGUI
-        name="YOU"
+        name={myName}
         score={gameState.player1Score || 0}
         isTurn={isMyTurn}
         align="left"
       />
       <PlayerGUI
-        name="OPPONENT"
+        name={opponentName}
         score={gameState.player2Score || 0}
         isTurn={!isMyTurn}
         align="right"

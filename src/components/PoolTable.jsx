@@ -141,7 +141,7 @@ const PoolTable = ({
 
             {/* Power Bar (Right Side) */}
             <div
-                className={`absolute right-4 md:right-6 top-1/2 transform -translate-y-1/2 z-50 h-[60vh] aspect-[1/10] flex flex-col justify-end group ${isMyTurn ? 'cursor-pointer' : 'opacity-50'}`}
+                className={`absolute right-4 md:right-6 top-1/2 transform -translate-y-1/2 z-50 h-64 md:h-[50vh] aspect-[1/10] flex flex-col justify-end group ${isMyTurn ? 'cursor-pointer' : 'opacity-50'}`}
                 onClick={handlePowerInteraction}
                 onMouseMove={(e) => e.buttons === 1 && handlePowerInteraction(e)}
             >
@@ -162,11 +162,9 @@ const PoolTable = ({
                 <div className="absolute -bottom-6 w-full text-[#FFD700] text-[8px] font-bold text-center tracking-widest drop-shadow-md">POWER</div>
             </div>
 
-            {/* Shoot Button (Floating near controls or integrated?)
-                 Let's add a prominent "Shoot" button if it's my turn
-             */}
+            {/* Shoot Button */}
             {isMyTurn && (
-                <div className="absolute bottom-8 right-8 z-50">
+                <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-50">
                     <button
                         onClick={handleShoot}
                         className="relative w-48 h-16 flex items-center justify-center transition-transform hover:scale-105 active:scale-95"
@@ -193,7 +191,7 @@ const PoolTable = ({
                     translateY: is3D ? 40 : 0
                 }}
                 transition={{ duration: 0.8, type: "spring", bounce: 0.2 }}
-                className="relative w-full max-w-5xl aspect-[1.8/1] flex items-center justify-center transform-style-3d"
+                className="relative w-full max-w-5xl aspect-[1.77/1] flex items-center justify-center transform-style-3d select-none"
             >
                 {/* 1. REAL TABLE IMAGE */}
                 <img
@@ -202,68 +200,62 @@ const PoolTable = ({
                     className="absolute inset-0 w-full h-full object-contain drop-shadow-2xl z-0 pointer-events-none"
                 />
 
-                {/* 2. Playable Surface (Defined relative to image aspect ratio) */}
-                {/* Adjust these insets to match the felt area of the image */}
-                <div className="absolute inset-[4.5%] top-[11%] bottom-[11%] left-[5%] right-[5%] z-50 playable-area">
+                {/* 3. Render Balls - MOVED OUTSIDE PLAYABLE AREA */}
+                <div className="absolute inset-0 w-full h-full pointer-events-none z-10">
+                    {Object.entries(balls).map(([num, ball]) => (
+                        ball.onTable && (
+                            <Ball
+                                key={num}
+                                number={num}
+                                x={(ball.x / 1280) * 100}
+                                y={(ball.y / 720) * 100}
+                            />
+                        )
+                    ))}
+                </div>
 
-                    {/* Head String */}
-                    <div className="absolute top-0 bottom-0 left-[25%] w-[1px] bg-white/10 opacity-50"></div>
+                {/* 2. Playable Surface Debug */}
+                <div className="absolute inset-[4.5%] top-[11%] bottom-[11%] left-[5%] right-[5%] z-20 pointer-events-none border border-white/0">
+                </div>
 
-                    {/* 3. Render Balls */}
-                    <div className="absolute inset-0 w-full h-full pointer-events-none">
-                        {Object.entries(balls).map(([num, ball]) => (
-                            ball.onTable && (
-                                <Ball
-                                    key={num}
-                                    number={num}
-                                    color={ball.color || (num === '0' ? 'bg-white' : num === '8' ? 'bg-black' : 'bg-red-500')}
-                                    x={ball.x}
-                                    y={ball.y}
-                                />
-                            )
-                        ))}
-                    </div>
-
-                    {/* 4. Cue Stick & Aim Line (Only if Cue Ball exists and isMyTurn) */}
-                    {cueBall && cueBall.onTable && isMyTurn && (
+                {/* 4. Cue Stick & Aim Line */}
+                {cueBall && cueBall.onTable && isMyTurn && (
+                    <div
+                        className="absolute z-20 pointer-events-none"
+                        style={{
+                            left: `${(cueBall.x / 1280) * 100}%`,
+                            top: `${(cueBall.y / 720) * 100}%`,
+                            width: 0, height: 0,
+                            overflow: 'visible'
+                        }}
+                    >
+                        {/* Rotation Wrapper */}
                         <div
-                            className="absolute z-20 pointer-events-none"
-                            style={{
-                                left: `${cueBall.x}%`,
-                                top: `${cueBall.y}%`,
-                                width: 0, height: 0,
-                                overflow: 'visible'
-                            }}
+                            className="absolute top-0 left-0 flex items-center justify-center"
+                            style={{ transform: `rotate(${angle}deg)` }}
                         >
-                            {/* Rotation Wrapper - Rotates around the ball center */}
+                            {/* Aim Line (Extends Right) */}
                             <div
-                                className="absolute top-0 left-0 flex items-center justify-center"
-                                style={{ transform: `rotate(${angle}deg)` }}
+                                className="absolute left-[18px] top-0 h-0 border-t-2 border-dashed border-white/80 origin-left drop-shadow-md"
+                                style={{ width: '800px' }}
                             >
-                                {/* Aim Line (Extends Right) */}
-                                <div
-                                    className="absolute left-[18px] top-0 h-0 border-t-2 border-dashed border-white/60 origin-left"
-                                    style={{ width: '800px' }}
-                                >
-                                    <div className="absolute right-0 top-1/2 w-4 h-4 border-2 border-white rounded-full transform -translate-y-1/2 translate-x-1/2 shadow-[0_0_10px_rgba(255,255,255,0.8)]"></div>
-                                </div>
+                                <div className="absolute right-0 top-1/2 w-4 h-4 border-2 border-white rounded-full transform -translate-y-1/2 translate-x-1/2 shadow-[0_0_10px_rgba(255,255,255,0.8)]"></div>
+                            </div>
 
-                                {/* Cue Stick (Extends Left) */}
-                                <div
-                                    className="absolute right-[60px] top-0 w-[600px] h-24 origin-right flex items-center justify-end"
-                                    style={{ transform: 'translateY(-50%)' }}
-                                >
-                                    <img
-                                        src="/assets/pool/stick.png"
-                                        alt="Cue Stick"
-                                        className="w-full h-full object-contain object-right"
-                                    />
-                                </div>
+                            {/* Cue Stick (Extends Left) */}
+                            <div
+                                className="absolute right-[60px] top-0 w-[400px] md:w-[600px] h-24 origin-right flex items-center justify-end"
+                                style={{ transform: 'translateY(-50%)' }}
+                            >
+                                <img
+                                    src="/assets/pool/stick.png"
+                                    alt="Cue Stick"
+                                    className="w-full h-full object-contain object-right"
+                                />
                             </div>
                         </div>
-                    )}
-
-                </div>
+                    </div>
+                )}
 
             </motion.div>
         </div>
