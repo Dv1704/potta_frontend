@@ -191,9 +191,9 @@ const PoolTable = ({
                 ref={tableRef}
                 initial={false}
                 animate={{
-                    rotateX: is3D ? 30 : 0,
-                    scale: is3D ? 0.9 : 1,
-                    translateY: is3D ? 40 : 0
+                    rotateX: 0,
+                    scale: 1,
+                    translateY: 0
                 }}
                 transition={{ duration: 0.8, type: "spring", bounce: 0.2 }}
                 className="relative w-full max-w-5xl aspect-[1.77/1] flex items-center justify-center transform-style-3d select-none"
