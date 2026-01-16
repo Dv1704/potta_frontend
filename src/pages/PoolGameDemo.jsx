@@ -7,6 +7,12 @@ const PoolGameDemo = () => {
     const [spin, setSpin] = useState({ x: 0, y: 0 });
     const [is3D, setIs3D] = useState(true);
     const [angle, setAngle] = useState(-15);
+    const [shotCount, setShotCount] = useState(0);
+
+    const handleShoot = () => {
+        console.log(`DEMO SHOT: angle=${angle}°, power=${power}%`);
+        setShotCount(prev => prev + 1);
+    };
 
     // Hardcoded Demo State for Visuals (Mapped from Game Engine settings.js 1920x1080)
     // Adjusted with aggressive spacing to prevent "jampacked" look
@@ -47,23 +53,10 @@ const PoolGameDemo = () => {
                 <div className="relative w-48 h-16">
                     <img src="/assets/pool/player_gui.png" alt="Player 1" className="w-full h-full object-contain drop-shadow-lg" />
                     <div className="absolute top-2 left-14 w-32 h-6 flex items-center mb-1">
-                        <span className="text-white font-bold text-xs truncate font-['Montserrat'] drop-shadow-md">YOU</span>
+                        <span className="text-white font-bold text-xs truncate font-['Montserrat'] drop-shadow-md">DEMO MODE</span>
                     </div>
                     <div className="absolute top-2 right-4 w-10 h-10 flex items-center justify-center">
-                        <span className="text-2xl font-black text-[#FFD700] font-['Montserrat'] drop-shadow-md">0</span>
-                    </div>
-                </div>
-            </div>
-
-            {/* HUD: Player 2 (Right) */}
-            <div className="absolute top-4 right-4 z-50 flex flex-col items-center pointer-events-none">
-                <div className="relative w-48 h-16">
-                    <img src="/assets/pool/player_gui.png" alt="Player 2" className="w-full h-full object-contain drop-shadow-lg" />
-                    <div className="absolute top-2 left-14 w-32 h-6 flex items-center mb-1">
-                        <span className="text-white font-bold text-xs truncate font-['Montserrat'] drop-shadow-md">PLAYER 2</span>
-                    </div>
-                    <div className="absolute top-2 right-4 w-10 h-10 flex items-center justify-center">
-                        <span className="text-2xl font-black text-white font-['Montserrat'] drop-shadow-md">0</span>
+                        <span className="text-2xl font-black text-[#FFD700] font-['Montserrat'] drop-shadow-md">{shotCount}</span>
                     </div>
                 </div>
             </div>
@@ -79,6 +72,7 @@ const PoolGameDemo = () => {
                     spin={spin}
                     setSpin={setSpin}
                     isMyTurn={true}
+                    onTakeShot={handleShoot}
                     is3D={is3D}
                 />
             </div>
