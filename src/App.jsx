@@ -24,6 +24,7 @@ const PottaPoolDashboard = React.lazy(() => import('./pages/PottaPoolDashboard')
 const ReferEarnDashboard = React.lazy(() => import('./pages/ReferEarnDashboard'));
 const GameDashboard = React.lazy(() => import('./pages/GameDashboard'));
 const MatchSummary = React.lazy(() => import('./pages/MatchSummary'));
+const PoolGameDemo = React.lazy(() => import('./pages/PoolGameDemo'));
 
 function AppContent() {
   const { loading } = useAuth();
@@ -137,6 +138,7 @@ function AppContent() {
             </DashboardLayout>
           </ProtectedRoute>
         } />
+        <Route path="/pool-ui-demo" element={<PoolGameDemo />} />
       </Routes>
     </Suspense>
   );
