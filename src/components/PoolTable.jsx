@@ -65,9 +65,11 @@ const PoolTable = ({
     const cueBall = balls['0'];
     const { play, SFX } = useSound();
 
-    // Universal Aiming Handler (Mouse, Trackpad, Touch, Pen)
+    const [isAiming, setIsAiming] = React.useState(false);
+
+    // Universal Aiming Handler - Only active when user is actively aiming
     const handleAimingMove = (e) => {
-        if (!isMyTurn || !cueBall || !tableRef.current) return;
+        if (!isMyTurn || !cueBall || !tableRef.current || !isAiming) return;
 
         // Get client coordinates from either pointer or touch event
         const clientX = e.clientX ?? e.touches?.[0]?.clientX;
@@ -87,6 +89,18 @@ const PoolTable = ({
 
         let deg = Math.atan2(dy, dx) * (180 / Math.PI);
         setAngle(deg);
+    };
+
+    // Start aiming when user clicks/touches the table
+    const handleStartAiming = (e) => {
+        if (!isMyTurn || !cueBall || !tableRef.current) return;
+        setIsAiming(true);
+        handleAimingMove(e); // Set initial angle
+    };
+
+    // Stop aiming when pointer is released
+    const handleStopAiming = () => {
+        setIsAiming(false);
     };
 
     // Handle Power Setting
@@ -113,8 +127,13 @@ const PoolTable = ({
     return (
         <div
             className="relative w-full h-full flex items-center justify-center font-['Montserrat']"
+            onPointerDown={handleStartAiming}
             onPointerMove={handleAimingMove}
+            onPointerUp={handleStopAiming}
+            onPointerLeave={handleStopAiming}
+            onTouchStart={handleStartAiming}
             onTouchMove={handleAimingMove}
+            onTouchEnd={handleStopAiming}
         >
             {/* Spin Control */}
             <div className="absolute bottom-8 left-4 md:left-8 z-50 pointer-events-auto">
