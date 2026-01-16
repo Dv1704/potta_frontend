@@ -46,6 +46,13 @@ const SpeedArena = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  // Animation State
+  const [animatingBalls, setAnimatingBalls] = useState(null);
+
+  useEffect(() => {
+    // ...
+  }, []);
+
   // Local Timer Countdown
   useEffect(() => {
     if (!gameState || localTimer <= 0) return;
@@ -91,8 +98,41 @@ const SpeedArena = () => {
     };
 
     const handleShotResult = (data) => {
-      setGameState(data.gameState);
-      setLocalTimer(data.gameState.timer || 60);
+      // Play Animation if available - SpeedArena Implementation
+      if (data.shotResult.animationFrames && data.shotResult.animationFrames.length > 0) {
+        const frames = data.shotResult.animationFrames;
+        const totalFrames = frames.length;
+        let frameIdx = 0;
+
+        const playFrame = () => {
+          if (frameIdx >= totalFrames) {
+            setAnimatingBalls(null);
+            // Apply final state
+            setGameState(data.gameState);
+            setLocalTimer(data.gameState.timer || 60);
+            return;
+          }
+
+          const frameBalls = frames[frameIdx];
+          setAnimatingBalls((prev) => {
+            const base = prev || gameState.balls;
+            const next = { ...base };
+            Object.entries(frameBalls).forEach(([num, pos]) => {
+              if (next[num]) {
+                next[num] = { ...next[num], x: pos.x, y: pos.y };
+              }
+            });
+            return next;
+          });
+
+          frameIdx++;
+          requestAnimationFrame(playFrame);
+        };
+        playFrame();
+      } else {
+        setGameState(data.gameState);
+        setLocalTimer(data.gameState.timer || 60);
+      }
     };
 
     const handleGameEnded = (data) => {
@@ -109,7 +149,7 @@ const SpeedArena = () => {
       socket.off('shotResult');
       socket.off('gameEnded');
     };
-  }, [gameId, navigate, showToast]);
+  }, [gameId, navigate, showToast]); // Removed gameState dependency to avoid loops
 
   useEffect(() => {
     if (gameState && userId) {
@@ -178,7 +218,7 @@ const SpeedArena = () => {
       {/* Main Game Area */}
       <div className="flex-1 relative p-0 flex items-center justify-center">
         <PoolTable
-          balls={gameState.balls || {}}
+          balls={animatingBalls || gameState.balls || {}}
           angle={shotParams.angle}
           setAngle={(a) => setShotParams(prev => ({ ...prev, angle: a }))}
           power={shotParams.power}
