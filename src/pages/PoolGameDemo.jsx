@@ -37,13 +37,13 @@ const PoolGameDemo = () => {
         if (isAnimating) return;
 
         console.log(`DEMO SHOT: angle=${angle}°, power=${power}%`);
-        play(SFX.STICK_SHOT, power / 100); // Play shooting sound with volume based on power
+        play(SFX.STICK_SHOT, 1.0); // Play at full volume so you can actually hear it
         setShotCount(prev => prev + 1);
         setIsAnimating(true);
 
         // Calculate initial velocity based on angle and power
         const radians = (angle * Math.PI) / 180;
-        const initialSpeed = (power / 100) * 0.8; // Adjusted for smooth animation
+        const initialSpeed = (power / 100) * 3.5; // MUCH stronger movement - now syncs with power!
 
         let currentSpeed = initialSpeed;
         const friction = 0.96; // Deceleration factor
