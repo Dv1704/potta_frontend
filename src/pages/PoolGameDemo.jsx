@@ -33,21 +33,79 @@ const PoolGameDemo = () => {
         '15': { x: 54.9, y: 26.0, onTable: true },
     });
 
-    const handleShoot = () => {
+    const handleShoot = async () => {
         if (isAnimating) return;
 
         console.log(`DEMO SHOT: angle=${angle}°, power=${power}%`);
-        play(SFX.STICK_SHOT, 1.0); // Play at full volume so you can actually hear it
+        play(SFX.STICK_SHOT, 1.0);
         setShotCount(prev => prev + 1);
         setIsAnimating(true);
 
-        // Calculate initial velocity based on angle and power
-        const radians = (angle * Math.PI) / 180;
-        const initialSpeed = (power / 100) * 3.5; // MUCH stronger movement - now syncs with power!
+        try {
+            // Call backend physics engine!
+            const response = await fetch('/api/game/demo-shot', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ angle, power, balls: demoBalls })
+            });
 
+            if (!response.ok) throw new Error('Backend shot failed');
+
+            const data = await response.json();
+            console.log(`[Backend] Received ${data.animationFrames?.length || 0} frames`);
+
+            // Play animation frames from backend
+            if (data.animationFrames && data.animationFrames.length > 0) {
+                const frames = data.animationFrames;
+                let frameIdx = 0;
+
+                const playFrame = () => {
+                    if (frameIdx >= frames.length) {
+                        // Apply final state
+                        if (data.finalBalls) {
+                            setDemoBalls(data.finalBalls);
+                        }
+                        setIsAnimating(false);
+                        console.log('[Animation] Complete');
+                        return;
+                    }
+
+                    const frameBalls = frames[frameIdx];
+                    setDemoBalls(prev => {
+                        const next = { ...prev };
+                        Object.entries(frameBalls).forEach(([num, pos]) => {
+                            if (next[num]) {
+                                next[num] = { ...next[num], x: pos.x, y: pos.y, onTable: true };
+                            }
+                        });
+                        return next;
+                    });
+
+                    frameIdx++;
+                    requestAnimationFrame(playFrame);
+                };
+                playFrame();
+            } else {
+                // No frames, just apply final state
+                if (data.finalBalls) {
+                    setDemoBalls(data.finalBalls);
+                }
+                setIsAnimating(false);
+            }
+        } catch (error) {
+            console.error('Backend physics failed, using fallback:', error);
+            // Fallback to simple frontend simulation
+            fallbackAnimation();
+        }
+    };
+
+    // Fallback frontend animation if backend fails
+    const fallbackAnimation = () => {
+        const radians = (angle * Math.PI) / 180;
+        const initialSpeed = (power / 100) * 15;
         let currentSpeed = initialSpeed;
-        const friction = 0.96; // Deceleration factor
-        const minSpeed = 0.01;
+        const friction = 0.98;
+        const minSpeed = 0.05;
 
         const animateMovement = () => {
             if (currentSpeed < minSpeed) {
@@ -58,27 +116,16 @@ const PoolGameDemo = () => {
             setDemoBalls(prev => {
                 const newBalls = { ...prev };
                 const cueBall = newBalls['0'];
-
                 if (cueBall && cueBall.onTable) {
-                    // Move ball in the direction of the angle
-                    const dx = Math.cos(radians) * currentSpeed;
-                    const dy = Math.sin(radians) * currentSpeed;
-
-                    // Update position with table bounds (3-97% to stay on table)
-                    cueBall.x = Math.max(3, Math.min(97, cueBall.x + dx));
-                    cueBall.y = Math.max(3, Math.min(97, cueBall.y + dy));
+                    cueBall.x = Math.max(3, Math.min(97, cueBall.x + Math.cos(radians) * currentSpeed));
+                    cueBall.y = Math.max(3, Math.min(97, cueBall.y + Math.sin(radians) * currentSpeed));
                 }
-
                 return newBalls;
             });
 
-            // Apply friction
             currentSpeed *= friction;
-
-            // Continue animation
             requestAnimationFrame(animateMovement);
         };
-
         animateMovement();
     };
 
@@ -88,10 +135,10 @@ const PoolGameDemo = () => {
             <div className="absolute inset-0 bg-[url('/assets/pool/bg_game.jpg')] bg-cover bg-center"></div>
 
             {/* Demo Banner */}
-            <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 bg-gradient-to-r from-blue-600 to-purple-600 px-6 py-3 rounded-full border-2 border-white/20 shadow-lg pointer-events-none">
+            <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 bg-gradient-to-r from-green-600 to-blue-600 px-6 py-3 rounded-full border-2 border-white/20 shadow-lg pointer-events-none">
                 <div className="text-white font-bold text-sm text-center flex items-center gap-2">
-                    <span className="text-2xl">🎯</span>
-                    <span>DEMO MODE - Click & Drag to Aim, Then Shoot!</span>
+                    <span className="text-2xl">🎱</span>
+                    <span>REAL PHYSICS DEMO - Backend Powered!</span>
                 </div>
             </div>
 
