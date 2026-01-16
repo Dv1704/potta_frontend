@@ -67,11 +67,15 @@ const PoolTable = ({
 
     // Universal Aiming Handler (Mouse, Trackpad, Touch, Pen)
     const handleAimingMove = (e) => {
+        console.log('[Aim] Event fired', { isMyTurn, cueBall: !!cueBall, tableRef: !!tableRef.current });
+
         if (!isMyTurn || !cueBall || !tableRef.current) return;
 
         // Get client coordinates from either pointer or touch event
         const clientX = e.clientX ?? e.touches?.[0]?.clientX;
         const clientY = e.clientY ?? e.touches?.[0]?.clientY;
+
+        console.log('[Aim] Client coords', { clientX, clientY });
 
         if (clientX === undefined || clientY === undefined) return;
 
@@ -81,11 +85,17 @@ const PoolTable = ({
         const cueBallX = rect.left + rect.width * (cueBall.x / 100);
         const cueBallY = rect.top + rect.height * (cueBall.y / 100);
 
+        console.log('[Aim] Positions', {
+            cueBallScreen: { x: cueBallX, y: cueBallY },
+            cueBallPercent: { x: cueBall.x, y: cueBall.y }
+        });
+
         // Calculate angle from cue ball to pointer
         const dx = clientX - cueBallX;
         const dy = clientY - cueBallY;
 
         let deg = Math.atan2(dy, dx) * (180 / Math.PI);
+        console.log('[Aim] Calculated angle:', deg);
         setAngle(deg);
     };
 
