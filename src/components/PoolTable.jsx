@@ -3,14 +3,24 @@ import { motion } from 'framer-motion';
 import useSound from '../hooks/useSound';
 
 const Ball = ({ number, x, y }) => {
-    // Sprite Sheet Logic for 2d_balls.png
-    // Confirmed dimensions: 448x28 (16 balls in a single horizontal row)
-    // Frame 0..15
-    const n = parseInt(number);
+    // Track rotation for rolling effect
+    const [rotation, setRotation] = React.useState(0);
+    const prevPos = React.useRef({ x, y });
 
-    // For a horizontal strip of 16 frames:
-    // background-size-x = 1600%
-    // position-x = (frameIndex / (totalFrames - 1)) * 100%
+    // Calculate rotation based on movement
+    React.useEffect(() => {
+        const dx = x - prevPos.current.x;
+        const dy = y - prevPos.current.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+
+        // Rotation based on distance (realistic physics)
+        const rotationPerUnit = 360 / (Math.PI * 2.2); // ball diameter ~2.2%
+        setRotation(prev => prev + distance * rotationPerUnit);
+        prevPos.current = { x, y };
+    }, [x, y]);
+
+    // Sprite Sheet Logic
+    const n = parseInt(number);
     const posX = n * (100 / 15);
 
     return (
@@ -18,7 +28,7 @@ const Ball = ({ number, x, y }) => {
             initial={false}
             animate={{ left: `${x}%`, top: `${y}%` }}
             transition={{ duration: 0.02, ease: "linear" }}
-            className="absolute z-10 w-[2.2%] aspect-square flex items-center justify-center" // Realistic size ~2.2%
+            className="absolute z-10 w-[2.2%] aspect-square flex items-center justify-center"
             style={{ transform: 'translate(-50%, -50%)' }}
         >
             {/* Real Shadow Asset */}
@@ -28,14 +38,16 @@ const Ball = ({ number, x, y }) => {
                 className="absolute top-[10%] left-[10%] w-full h-full opacity-60 pointer-events-none scale-125"
             />
 
-            {/* Sprite Ball */}
-            <div
+            {/* Sprite Ball with Rotation */}
+            <motion.div
+                animate={{ rotate: rotation }}
+                transition={{ duration: 0, ease: "linear" }}
                 className="relative w-full h-full rounded-full bg-no-repeat overflow-hidden"
                 style={{
                     backgroundImage: 'url(/assets/pool/2d_balls.png)',
                     backgroundSize: '1600% 100%',
                     backgroundPosition: `${posX}% 0%`,
-                    boxShadow: 'inset -2px -2px 6px rgba(0,0,0,0.3)', // Subtle depth integration
+                    boxShadow: 'inset -2px -2px 6px rgba(0,0,0,0.3)',
                 }}
             />
         </motion.div>

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import PoolTable from '../components/PoolTable';
+import useSound from '../hooks/useSound';
 
 const PoolGameDemo = () => {
     const [power, setPower] = useState(50);
@@ -9,6 +10,8 @@ const PoolGameDemo = () => {
     const [angle, setAngle] = useState(-15);
     const [shotCount, setShotCount] = useState(0);
     const [isAnimating, setIsAnimating] = useState(false);
+
+    const { play, SFX } = useSound();
 
     // Ball positions - stateful so they can be animated
     const [demoBalls, setDemoBalls] = useState({
@@ -34,6 +37,7 @@ const PoolGameDemo = () => {
         if (isAnimating) return;
 
         console.log(`DEMO SHOT: angle=${angle}°, power=${power}%`);
+        play(SFX.STICK_SHOT, power / 100); // Play shooting sound with volume based on power
         setShotCount(prev => prev + 1);
         setIsAnimating(true);
 
