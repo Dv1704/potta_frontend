@@ -55,28 +55,35 @@ const PoolTable = ({
     is3D = true
 }) => {
     const tableRef = useRef(null);
+
+    // Critical null safety checks
+    if (!balls || typeof balls !== 'object') {
+        console.warn('[PoolTable] Invalid balls prop received:', balls);
+        return null;
+    }
+
     const cueBall = balls['0'];
     const { play, SFX } = useSound();
 
-    // Handle Aiming via Mouse
-    const handleTableMouseMove = (e) => {
-        if (!isMyTurn || !cueBall || !tableRef.current) return;
+    // Universal Aiming Handler (Mouse, Trackpad, Touch, Pen)
+    const handleAimingMove = (e) => {
+        if (!isMyTurn || !cueBall || !cueBall.onTable || !tableRef.current) return;
+
+        // Get client coordinates from either pointer or touch event
+        const clientX = e.clientX ?? e.touches?.[0]?.clientX;
+        const clientY = e.clientY ?? e.touches?.[0]?.clientY;
+
+        if (clientX === undefined || clientY === undefined) return;
 
         const rect = tableRef.current.getBoundingClientRect();
-        const centerX = rect.left + rect.width * (cueBall.x / 100);
-        const centerY = rect.top + rect.height * (cueBall.y / 100);
 
-        // Calculate mouse position relative to Cue Ball
-        const dx = e.clientX - centerX;
-        const dy = e.clientY - centerY;
+        // Calculate cue ball center in screen coordinates
+        const cueBallX = rect.left + rect.width * (cueBall.x / 100);
+        const cueBallY = rect.top + rect.height * (cueBall.y / 100);
 
-        // Compensate for 3D tilt if active
-        // When tilted 25deg, visual Y is compressed. We need to un-compress it to get true angle.
-        // However, the aim line is drawn in the flattened/tilted container context?
-        // Actually, the mouse event is in screen coordinates (2D).
-        // The table is tilted via CSS transform.
-        // Calculating angle in screen space is usually "good enough" for visual aiming
-        // provided the visual cues (stick) match the screen angle.
+        // Calculate angle from cue ball to pointer
+        const dx = clientX - cueBallX;
+        const dy = clientY - cueBallY;
 
         let deg = Math.atan2(dy, dx) * (180 / Math.PI);
         setAngle(deg);
@@ -103,13 +110,11 @@ const PoolTable = ({
         }
     };
 
-    // Keyboard 'Space' to shoot? Or just use the UI button/gesture.
-    // We will stick to the props for now.
-
     return (
         <div
             className="relative w-full h-full flex items-center justify-center font-['Montserrat']"
-            onMouseMove={handleTableMouseMove}
+            onPointerMove={handleAimingMove}
+            onTouchMove={handleAimingMove}
         >
             {/* Spin Control */}
             <div className="absolute bottom-8 left-4 md:left-8 z-50 pointer-events-auto">

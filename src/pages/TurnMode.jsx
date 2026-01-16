@@ -110,7 +110,7 @@ const TurnMode = () => {
 
             // We merge with current gameState.balls to keep colors/static info
             setAnimatingBalls((prev) => {
-              const base = prev || gameState.balls;
+              const base = prev || gameState?.balls || {};
               const next = { ...base };
               Object.entries(frameBalls).forEach(([num, pos]) => {
                 if (next[num]) {
@@ -210,7 +210,7 @@ const TurnMode = () => {
       {/* Main Game Area */}
       <div className="flex-1 relative flex items-center justify-center p-0 md:p-0">
         <PoolTable
-          balls={animatingBalls || gameState.balls || {}}
+          balls={animatingBalls || gameState?.balls || {}}
           angle={shotParams.angle}
           setAngle={(a) => setShotParams(prev => ({ ...prev, angle: a }))}
           power={shotParams.power}

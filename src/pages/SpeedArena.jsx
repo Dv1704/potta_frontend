@@ -115,7 +115,7 @@ const SpeedArena = () => {
 
           const frameBalls = frames[frameIdx];
           setAnimatingBalls((prev) => {
-            const base = prev || gameState.balls;
+            const base = prev || gameState?.balls || {};
             const next = { ...base };
             Object.entries(frameBalls).forEach(([num, pos]) => {
               if (next[num]) {
@@ -218,7 +218,7 @@ const SpeedArena = () => {
       {/* Main Game Area */}
       <div className="flex-1 relative p-0 flex items-center justify-center">
         <PoolTable
-          balls={animatingBalls || gameState.balls || {}}
+          balls={animatingBalls || gameState?.balls || {}}
           angle={shotParams.angle}
           setAngle={(a) => setShotParams(prev => ({ ...prev, angle: a }))}
           power={shotParams.power}
