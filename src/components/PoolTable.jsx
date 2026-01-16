@@ -234,17 +234,17 @@ const PoolTable = ({
                             className="absolute top-0 left-0 flex items-center justify-center"
                             style={{ transform: `rotate(${angle}deg)` }}
                         >
-                            {/* Aim Line (Extends Right) */}
+                            {/* Aim Line (Extends Right) -> Matches 0 deg */}
                             <div
-                                className="absolute left-[18px] top-0 h-0 border-t-2 border-dashed border-white/80 origin-left drop-shadow-md"
+                                className="absolute left-[20px] top-0 h-0 border-t-2 border-dashed border-white/80 origin-left drop-shadow-md"
                                 style={{ width: '800px' }}
                             >
                                 <div className="absolute right-0 top-1/2 w-4 h-4 border-2 border-white rounded-full transform -translate-y-1/2 translate-x-1/2 shadow-[0_0_10px_rgba(255,255,255,0.8)]"></div>
                             </div>
 
-                            {/* Cue Stick (Extends Left) */}
+                            {/* Cue Stick (Extends Left) -> Matches 180 deg essentially */}
                             <div
-                                className="absolute right-[60px] top-0 w-[400px] md:w-[600px] h-24 origin-right flex items-center justify-end"
+                                className="absolute right-[20px] top-0 w-[400px] md:w-[600px] h-24 origin-right flex items-center justify-end"
                                 style={{ transform: 'translateY(-50%)' }}
                             >
                                 <img

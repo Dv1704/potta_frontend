@@ -14,8 +14,9 @@ const PlayerGUI = ({ name, score, isTurn, align = 'left' }) => (
         className="w-full h-full object-contain drop-shadow-lg"
       />
       {/* Name - Approx position based on asset layout */}
-      <div className="absolute top-2 left-14 w-32 h-6 flex items-center mb-1">
-        <span className="text-white font-bold text-xs truncate max-w-full font-['Montserrat'] drop-shadow-md">{name}</span>
+      {/* Name - Approx position based on asset layout - CENTERED */}
+      <div className="absolute top-2 left-14 w-32 h-6 flex items-center justify-center mb-1">
+        <span className="text-white font-bold text-xs truncate max-w-full font-['Montserrat'] drop-shadow-md text-center">{name}</span>
       </div>
       {/* Score */}
       <div className="absolute top-2 right-4 w-10 h-10 flex items-center justify-center">
