@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aiming Test - Potta Pool</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #1a1a1a;
+            color: white;
+            padding: 20px;
+        }
+
+        .test-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+            color: #4CAF50;
+        }
+
+        .test-area {
+            background: #2a2a2a;
+            border: 2px solid #444;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .game-surface {
+            width: 100%;
+            height: 500px;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            position: relative;
+            cursor: crosshair;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .cue-ball {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            background: white;
+            border-radius: 50%;
+            top: 50%;
+            left: 30%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .cue-stick {
+            position: absolute;
+            width: 300px;
+            height: 8px;
+            background: linear-gradient(90deg, #8B4513 0%, #D2691E 100%);
+            transform-origin: left center;
+            pointer-events: none;
+            transition: none;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .aim-line {
+            position: absolute;
+            width: 500px;
+            height: 2px;
+            background: rgba(255, 255, 255, 0.5);
+            border-top: 2px dashed white;
+            transform-origin: left center;
+            pointer-events: none;
+        }
+
+        .test-results {
+            background: #333;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+
+        .result-item {
+            margin: 10px 0;
+            padding: 10px;
+            border-left: 4px solid #666;
+            background: #2a2a2a;
+        }
+
+        .result-item.pass {
+            border-left-color: #4CAF50;
+        }
+
+        .result-item.fail {
+            border-left-color: #f44336;
+        }
+
+        .result-item.warning {
+            border-left-color: #ff9800;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 3px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .status.pass {
+            background: #4CAF50;
+        }
+
+        .status.fail {
+            background: #f44336;
+        }
+
+        .status.warning {
+            background: #ff9800;
+        }
+
+        .log {
+            background: #1a1a1a;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .log-entry {
+            margin: 5px 0;
+            opacity: 0.8;
+        }
+
+        .instructions {
+            background: #2a4a7c;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+
+        .instructions h3 {
+            margin-bottom: 10px;
+        }
+
+        .instructions ol {
+            margin-left: 20px;
+        }
+
+        .instructions li {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="test-container">
+        <h1>🎱 Potta Pool Aiming Test</h1>
+
+        <div class="instructions">
+            <h3>Test Instructions:</h3>
+            <ol>
+                <li><strong>Hover Test:</strong> Move your mouse over the blue area WITHOUT clicking</li>
+                <li><strong>Click & Drag Test:</strong> Click on the blue area and drag to aim</li>
+                <li><strong>Release Test:</strong> Release the mouse button</li>
+                <li><strong>Touch Test:</strong> (Mobile/Trackpad) Touch and drag on the blue area</li>
+            </ol>
+        </div>
+
+        <div class="test-area">
+            <h2>Interactive Test Surface</h2>
+            <div id="gameSurface" class="game-surface">
+                <div class="cue-ball" id="cueBall"></div>
+                <div class="aim-line" id="aimLine"></div>
+                <div class="cue-stick" id="cueStick"></div>
+            </div>
+        </div>
+
+        <div class="test-results">
+            <h2>Test Results</h2>
+            <div id="testResults"></div>
+        </div>
+
+        <div class="log">
+            <h3>Event Log</h3>
+            <div id="eventLog"></div>
+        </div>
+    </div>
+
+    <script>
+        const gameSurface = document.getElementById('gameSurface');
+        const cueBall = document.getElementById('cueBall');
+        const cueStick = document.getElementById('cueStick');
+        const aimLine = document.getElementById('aimLine');
+        const testResults = document.getElementById('testResults');
+        const eventLog = document.getElementById('eventLog');
+
+        let isAiming = false;
+        let initialAngle = null;
+        let hoverMoveCount = 0;
+        let aimingMoveCount = 0;
+        let angleChangedWhileNotAiming = false;
+
+        const cueBallRect = cueBall.getBoundingClientRect();
+        const cueBallX = cueBallRect.left + cueBallRect.width / 2;
+        const cueBallY = cueBallRect.top + cueBallRect.height / 2;
+
+        function logEvent(message, type = 'info') {
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.style.color = type === 'error' ? '#f44336' : type === 'success' ? '#4CAF50' : '#aaa';
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            eventLog.insertBefore(entry, eventLog.firstChild);
+        }
+
+        function updateAngle(clientX, clientY) {
+            const surfaceRect = gameSurface.getBoundingClientRect();
+            const cueBallCenterX = surfaceRect.left + surfaceRect.width * 0.3;
+            const cueBallCenterY = surfaceRect.top + surfaceRect.height * 0.5;
+
+            const dx = clientX - cueBallCenterX;
+            const dy = clientY - cueBallCenterY;
+            const angle = Math.atan2(dy, dx) * (180 / Math.PI);
+
+            if (initialAngle === null) {
+                initialAngle = angle;
+            }
+
+            if (!isAiming && Math.abs(angle - initialAngle) > 5) {
+                angleChangedWhileNotAiming = true;
+            }
+
+            cueStick.style.transform = `rotate(${angle}deg) translate(-100%, -50%)`;
+            aimLine.style.transform = `rotate(${angle}deg) translateY(-50%)`;
+            cueStick.style.left = cueBall.offsetLeft + 15 + 'px';
+            cueStick.style.top = cueBall.offsetTop + 15 + 'px';
+            aimLine.style.left = cueBall.offsetLeft + 15 + 'px';
+            aimLine.style.top = cueBall.offsetTop + 15 + 'px';
+
+            return angle;
+        }
+
+        function runTests() {
+            const tests = [];
+
+            // Test 1: Stick should NOT move on hover without click
+            tests.push({
+                name: "Hover Test: Stick should stay still when just hovering",
+                pass: !angleChangedWhileNotAiming && hoverMoveCount > 0,
+                message: angleChangedWhileNotAiming
+                    ? `FAIL: Stick moved ${hoverMoveCount} times during hover (should stay still)`
+                    : hoverMoveCount === 0
+                        ? `WARNING: No hover movement detected (hover over the area first)`
+                        : `PASS: Stick stayed still during ${hoverMoveCount} hover movements`
+            });
+
+            // Test 2: Stick SHOULD move when aiming (click + drag)
+            tests.push({
+                name: "Click & Drag Test: Stick should follow pointer when click+dragging",
+                pass: aimingMoveCount > 0,
+                message: aimingMoveCount > 0
+                    ? `PASS: Stick followed pointer during ${aimingMoveCount} aiming movements`
+                    : `FAIL: No aiming movement detected (click and drag on the area)`
+            });
+
+            testResults.innerHTML = '';
+            tests.forEach(test => {
+                const div = document.createElement('div');
+                div.className = `result-item ${test.pass ? 'pass' : test.message.includes('WARNING') ? 'warning' : 'fail'}`;
+                div.innerHTML = `
+                    <div><strong>${test.name}</strong></div>
+                    <div><span class="status ${test.pass ? 'pass' : test.message.includes('WARNING') ? 'warning' : 'fail'}">${test.pass ? 'PASS' : test.message.includes('WARNING') ? 'WARN' : 'FAIL'}</span> ${test.message}</div>
+                `;
+                testResults.appendChild(div);
+            });
+        }
+
+        // Event Handlers (matching the actual implementation)
+        function handleStartAiming(e) {
+            isAiming = true;
+            logEvent('Started aiming (clicked/touched)', 'success');
+            const clientX = e.clientX ?? e.touches?.[0]?.clientX;
+            const clientY = e.clientY ?? e.touches?.[0]?.clientY;
+            if (clientX && clientY) {
+                updateAngle(clientX, clientY);
+            }
+        }
+
+        function handleAimingMove(e) {
+            if (!isAiming) {
+                hoverMoveCount++;
+                return;
+            }
+
+            aimingMoveCount++;
+            const clientX = e.clientX ?? e.touches?.[0]?.clientX;
+            const clientY = e.clientY ?? e.touches?.[0]?.clientY;
+            if (clientX && clientY) {
+                const angle = updateAngle(clientX, clientY);
+                logEvent(`Aiming: angle = ${angle.toFixed(1)}°`);
+            }
+        }
+
+        function handleStopAiming() {
+            if (isAiming) {
+                isAiming = false;
+                logEvent('Stopped aiming (released)', 'success');
+                runTests();
+            }
+        }
+
+        // Attach event listeners (matching actual implementation)
+        gameSurface.addEventListener('pointerdown', handleStartAiming);
+        gameSurface.addEventListener('pointermove', handleAimingMove);
+        gameSurface.addEventListener('pointerup', handleStopAiming);
+        gameSurface.addEventListener('pointerleave', handleStopAiming);
+        gameSurface.addEventListener('touchstart', handleStartAiming);
+        gameSurface.addEventListener('touchmove', handleAimingMove);
+        gameSurface.addEventListener('touchend', handleStopAiming);
+
+        // Initialize
+        logEvent('Test initialized. Follow the instructions above.', 'info');
+        runTests();
+    </script>
+</body>
+
+</html>
