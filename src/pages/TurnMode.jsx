@@ -1,58 +1,80 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { socket, connectSocket } from '../socket';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { useToast } from '../context/ToastContext';
-import PoolTable from '../components/PoolTable';
+import PoolGameEngineEmbed from '../components/PoolGameEngineEmbed';
 
-const PlayerGUI = ({ name, score, isTurn, align = 'left' }) => (
-  <div className={`absolute top-4 ${align === 'left' ? 'left-4' : 'right-4'} z-50 flex flex-col items-center pointer-events-none`}>
-    <div className="relative w-48 h-16">
-      <img
-        src="/assets/pool/player_gui.png"
-        alt={`Player ${name}`}
-        className="w-full h-full object-contain drop-shadow-lg"
-      />
-      {/* Name - Approx position based on asset layout */}
-      {/* Name - Approx position based on asset layout - CENTERED */}
-      <div className="absolute top-2 left-14 w-32 h-6 flex items-center justify-center mb-1">
-        <span className="text-white font-bold text-xs truncate max-w-full font-['Montserrat'] drop-shadow-md text-center">{name}</span>
+/**
+ * PlayerInfoOverlay - Shows player names and game stats on top of the game
+ */
+const PlayerInfoOverlay = ({ player1, player2, myId, currentTurn, stake }) => {
+  const isMyTurn = currentTurn === myId;
+  const isPlayer1Me = player1?.id === myId;
+
+  return (
+    <>
+      {/* Player 1 Info - Top Left */}
+      <div className="absolute top-4 left-4 z-[9999] pointer-events-none">
+        <div className="bg-gradient-to-r from-purple-600/90 to-blue-600/90 backdrop-blur-sm rounded-lg px-4 py-2 shadow-xl border border-white/20">
+          <div className="flex items-center gap-3">
+            <div className={`w-3 h-3 rounded-full ${currentTurn === player1?.id ? 'bg-green-400 animate-pulse' : 'bg-gray-400'}`}></div>
+            <div className="text-white font-bold text-sm">
+              {player1?.name || 'Player 1'} {isPlayer1Me && '(YOU)'}
+            </div>
+          </div>
+        </div>
       </div>
-      {/* Score */}
-      <div className="absolute top-2 right-4 w-10 h-10 flex items-center justify-center">
-        <span className={`text-2xl font-black ${isTurn ? 'text-[#FFD700]' : 'text-white'} font-['Montserrat'] drop-shadow-md`}>{score}</span>
+
+      {/* Player 2 Info - Top Right */}
+      <div className="absolute top-4 right-4 z-[9999] pointer-events-none">
+        <div className="bg-gradient-to-r from-orange-600/90 to-red-600/90 backdrop-blur-sm rounded-lg px-4 py-2 shadow-xl border border-white/20">
+          <div className="flex items-center gap-3">
+            <div className="text-white font-bold text-sm text-right">
+              {player2?.name || 'Player 2'} {!isPlayer1Me && '(YOU)'}
+            </div>
+            <div className={`w-3 h-3 rounded-full ${currentTurn === player2?.id ? 'bg-green-400 animate-pulse' : 'bg-gray-400'}`}></div>
+          </div>
+        </div>
       </div>
-      {/* Turn Indicator Highlight - Optional Overlay */}
-      {isTurn && (
-        <div className="absolute inset-0 rounded-lg shadow-[0_0_15px_rgba(255,215,0,0.4)] pointer-events-none"></div>
+
+      {/* Stake Info - Top Center */}
+      {stake && (
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[9999] pointer-events-none">
+          <div className="bg-gradient-to-r from-yellow-600/90 to-amber-600/90 backdrop-blur-sm rounded-lg px-6 py-2 shadow-xl border border-white/20">
+            <div className="text-center">
+              <div className="text-yellow-100 text-xs font-semibold">STAKE</div>
+              <div className="text-white font-bold text-lg">₦{stake.toLocaleString()}</div>
+              <div className="text-yellow-200 text-xs">Winner takes: ₦{(stake * 1.9).toLocaleString()}</div>
+            </div>
+          </div>
+        </div>
       )}
-    </div>
-  </div>
-);
+
+      {/* Turn Indicator */}
+      {isMyTurn && (
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-[9999] pointer-events-none">
+          <div className="bg-green-500/90 backdrop-blur-sm rounded-full px-6 py-2 shadow-xl border border-white/30 animate-pulse">
+            <div className="text-white font-bold text-sm">YOUR TURN</div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+};
 
 const TurnMode = () => {
-  // ... State logic (keep mostly same)
   const { id: gameId } = useParams();
   const navigate = useNavigate();
   const { showToast } = useToast();
+
+  // Game state
   const [gameState, setGameState] = useState(null);
-  const [lastShotResult, setLastShotResult] = useState(null);
-  const [shotParams, setShotParams] = useState({ angle: 0, power: 50 });
-  const [spin, setSpin] = useState({ x: 0, y: 0 });
-  const [isMyTurn, setIsMyTurn] = useState(false);
-  const [is3D, setIs3D] = useState(true);
+  const [isConnected, setIsConnected] = useState(false);
+
   const userId = localStorage.getItem('userId');
-  const [isPortrait, setIsPortrait] = useState(window.innerHeight > window.innerWidth);
 
-  useEffect(() => {
-    const handleResize = () => setIsPortrait(window.innerHeight > window.innerWidth);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  // ... (Keep useEffect logic)
-  const [animatingBalls, setAnimatingBalls] = useState(null);
-
+  // Socket connection and event handlers
   useEffect(() => {
     if (!userId) {
       navigate('/login');
@@ -60,159 +82,143 @@ const TurnMode = () => {
     }
 
     connectSocket(userId);
-    socket.emit('joinGame', { gameId });
+
+    socket.on('connect', () => {
+      setIsConnected(true);
+      socket.emit('joinGame', { gameId });
+    });
+
+    socket.on('disconnect', () => {
+      setIsConnected(false);
+    });
 
     const handleGameState = (state) => {
-      // If we are animating, don't interrupt with intermediate state updates unless necessary
-      // But for simplicity, we treat simple state updates as overrides
+      console.log('[TurnMode] Game state received:', state);
       setGameState(state);
-      setIsMyTurn(state.turn === userId);
+
+      // Send state to game iframe if needed
+      const iframe = document.querySelector('iframe');
+      if (iframe && iframe.contentWindow) {
+        iframe.contentWindow.postMessage({
+          type: 'gameStateUpdate',
+          state: state
+        }, '*');
+      }
     };
 
     const handleShotResult = async (data) => {
-      setLastShotResult(data.shotResult);
+      console.log('[TurnMode] Shot result:', data);
+      const { gameState: newGameState, shooterId } = data;
+      setGameState(newGameState);
 
-      // Play Animation if available
-      if (data.shotResult.animationFrames && data.shotResult.animationFrames.length > 0) {
-        const frames = data.shotResult.animationFrames;
-        const totalFrames = frames.length;
+      // Notify game iframe
+      const iframe = document.querySelector('iframe');
+      if (iframe && iframe.contentWindow) {
+        iframe.contentWindow.postMessage({
+          type: 'shotResult',
+          data: data
+        }, '*');
+      }
 
-        console.log(`[Animation] Playing ${totalFrames} frames`);
+      if (shooterId !== userId) {
+        showToast('Opponent took their shot', 'info');
+      }
+    };
 
-        let frameIdx = 0;
-
-        return new Promise((resolve) => {
-          const playFrame = () => {
-            if (frameIdx >= totalFrames) {
-              setAnimatingBalls(null);
-              // Apply final state
-              setGameState(data.gameState);
-              setIsMyTurn(data.gameState.turn === userId);
-              console.log('[Animation] Complete');
-              resolve();
-              return;
-            }
-
-            const frameBalls = frames[frameIdx];
-
-            // Merge with current gameState.balls to keep colors/static info
-            setAnimatingBalls((prev) => {
-              const base = prev || gameState?.balls || {};
-              const next = { ...base };
-              Object.entries(frameBalls).forEach(([num, pos]) => {
-                if (base[num]) {
-                  next[num] = { ...base[num], x: pos.x, y: pos.y, onTable: true };
-                }
-              });
-              return next;
-            });
-
-            frameIdx++;
-            requestAnimationFrame(playFrame);
-          };
-          playFrame();
-        });
-      } else {
-        console.log('[Animation] No frames received, using final state directly');
-        setGameState(data.gameState);
-        setIsMyTurn(data.gameState.turn === userId);
+    const handleOpponentShotStart = (data) => {
+      console.log('[TurnMode] Opponent shot start:', data);
+      // Relay to game for visualization
+      const iframe = document.querySelector('iframe');
+      if (iframe && iframe.contentWindow) {
+        iframe.contentWindow.postMessage({
+          type: 'opponentShot',
+          data: data
+        }, '*');
       }
     };
 
     const handleGameEnded = (data) => {
-      showToast(data.message || 'Game Over', 'info');
+      showToast(data.message || 'Game Over', 'success');
       setTimeout(() => navigate('/dashboard'), 3000);
+    };
+
+    const handleError = (error) => {
+      showToast(error.message || 'An error occurred', 'error');
     };
 
     socket.on('gameState', handleGameState);
     socket.on('shotResult', handleShotResult);
+    socket.on('opponentShotStart', handleOpponentShotStart);
     socket.on('gameEnded', handleGameEnded);
+    socket.on('error', handleError);
 
     socket.emit('getGameState', { gameId });
 
     return () => {
+      socket.off('connect');
+      socket.off('disconnect');
       socket.off('gameState');
       socket.off('shotResult');
+      socket.off('opponentShotStart');
       socket.off('gameEnded');
+      socket.off('error');
     };
-  }, [gameId, userId, navigate, showToast]); // remove gameState dependency to avoid re-binding loop
+  }, [gameId, userId, navigate, showToast]);
 
-  const handleTakeShot = () => {
-    if (!isMyTurn) return;
-    socket.emit('takeShot', {
-      gameId,
-      userId,
-      angle: parseFloat(shotParams.angle),
-      power: parseFloat(shotParams.power),
-      sideSpin: spin.x,
-      backSpin: spin.y
-    });
-  };
+  // Listen for messages from the game iframe
+  useEffect(() => {
+    const handleMessage = (event) => {
+      if (event.data.type === 'takeShot') {
+        // Player took a shot in the game, send to server
+        console.log('[TurnMode] Sending shot to server:', event.data);
+        socket.emit('takeShot', {
+          gameId,
+          userId,
+          ...event.data.shot
+        });
+      }
+    };
 
-  if (!gameState) return <LoadingSpinner text="Connecting..." />;
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, [gameId, userId]);
 
+  if (!gameState) {
+    return <LoadingSpinner text="Connecting to match..." />;
+  }
 
-  // Determine Names
-  const myPlayer = gameState.players?.find(p => p.id === userId);
-  const opponentPlayer = gameState.players?.find(p => p.id !== userId);
-
-  const myName = "YOU"; // Always show YOU for self
-  const opponentName = opponentPlayer?.name?.toUpperCase() || "OPPONENT";
+  const player1 = gameState.players?.[0];
+  const player2 = gameState.players?.[1];
+  const stake = gameState.stake || gameState.betAmount || 0;
 
   return (
-    <div className="relative w-full h-screen bg-[#121212] overflow-hidden flex flex-col font-sans select-none">
+    <div className="relative w-full h-screen bg-black overflow-hidden">
+      {/* Player Info Overlay */}
+      <PlayerInfoOverlay
+        player1={player1}
+        player2={player2}
+        myId={userId}
+        currentTurn={gameState.turn}
+        stake={stake}
+      />
 
-      {/* Mobile Orientation Warning */}
-      {isPortrait && (
-        <div className="absolute inset-0 z-[100] bg-black/90 flex flex-col items-center justify-center text-white p-8 text-center backdrop-blur-sm">
-          <div className="text-6xl mb-4">↻</div>
-          <h2 className="text-2xl font-bold mb-2">Please Rotate Your Device</h2>
-          <p className="text-gray-400">For the best experience, flip your phone to landscape mode.</p>
+      {/* Connection Status */}
+      {!isConnected && (
+        <div className="absolute top-20 left-1/2 -translate-x-1/2 z-[9999] pointer-events-none">
+          <div className="bg-red-500/90 backdrop-blur-sm rounded-lg px-4 py-2 shadow-xl border border-white/20">
+            <div className="text-white font-bold text-sm">⚠️ Reconnecting...</div>
+          </div>
         </div>
       )}
 
-      {/* Background Ambience */}
-      <div className="absolute inset-0 bg-[url('/assets/pool/bg_game.jpg')] bg-cover bg-center"></div>
-
-      {/* HUD Layers */}
-      <PlayerGUI
-        name={myName}
-        score={gameState.player1Score || 0}
-        isTurn={isMyTurn}
-        align="left"
+      {/* Embed the 8 Ball Pro game engine */}
+      <PoolGameEngineEmbed
+        onStartSession={() => console.log('Game started')}
+        onEndSession={() => console.log('Game ended')}
+        onSaveScore={(score) => console.log('Score:', score)}
       />
-      <PlayerGUI
-        name={opponentName}
-        score={gameState.player2Score || 0}
-        isTurn={!isMyTurn}
-        align="right"
-      />
-
-      {/* Main Game Area */}
-      <div className="flex-1 relative flex items-center justify-center p-0 md:p-0">
-        <PoolTable
-          balls={animatingBalls || gameState?.balls || {}}
-          angle={shotParams.angle}
-          setAngle={(a) => setShotParams(prev => ({ ...prev, angle: a }))}
-          power={shotParams.power}
-          setPower={(p) => setShotParams(prev => ({ ...prev, power: p }))}
-          spin={spin}
-          setSpin={setSpin}
-          isMyTurn={isMyTurn}
-          onTakeShot={handleTakeShot}
-          is3D={is3D}
-        />
-      </div>
-
-      {/* Exit Button (Top Right of Scene usually, or handled by menu) */}
-      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50">
-        {/* Maybe a VS panel or Timer? For now clean. */}
-      </div>
-
     </div>
   );
 };
 
 export default TurnMode;
-
-// End of file

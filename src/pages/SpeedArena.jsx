@@ -3,238 +3,227 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { socket, connectSocket } from '../socket';
 import { useToast } from '../context/ToastContext';
 import LoadingSpinner from '../components/LoadingSpinner';
-import PoolTable from '../components/PoolTable';
+import PoolGameEngineEmbed from '../components/PoolGameEngineEmbed';
 
-const PlayerGUI = ({ name, score, isTurn, align = 'left' }) => (
-  <div className={`absolute top-4 ${align === 'left' ? 'left-4' : 'right-4'} z-50 flex flex-col items-center pointer-events-none`}>
-    <div className="relative w-48 h-16">
-      <img
-        src="/assets/pool/player_gui.png"
-        alt={`Player ${name}`}
-        className="w-full h-full object-contain drop-shadow-lg"
-      />
-      <div className="absolute top-2 left-14 w-32 h-6 flex items-center justify-center mb-1">
-        <span className="text-white font-bold text-xs truncate max-w-full font-['Montserrat'] drop-shadow-md text-center">{name}</span>
+/**
+ * PlayerInfoOverlay - Shows player names and game stats on top of the game
+ */
+const PlayerInfoOverlay = ({ player1, player2, myId, stake, timeRemaining }) => {
+  const isPlayer1Me = player1?.id === myId;
+
+  return (
+    <>
+      {/* Player 1 Info - Top Left */}
+      <div className="absolute top-4 left-4 z-[9999] pointer-events-none">
+        <div className="bg-gradient-to-r from-purple-600/90 to-blue-600/90 backdrop-blur-sm rounded-lg px-4 py-2 shadow-xl border border-white/20">
+          <div className="flex items-center gap-3">
+            <div className="w-3 h-3 rounded-full bg-green-400 animate-pulse"></div>
+            <div className="text-white font-bold text-sm">
+              {player1?.name || 'Player 1'} {isPlayer1Me && '(YOU)'}
+            </div>
+          </div>
+        </div>
       </div>
-      <div className="absolute top-2 right-4 w-10 h-10 flex items-center justify-center">
-        <span className={`text-2xl font-black ${isTurn ? 'text-[#FFD700]' : 'text-white'} font-['Montserrat'] drop-shadow-md`}>{score}</span>
+
+      {/* Player 2 Info - Top Right */}
+      <div className="absolute top-4 right-4 z-[9999] pointer-events-none">
+        <div className="bg-gradient-to-r from-orange-600/90 to-red-600/90 backdrop-blur-sm rounded-lg px-4 py-2 shadow-xl border border-white/20">
+          <div className="flex items-center gap-3">
+            <div className="text-white font-bold text-sm text-right">
+              {player2?.name || 'Player 2'} {!isPlayer1Me && '(YOU)'}
+            </div>
+            <div className="w-3 h-3 rounded-full bg-green-400 animate-pulse"></div>
+          </div>
+        </div>
       </div>
-      {isTurn && (
-        <div className="absolute inset-0 rounded-lg shadow-[0_0_15px_rgba(255,215,0,0.4)] pointer-events-none"></div>
+
+      {/* Stake Info - Top Center */}
+      {stake && (
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[9999] pointer-events-none">
+          <div className="bg-gradient-to-r from-yellow-600/90 to-amber-600/90 backdrop-blur-sm rounded-lg px-6 py-2 shadow-xl border border-white/20">
+            <div className="text-center">
+              <div className="text-yellow-100 text-xs font-semibold">STAKE</div>
+              <div className="text-white font-bold text-lg">₦{stake.toLocaleString()}</div>
+              <div className="text-yellow-200 text-xs">Winner takes: ₦{(stake * 1.9).toLocaleString()}</div>
+            </div>
+          </div>
+        </div>
       )}
-    </div>
-  </div>
-);
+
+      {/* Timer - Bottom Center (for Speed Mode) */}
+      {timeRemaining !== undefined && (
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-[9999] pointer-events-none">
+          <div className={`${timeRemaining < 10 ? 'bg-red-500/90 animate-pulse' : 'bg-blue-500/90'} backdrop-blur-sm rounded-full px-6 py-2 shadow-xl border border-white/30`}>
+            <div className="text-white font-bold text-sm">
+              ⏱️ {Math.max(0, timeRemaining)}s
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+};
 
 const SpeedArena = () => {
   const { id: gameId } = useParams();
   const navigate = useNavigate();
   const { showToast } = useToast();
+
+  // Game state
   const [gameState, setGameState] = useState(null);
-  const [shotParams, setShotParams] = useState({ angle: 0, power: 50 });
-  const [spin, setSpin] = useState({ x: 0, y: 0 });
-  const [isMyTurn, setIsMyTurn] = useState(false);
-  const [userId, setUserId] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [localTimer, setLocalTimer] = useState(60);
-  const [is3D, setIs3D] = useState(true);
-  const [isPortrait, setIsPortrait] = useState(window.innerHeight > window.innerWidth);
+  const [isConnected, setIsConnected] = useState(false);
+  const [timeRemaining, setTimeRemaining] = useState(null);
 
+  const userId = localStorage.getItem('userId');
+
+  // Socket connection and event handlers
   useEffect(() => {
-    const handleResize = () => setIsPortrait(window.innerHeight > window.innerWidth);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+    if (!userId) {
+      navigate('/login');
+      return;
+    }
 
-  // Animation State
-  const [animatingBalls, setAnimatingBalls] = useState(null);
+    connectSocket(userId);
 
-  useEffect(() => {
-    // ...
-  }, []);
+    socket.on('connect', () => {
+      setIsConnected(true);
+      socket.emit('joinGame', { gameId });
+    });
 
-  // Local Timer Countdown
-  useEffect(() => {
-    if (!gameState || localTimer <= 0) return;
-    const interval = setInterval(() => {
-      setLocalTimer((prev) => Math.max(0, prev - 1));
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [gameState, localTimer]);
-
-  useEffect(() => {
-    const initGame = async () => {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        navigate('/login');
-        return;
-      }
-
-      try {
-        const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/auth/profile`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-
-        if (!response.ok) throw new Error('Auth failed');
-        const user = await response.json();
-        setUserId(user.id);
-
-        connectSocket(user.id);
-        socket.emit('joinGame', { gameId });
-        socket.emit('getGameState', { gameId });
-
-      } catch (err) {
-        showToast('Arena Link Failure', 'error');
-        navigate('/dashboard');
-      }
-    };
-
-    initGame();
+    socket.on('disconnect', () => {
+      setIsConnected(false);
+    });
 
     const handleGameState = (state) => {
+      console.log('[SpeedArena] Game state received:', state);
       setGameState(state);
-      setLocalTimer(state.timer || 60);
-      setLoading(false);
+
+      // Update timer from gameState
+      if (state.timer !== undefined) {
+        setTimeRemaining(state.timer);
+      }
+
+      // Send state to game iframe if needed
+      const iframe = document.querySelector('iframe');
+      if (iframe && iframe.contentWindow) {
+        iframe.contentWindow.postMessage({
+          type: 'gameStateUpdate',
+          state: state
+        }, '*');
+      }
     };
 
-    const handleShotResult = (data) => {
-      // Play Animation if available - SpeedArena Implementation
-      if (data.shotResult.animationFrames && data.shotResult.animationFrames.length > 0) {
-        const frames = data.shotResult.animationFrames;
-        const totalFrames = frames.length;
+    const handleShotResult = async (data) => {
+      console.log('[SpeedArena] Shot result:', data);
+      const { gameState: newGameState, shooterId } = data;
+      setGameState(newGameState);
 
-        console.log(`[Animation] Playing ${totalFrames} frames`);
-        let frameIdx = 0;
+      // Notify game iframe
+      const iframe = document.querySelector('iframe');
+      if (iframe && iframe.contentWindow) {
+        iframe.contentWindow.postMessage({
+          type: 'shotResult',
+          data: data
+        }, '*');
+      }
 
-        const playFrame = () => {
-          if (frameIdx >= totalFrames) {
-            setAnimatingBalls(null);
-            // Apply final state
-            setGameState(data.gameState);
-            setLocalTimer(data.gameState.timer || 60);
-            console.log('[Animation] Complete');
-            return;
-          }
+      if (shooterId !== userId) {
+        showToast('Opponent scored!', 'info');
+      }
+    };
 
-          const frameBalls = frames[frameIdx];
-          setAnimatingBalls((prev) => {
-            const base = prev || gameState?.balls || {};
-            const next = { ...base };
-            Object.entries(frameBalls).forEach(([num, pos]) => {
-              if (base[num]) {
-                next[num] = { ...base[num], x: pos.x, y: pos.y, onTable: true };
-              }
-            });
-            return next;
-          });
-
-          frameIdx++;
-          requestAnimationFrame(playFrame);
-        };
-        playFrame();
-      } else {
-        console.log('[Animation] No frames received, using final state directly');
-        setGameState(data.gameState);
-        setLocalTimer(data.gameState.timer || 60);
+    const handleOpponentShotStart = (data) => {
+      console.log('[SpeedArena] Opponent shot start:', data);
+      // Relay to game for visualization
+      const iframe = document.querySelector('iframe');
+      if (iframe && iframe.contentWindow) {
+        iframe.contentWindow.postMessage({
+          type: 'opponentShot',
+          data: data
+        }, '*');
       }
     };
 
     const handleGameEnded = (data) => {
-      showToast(data.message || 'Battle Over', 'info');
-      setTimeout(() => navigate('/dashboard'), 2500);
+      showToast(data.message || 'Game Over', 'success');
+      setTimeout(() => navigate('/dashboard'), 3000);
+    };
+
+    const handleError = (error) => {
+      showToast(error.message || 'An error occurred', 'error');
     };
 
     socket.on('gameState', handleGameState);
     socket.on('shotResult', handleShotResult);
+    socket.on('opponentShotStart', handleOpponentShotStart);
     socket.on('gameEnded', handleGameEnded);
+    socket.on('error', handleError);
+
+    socket.emit('getGameState', { gameId });
 
     return () => {
+      socket.off('connect');
+      socket.off('disconnect');
       socket.off('gameState');
       socket.off('shotResult');
+      socket.off('opponentShotStart');
       socket.off('gameEnded');
+      socket.off('error');
     };
-  }, [gameId, navigate, showToast]); // Removed gameState dependency to avoid loops
+  }, [gameId, userId, navigate, showToast]);
 
+  // Listen for messages from the game iframe
   useEffect(() => {
-    if (gameState && userId) {
-      setIsMyTurn(gameState.turn === userId);
-    }
-  }, [gameState, userId]);
+    const handleMessage = (event) => {
+      if (event.data.type === 'takeShot') {
+        // Player took a shot in the game, send to server
+        console.log('[SpeedArena] Sending shot to server:', event.data);
+        socket.emit('takeShot', {
+          gameId,
+          userId,
+          ...event.data.shot
+        });
+      }
+    };
 
-  const handleTakeShot = () => {
-    if (!isMyTurn || !userId) return;
-    socket.emit('takeShot', {
-      gameId,
-      userId,
-      angle: parseFloat(shotParams.angle),
-      power: parseFloat(shotParams.power),
-      sideSpin: spin.x,
-      backSpin: spin.y
-    });
-  };
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, [gameId, userId]);
 
-  if (loading || !gameState) return <LoadingSpinner text="Connecting..." />;
+  if (!gameState) {
+    return <LoadingSpinner text="Finding opponent..." />;
+  }
 
-  const isCritical = localTimer < 15;
-
-  // Determine Names
-  const opponentPlayer = gameState.players?.find(p => p.id !== userId);
-  const myName = "YOU";
-  const opponentName = opponentPlayer?.name?.toUpperCase() || "OPPONENT";
+  const player1 = gameState.players?.[0];
+  const player2 = gameState.players?.[1];
+  const stake = gameState.stake || gameState.betAmount || 0;
 
   return (
-    <div className="relative w-full h-screen bg-[#121212] overflow-hidden flex flex-col font-sans select-none">
+    <div className="relative w-full h-screen bg-black overflow-hidden">
+      {/* Player Info Overlay */}
+      <PlayerInfoOverlay
+        player1={player1}
+        player2={player2}
+        myId={userId}
+        stake={stake}
+        timeRemaining={timeRemaining}
+      />
 
-      {/* Mobile Orientation Warning */}
-      {isPortrait && (
-        <div className="absolute inset-0 z-[100] bg-black/90 flex flex-col items-center justify-center text-white p-8 text-center backdrop-blur-sm">
-          <div className="text-6xl mb-4">↻</div>
-          <h2 className="text-2xl font-bold mb-2">Please Rotate Your Device</h2>
-          <p className="text-gray-400">For the best experience, flip your phone to landscape mode.</p>
+      {/* Connection Status */}
+      {!isConnected && (
+        <div className="absolute top-20 left-1/2 -translate-x-1/2 z-[9999] pointer-events-none">
+          <div className="bg-red-500/90 backdrop-blur-sm rounded-lg px-4 py-2 shadow-xl border border-white/20">
+            <div className="text-white font-bold text-sm">⚠️ Reconnecting...</div>
+          </div>
         </div>
       )}
 
-      {/* Background Ambience */}
-      <div className={`absolute inset-0 bg-[url('/assets/pool/bg_game.jpg')] bg-cover bg-center transition-colors duration-1000 ${isCritical ? 'contrast-125 saturate-150' : ''}`}></div>
-      {isCritical && <div className="absolute inset-0 bg-red-900/20 mix-blend-overlay pointer-events-none animate-pulse"></div>}
-
-      {/* HUD Layers */}
-      <PlayerGUI
-        name={myName}
-        score={0} // Speed mode score logic?
-        isTurn={isMyTurn}
-        align="left"
+      {/* Embed the 8 Ball Pro game engine */}
+      <PoolGameEngineEmbed
+        onStartSession={() => console.log('Game started')}
+        onEndSession={() => console.log('Game ended')}
+        onSaveScore={(score) => console.log('Score:', score)}
       />
-      <PlayerGUI
-        name={opponentName}
-        score={0}
-        isTurn={!isMyTurn}
-        align="right"
-      />
-
-      {/* Central Round Timer */}
-      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 flex items-center justify-center pointer-events-none">
-        <span className={`text-4xl font-black font-['Montserrat'] drop-shadow-[0_2px_4px_rgba(0,0,0,1)] ${isCritical ? 'text-red-500' : 'text-white'}`}>
-          {localTimer}
-        </span>
-      </div>
-
-      {/* Main Game Area */}
-      <div className="flex-1 relative p-0 flex items-center justify-center">
-        <PoolTable
-          balls={animatingBalls || gameState?.balls || {}}
-          angle={shotParams.angle}
-          setAngle={(a) => setShotParams(prev => ({ ...prev, angle: a }))}
-          power={shotParams.power}
-          setPower={(p) => setShotParams(prev => ({ ...prev, power: p }))}
-          spin={spin}
-          setSpin={setSpin}
-          isMyTurn={isMyTurn}
-          onTakeShot={handleTakeShot}
-          is3D={is3D}
-        />
-      </div>
-
     </div>
   );
 };

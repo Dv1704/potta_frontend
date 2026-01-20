@@ -25,6 +25,8 @@ const ReferEarnDashboard = React.lazy(() => import('./pages/ReferEarnDashboard')
 const GameDashboard = React.lazy(() => import('./pages/GameDashboard'));
 const MatchSummary = React.lazy(() => import('./pages/MatchSummary'));
 const PoolGameDemo = React.lazy(() => import('./pages/PoolGameDemo'));
+const PoolEngineTest = React.lazy(() => import('./pages/PoolEngineTest'));
+const GameEngineTest = React.lazy(() => import('./pages/GameEngineTest'));
 
 function AppContent() {
   const { loading } = useAuth();
@@ -139,6 +141,8 @@ function AppContent() {
           </ProtectedRoute>
         } />
         <Route path="/pool-ui-demo" element={<PoolGameDemo />} />
+        <Route path="/pool-engine-test" element={<PoolEngineTest />} />
+        <Route path="/game-test" element={<GameEngineTest />} />
       </Routes>
     </Suspense>
   );
