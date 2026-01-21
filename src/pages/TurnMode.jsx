@@ -20,7 +20,7 @@ const PlayerInfoOverlay = ({ player1, player2, myId, currentTurn, stake }) => {
           <div className="flex items-center gap-3">
             <div className={`w-3 h-3 rounded-full ${currentTurn === player1?.id ? 'bg-green-400 animate-pulse' : 'bg-gray-400'}`}></div>
             <div className="text-white font-bold text-sm">
-              {player1?.name || 'Player 1'} {isPlayer1Me && '(YOU)'}
+              {player1?.name || 'Player 1'} {player1?.id === myId && '(YOU)'}
             </div>
           </div>
         </div>
@@ -31,7 +31,7 @@ const PlayerInfoOverlay = ({ player1, player2, myId, currentTurn, stake }) => {
         <div className="bg-gradient-to-r from-orange-600/90 to-red-600/90 backdrop-blur-sm rounded-lg px-4 py-2 shadow-xl border border-white/20">
           <div className="flex items-center gap-3">
             <div className="text-white font-bold text-sm text-right">
-              {player2?.name || 'Player 2'} {!isPlayer1Me && '(YOU)'}
+              {player2?.name || 'Player 2'} {player2?.id === myId && '(YOU)'}
             </div>
             <div className={`w-3 h-3 rounded-full ${currentTurn === player2?.id ? 'bg-green-400 animate-pulse' : 'bg-gray-400'}`}></div>
           </div>
@@ -44,8 +44,8 @@ const PlayerInfoOverlay = ({ player1, player2, myId, currentTurn, stake }) => {
           <div className="bg-gradient-to-r from-yellow-600/90 to-amber-600/90 backdrop-blur-sm rounded-lg px-6 py-2 shadow-xl border border-white/20">
             <div className="text-center">
               <div className="text-yellow-100 text-xs font-semibold">STAKE</div>
-              <div className="text-white font-bold text-lg">₦{stake.toLocaleString()}</div>
-              <div className="text-yellow-200 text-xs">Winner takes: ₦{(stake * 1.9).toLocaleString()}</div>
+              <div className="text-white font-bold text-lg">GH₵{stake.toLocaleString()}</div>
+              <div className="text-yellow-200 text-xs">Winner takes: GH₵{(stake * 1.8).toLocaleString()}</div>
             </div>
           </div>
         </div>
@@ -70,7 +70,7 @@ const TurnMode = () => {
 
   // Game state
   const [gameState, setGameState] = useState(null);
-  const [isConnected, setIsConnected] = useState(false);
+  const [isConnected, setIsConnected] = useState(socket.connected);
 
   const userId = localStorage.getItem('userId');
 
@@ -83,6 +83,11 @@ const TurnMode = () => {
 
     connectSocket(userId);
 
+    if (socket.connected) {
+      setIsConnected(true);
+      socket.emit('joinGame', { gameId });
+    }
+
     socket.on('connect', () => {
       setIsConnected(true);
       socket.emit('joinGame', { gameId });
@@ -94,11 +99,17 @@ const TurnMode = () => {
 
     const handleGameState = (state) => {
       console.log('[TurnMode] Game state received:', state);
+      setIsConnected(true);
       setGameState(state);
 
       // Send state to game iframe if needed
       const iframe = document.querySelector('iframe');
       if (iframe && iframe.contentWindow) {
+        iframe.contentWindow.postMessage({
+          type: 'initUser',
+          userId: userId
+        }, '*');
+
         iframe.contentWindow.postMessage({
           type: 'gameStateUpdate',
           state: state
@@ -108,6 +119,7 @@ const TurnMode = () => {
 
     const handleShotResult = async (data) => {
       console.log('[TurnMode] Shot result:', data);
+      setIsConnected(true);
       const { gameState: newGameState, shooterId } = data;
       setGameState(newGameState);
 
@@ -203,7 +215,7 @@ const TurnMode = () => {
       />
 
       {/* Connection Status */}
-      {!isConnected && (
+      {!isConnected && !gameState && (
         <div className="absolute top-20 left-1/2 -translate-x-1/2 z-[9999] pointer-events-none">
           <div className="bg-red-500/90 backdrop-blur-sm rounded-lg px-4 py-2 shadow-xl border border-white/20">
             <div className="text-white font-bold text-sm">⚠️ Reconnecting...</div>
@@ -213,6 +225,7 @@ const TurnMode = () => {
 
       {/* Embed the 8 Ball Pro game engine */}
       <PoolGameEngineEmbed
+        mode="turn"
         onStartSession={() => console.log('Game started')}
         onEndSession={() => console.log('Game ended')}
         onSaveScore={(score) => console.log('Score:', score)}

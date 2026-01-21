@@ -46,8 +46,8 @@ const PlayerInfoOverlay = () => {
                 <div className="bg-gradient-to-r from-yellow-600/90 to-amber-600/90 backdrop-blur-sm rounded-lg px-6 py-2 shadow-xl border border-white/20">
                     <div className="text-center">
                         <div className="text-yellow-100 text-xs font-semibold">STAKE</div>
-                        <div className="text-white font-bold text-lg">₦1,000</div>
-                        <div className="text-yellow-200 text-xs">Winner takes: ₦1,900</div>
+                        <div className="text-white font-bold text-lg">GH₵1,000</div>
+                        <div className="text-yellow-200 text-xs">Winner takes: GH₵1,900</div>
                     </div>
                 </div>
             </div>

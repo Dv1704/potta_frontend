@@ -9,8 +9,6 @@ import PoolGameEngineEmbed from '../components/PoolGameEngineEmbed';
  * PlayerInfoOverlay - Shows player names and game stats on top of the game
  */
 const PlayerInfoOverlay = ({ player1, player2, myId, stake, timeRemaining }) => {
-  const isPlayer1Me = player1?.id === myId;
-
   return (
     <>
       {/* Player 1 Info - Top Left */}
@@ -19,7 +17,7 @@ const PlayerInfoOverlay = ({ player1, player2, myId, stake, timeRemaining }) => 
           <div className="flex items-center gap-3">
             <div className="w-3 h-3 rounded-full bg-green-400 animate-pulse"></div>
             <div className="text-white font-bold text-sm">
-              {player1?.name || 'Player 1'} {isPlayer1Me && '(YOU)'}
+              {player1?.name || 'Player 1'} {player1?.id === myId && '(YOU)'}
             </div>
           </div>
         </div>
@@ -30,7 +28,7 @@ const PlayerInfoOverlay = ({ player1, player2, myId, stake, timeRemaining }) => 
         <div className="bg-gradient-to-r from-orange-600/90 to-red-600/90 backdrop-blur-sm rounded-lg px-4 py-2 shadow-xl border border-white/20">
           <div className="flex items-center gap-3">
             <div className="text-white font-bold text-sm text-right">
-              {player2?.name || 'Player 2'} {!isPlayer1Me && '(YOU)'}
+              {player2?.name || 'Player 2'} {player2?.id === myId && '(YOU)'}
             </div>
             <div className="w-3 h-3 rounded-full bg-green-400 animate-pulse"></div>
           </div>
@@ -38,28 +36,32 @@ const PlayerInfoOverlay = ({ player1, player2, myId, stake, timeRemaining }) => 
       </div>
 
       {/* Stake Info - Top Center */}
-      {stake && (
-        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[9999] pointer-events-none">
-          <div className="bg-gradient-to-r from-yellow-600/90 to-amber-600/90 backdrop-blur-sm rounded-lg px-6 py-2 shadow-xl border border-white/20">
-            <div className="text-center">
-              <div className="text-yellow-100 text-xs font-semibold">STAKE</div>
-              <div className="text-white font-bold text-lg">₦{stake.toLocaleString()}</div>
-              <div className="text-yellow-200 text-xs">Winner takes: ₦{(stake * 1.9).toLocaleString()}</div>
+      {
+        stake && (
+          <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[9999] pointer-events-none">
+            <div className="bg-gradient-to-r from-yellow-600/90 to-amber-600/90 backdrop-blur-sm rounded-lg px-6 py-2 shadow-xl border border-white/20">
+              <div className="text-center">
+                <div className="text-yellow-100 text-xs font-semibold">STAKE</div>
+                <div className="text-white font-bold text-lg">GH₵{stake.toLocaleString()}</div>
+                <div className="text-yellow-200 text-xs">Winner takes: GH₵{(stake * 1.8).toLocaleString()}</div>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
       {/* Timer - Bottom Center (for Speed Mode) */}
-      {timeRemaining !== undefined && (
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-[9999] pointer-events-none">
-          <div className={`${timeRemaining < 10 ? 'bg-red-500/90 animate-pulse' : 'bg-blue-500/90'} backdrop-blur-sm rounded-full px-6 py-2 shadow-xl border border-white/30`}>
-            <div className="text-white font-bold text-sm">
-              ⏱️ {Math.max(0, timeRemaining)}s
+      {
+        timeRemaining !== undefined && (
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-[9999] pointer-events-none">
+            <div className={`${timeRemaining < 10 ? 'bg-red-500/90 animate-pulse' : 'bg-blue-500/90'} backdrop-blur-sm rounded-full px-6 py-2 shadow-xl border border-white/30`}>
+              <div className="text-white font-bold text-sm">
+                ⏱️ {Math.max(0, timeRemaining)}s
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      }
     </>
   );
 };
@@ -71,7 +73,7 @@ const SpeedArena = () => {
 
   // Game state
   const [gameState, setGameState] = useState(null);
-  const [isConnected, setIsConnected] = useState(false);
+  const [isConnected, setIsConnected] = useState(socket.connected);
   const [timeRemaining, setTimeRemaining] = useState(null);
 
   const userId = localStorage.getItem('userId');
@@ -85,6 +87,11 @@ const SpeedArena = () => {
 
     connectSocket(userId);
 
+    if (socket.connected) {
+      setIsConnected(true);
+      socket.emit('joinGame', { gameId });
+    }
+
     socket.on('connect', () => {
       setIsConnected(true);
       socket.emit('joinGame', { gameId });
@@ -96,6 +103,7 @@ const SpeedArena = () => {
 
     const handleGameState = (state) => {
       console.log('[SpeedArena] Game state received:', state);
+      setIsConnected(true);
       setGameState(state);
 
       // Update timer from gameState
@@ -107,6 +115,11 @@ const SpeedArena = () => {
       const iframe = document.querySelector('iframe');
       if (iframe && iframe.contentWindow) {
         iframe.contentWindow.postMessage({
+          type: 'initUser',
+          userId: userId
+        }, '*');
+
+        iframe.contentWindow.postMessage({
           type: 'gameStateUpdate',
           state: state
         }, '*');
@@ -115,6 +128,7 @@ const SpeedArena = () => {
 
     const handleShotResult = async (data) => {
       console.log('[SpeedArena] Shot result:', data);
+      setIsConnected(true);
       const { gameState: newGameState, shooterId } = data;
       setGameState(newGameState);
 
@@ -210,7 +224,7 @@ const SpeedArena = () => {
       />
 
       {/* Connection Status */}
-      {!isConnected && (
+      {!isConnected && !gameState && (
         <div className="absolute top-20 left-1/2 -translate-x-1/2 z-[9999] pointer-events-none">
           <div className="bg-red-500/90 backdrop-blur-sm rounded-lg px-4 py-2 shadow-xl border border-white/20">
             <div className="text-white font-bold text-sm">⚠️ Reconnecting...</div>
@@ -220,6 +234,7 @@ const SpeedArena = () => {
 
       {/* Embed the 8 Ball Pro game engine */}
       <PoolGameEngineEmbed
+        mode="speed"
         onStartSession={() => console.log('Game started')}
         onEndSession={() => console.log('Game ended')}
         onSaveScore={(score) => console.log('Score:', score)}

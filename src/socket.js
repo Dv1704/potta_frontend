@@ -12,6 +12,9 @@ export const socket = io(sanitizedUrl, {
 export const connectSocket = (userId) => {
     if (socket.connected) return;
 
+    console.log('[Socket] Connecting to:', sanitizedUrl);
+
+
     socket.io.opts.query = { userId };
     socket.connect();
 };

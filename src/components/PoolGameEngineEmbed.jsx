@@ -7,6 +7,7 @@ import React, { useEffect, useRef, useState } from 'react';
  * Preserves all original physics, UI, and functionality.
  */
 const PoolGameEngineEmbed = ({
+    mode = 'turn',
     onStartSession,
     onEndSession,
     onSaveScore,
@@ -86,7 +87,7 @@ const PoolGameEngineEmbed = ({
             )}
             <iframe
                 ref={iframeRef}
-                src="/game-engine/index.html"
+                src={`/game-engine/index.html?mode=${mode}`}
                 style={{
                     width: '100%',
                     height: '100%',

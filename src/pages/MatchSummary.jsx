@@ -89,7 +89,7 @@ const MatchSummary = () => {
             </p>
             {result === 'WIN' && (
               <p className="text-xl text-green-300 mt-2 font-bold">
-                +{currency || 'GHGHC '}{winnings.toLocaleString()}
+                +{currency || 'GH₵ '}{winnings.toLocaleString()}
               </p>
             )}
           </div>

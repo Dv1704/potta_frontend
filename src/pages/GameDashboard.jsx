@@ -193,7 +193,7 @@ export default function GameDashboard() {
             <div className="text-right">
               <p className="text-gray-500 text-xs font-bold uppercase tracking-widest mb-2">TOTAL BALANCE</p>
               <h2 className="text-5xl font-black tracking-tighter flex items-baseline gap-2">
-                <span className="text-gray-500 text-3xl font-bold">GHC</span>
+                <span className="text-gray-500 text-3xl font-bold">GH₵</span>
                 <span>{user.balance.toLocaleString()}</span>
               </h2>
             </div>
@@ -250,7 +250,7 @@ export default function GameDashboard() {
                   <div>
                     <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest mb-2">STAKE FROM</p>
                     <p className="text-2xl font-black flex items-center gap-1.5">
-                      <span className="text-blue-500 text-lg">GHC</span>
+                      <span className="text-blue-500 text-lg">GH₵</span>
                       <span>{game.minBet}</span>
                     </p>
                   </div>
@@ -282,7 +282,7 @@ export default function GameDashboard() {
                 <div className="bg-black/40 rounded-3xl p-8 border border-white/5 mb-8 text-center">
                   <p className="text-gray-500 text-[10px] font-black uppercase tracking-widest mb-2">STAKING AMOUNT</p>
                   <div className="flex items-center justify-center gap-2">
-                    <span className="text-3xl font-bold text-blue-500">GHC</span>
+                    <span className="text-3xl font-bold text-blue-500">GH₵</span>
                     <input
                       type="number"
                       value={betAmount}
@@ -315,7 +315,7 @@ export default function GameDashboard() {
                 <form onSubmit={handleDeposit} className="space-y-10">
                   <div className="relative group">
                     <input type="number" value={depositAmount} onChange={(e) => setDepositAmount(e.target.value)} className="w-full bg-black/40 p-8 rounded-3xl text-4xl font-black text-center border border-white/5 focus:border-blue-500/50 outline-none transition-all" placeholder="Min 10" required />
-                    <div className="absolute left-6 top-1/2 -translate-y-1/2 text-gray-700 font-black text-xl pointer-events-none group-focus-within:text-blue-500/30 transition-colors">GHC</div>
+                    <div className="absolute left-6 top-1/2 -translate-y-1/2 text-gray-700 font-black text-xl pointer-events-none group-focus-within:text-blue-500/30 transition-colors">GH₵</div>
                   </div>
                   <div className="flex gap-4">
                     <button type="button" onClick={() => setShowDepositModal(false)} className="flex-1 py-5 border border-white/10 rounded-2xl font-black uppercase tracking-widest hover:bg-white/5 transition-all">CLOSE</button>
