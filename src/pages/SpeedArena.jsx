@@ -51,17 +51,18 @@ const PlayerInfoOverlay = ({ player1, player2, myId, stake, timeRemaining }) => 
       }
 
       {/* Timer - Bottom Center (for Speed Mode) */}
-      {
-        timeRemaining !== undefined && (
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-[9999] pointer-events-none">
-            <div className={`${timeRemaining < 10 ? 'bg-red-500/90 animate-pulse' : 'bg-blue-500/90'} backdrop-blur-sm rounded-full px-6 py-2 shadow-xl border border-white/30`}>
-              <div className="text-white font-bold text-sm">
-                ⏱️ {Math.max(0, timeRemaining)}s
+      {timeRemaining !== undefined && (
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-[9999] pointer-events-none">
+          <div className="flex flex-col items-center gap-2">
+            <div className={`${timeRemaining < 10 ? 'bg-red-500/90 animate-pulse' : 'bg-blue-600/90'} backdrop-blur-sm rounded-lg px-4 py-1 shadow-lg border border-white/20 min-w-[80px] text-center`}>
+              <div className="text-white font-mono font-bold text-lg">
+                {Math.floor(timeRemaining / 60)}:{(timeRemaining % 60).toString().padStart(2, '0')}
               </div>
+              <div className="text-[10px] text-blue-100 font-bold uppercase tracking-wider">Time Left</div>
             </div>
           </div>
-        )
-      }
+        </div>
+      )}
     </>
   );
 };
@@ -165,6 +166,15 @@ const SpeedArena = () => {
 
     const handleError = (error) => {
       showToast(error.message || 'An error occurred', 'error');
+
+      // Notify game iframe to reset state if a shot was rejected
+      const iframe = document.querySelector('iframe');
+      if (iframe && iframe.contentWindow) {
+        iframe.contentWindow.postMessage({
+          type: 'error',
+          message: error.message
+        }, '*');
+      }
     };
 
     socket.on('gameState', handleGameState);
@@ -203,6 +213,17 @@ const SpeedArena = () => {
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
   }, [gameId, userId]);
+
+  // Local countdown timer effect
+  useEffect(() => {
+    if (timeRemaining === null || timeRemaining <= 0) return;
+
+    const timer = setInterval(() => {
+      setTimeRemaining(prev => (prev !== null && prev > 0) ? prev - 1 : 0);
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [timeRemaining]);
 
   if (!gameState) {
     return <LoadingSpinner text="Finding opponent..." />;

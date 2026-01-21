@@ -8,7 +8,7 @@ import PoolGameEngineEmbed from '../components/PoolGameEngineEmbed';
 /**
  * PlayerInfoOverlay - Shows player names and game stats on top of the game
  */
-const PlayerInfoOverlay = ({ player1, player2, myId, currentTurn, stake }) => {
+const PlayerInfoOverlay = ({ player1, player2, myId, currentTurn, stake, timeRemaining }) => {
   const isMyTurn = currentTurn === myId;
   const isPlayer1Me = player1?.id === myId;
 
@@ -51,11 +51,24 @@ const PlayerInfoOverlay = ({ player1, player2, myId, currentTurn, stake }) => {
         </div>
       )}
 
-      {/* Turn Indicator */}
-      {isMyTurn && (
+      {/* Turn Indicator & Timer */}
+      {currentTurn && (
         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-[9999] pointer-events-none">
-          <div className="bg-green-500/90 backdrop-blur-sm rounded-full px-6 py-2 shadow-xl border border-white/30 animate-pulse">
-            <div className="text-white font-bold text-sm">YOUR TURN</div>
+          <div className="flex flex-col items-center gap-2">
+            {isMyTurn && (
+              <div className="bg-green-500/90 backdrop-blur-sm rounded-full px-6 py-2 shadow-xl border border-white/30 animate-pulse">
+                <div className="text-white font-bold text-sm">YOUR TURN</div>
+              </div>
+            )}
+
+            {timeRemaining !== undefined && (
+              <div className={`${timeRemaining < 10 ? 'bg-red-500/90 animate-pulse' : 'bg-blue-600/90'} backdrop-blur-sm rounded-lg px-4 py-1 shadow-lg border border-white/20 min-w-[80px] text-center`}>
+                <div className="text-white font-mono font-bold text-lg">
+                  {Math.floor(timeRemaining / 60)}:{(timeRemaining % 60).toString().padStart(2, '0')}
+                </div>
+                <div className="text-[10px] text-blue-100 font-bold uppercase tracking-wider">Remaining</div>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -71,6 +84,7 @@ const TurnMode = () => {
   // Game state
   const [gameState, setGameState] = useState(null);
   const [isConnected, setIsConnected] = useState(socket.connected);
+  const [timeRemaining, setTimeRemaining] = useState(null);
 
   const userId = localStorage.getItem('userId');
 
@@ -101,6 +115,11 @@ const TurnMode = () => {
       console.log('[TurnMode] Game state received:', state);
       setIsConnected(true);
       setGameState(state);
+
+      // Update timer from gameState
+      if (state.timer !== undefined) {
+        setTimeRemaining(state.timer);
+      }
 
       // Send state to game iframe if needed
       const iframe = document.querySelector('iframe');
@@ -204,6 +223,17 @@ const TurnMode = () => {
     return () => window.removeEventListener('message', handleMessage);
   }, [gameId, userId]);
 
+  // Local countdown timer effect
+  useEffect(() => {
+    if (timeRemaining === null || timeRemaining <= 0) return;
+
+    const timer = setInterval(() => {
+      setTimeRemaining(prev => (prev !== null && prev > 0) ? prev - 1 : 0);
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [timeRemaining]);
+
   if (!gameState) {
     return <LoadingSpinner text="Connecting to match..." />;
   }
@@ -221,6 +251,7 @@ const TurnMode = () => {
         myId={userId}
         currentTurn={gameState.turn}
         stake={stake}
+        timeRemaining={timeRemaining}
       />
 
       {/* Connection Status */}
