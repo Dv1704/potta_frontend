@@ -182,6 +182,12 @@ function CGame() {
                     s_oTable.executeRemoteShot(event.data.data.vector);
                 }
             }
+            if (event.data.type === 'error') {
+                console.warn("[GameEngine] Shot rejected by server:", event.data.message);
+                if (s_oTable) {
+                    s_oTable.resetShotState();
+                }
+            }
         };
         window.addEventListener('message', this._oMessageListener);
     };

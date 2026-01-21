@@ -614,6 +614,16 @@ function CTable(oParentContainer, oCpuDifficultyParams) {
                 }
         };
 
+        /**
+         * Resets the shot state if the server rejected the shot.
+         */
+        this.resetShotState = function () {
+                _iState = STATE_TABLE_MOVE_STICK;
+                _bReadyForShot = true;
+                _oStick.setVisible(true);
+                _oCueBall.setCurForce(0, 0);
+        };
+
         this.startToShot = function () {
                 _oHandCueBallDrag.hide();
                 _iState = STATE_TABLE_MOVE_STICK;

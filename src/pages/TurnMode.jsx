@@ -156,6 +156,15 @@ const TurnMode = () => {
 
     const handleError = (error) => {
       showToast(error.message || 'An error occurred', 'error');
+
+      // Notify game iframe to reset state if a shot was rejected
+      const iframe = document.querySelector('iframe');
+      if (iframe && iframe.contentWindow) {
+        iframe.contentWindow.postMessage({
+          type: 'error',
+          message: error.message
+        }, '*');
+      }
     };
 
     socket.on('gameState', handleGameState);
