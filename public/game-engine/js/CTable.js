@@ -579,6 +579,15 @@ function CTable(oParentContainer, oCpuDifficultyParams) {
         };
 
         /**
+         * Sets visibility of the stick
+         */
+        this.setStickVisible = function (bVisible) {
+                if (_oStick) {
+                        _oStick.setVisible(bVisible);
+                }
+        };
+
+        /**
          * Updates ball positions based on server authoritative state
          */
         this.updateBallsFromServer = function (serverBalls) {

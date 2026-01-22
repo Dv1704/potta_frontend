@@ -174,6 +174,16 @@ function CGame() {
                 if (s_oTable && state && state.balls) {
                     s_oTable.updateBallsFromServer(state.balls);
                 }
+
+                if (typeof s_bIsMyTurn !== 'undefined') {
+                    if (s_bIsMyTurn) {
+                        s_oGame.showShotBar();
+                        if (s_oTable) s_oTable.setStickVisible(true);
+                    } else {
+                        s_oGame.hideShotBar();
+                        if (s_oTable) s_oTable.setStickVisible(false);
+                    }
+                }
             }
 
             if (event.data.type === 'opponentShot') {
@@ -249,17 +259,18 @@ function CGame() {
     };
 
     this._onMouseDownPowerBar = function () {
-
+        if (typeof s_bIsMyTurn !== 'undefined' && !s_bIsMyTurn) return;
         s_oTable.startToShot();
     };
 
     this._onPressMovePowerBar = function (iOffset) {
-
+        if (typeof s_bIsMyTurn !== 'undefined' && !s_bIsMyTurn) return;
 
         s_oTable.holdShotStickMovement(iOffset);
     };
 
     this._onPressUpPowerBar = function () {
+        if (typeof s_bIsMyTurn !== 'undefined' && !s_bIsMyTurn) return;
 
         if (s_oTable.startStickAnimation()) {
             _oShotPowerBar.setInput(false);
@@ -535,6 +546,8 @@ function CGame() {
         if (!_bHoldStickCommand) {
             return;
         }
+
+        if (typeof s_bIsMyTurn !== 'undefined' && !s_bIsMyTurn) return;
 
         _oTable.rotateStick(_iDirStickCommand * _iDirStickSpeedCommand);
         _iDirStickSpeedCommand += COMMAND_STICK_SPEED_INCREMENT;

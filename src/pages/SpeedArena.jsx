@@ -250,14 +250,16 @@ const SpeedArena = () => {
   // Local countdown timer effect
   useEffect(() => {
     if (!isGameStarted) return;
-    if (timeRemaining === null || timeRemaining <= 0) return;
 
     const timer = setInterval(() => {
-      setTimeRemaining(prev => (prev !== null && prev > 0) ? prev - 1 : 0);
+      setTimeRemaining(prev => {
+        if (prev === null || prev <= 0) return 0;
+        return prev - 1;
+      });
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [timeRemaining]);
+  }, [isGameStarted]);
 
   if (!gameState) {
     return <LoadingSpinner text="Finding opponent..." />;
