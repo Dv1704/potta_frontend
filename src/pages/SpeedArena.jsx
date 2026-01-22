@@ -76,6 +76,7 @@ const SpeedArena = () => {
   const [gameState, setGameState] = useState(null);
   const [isConnected, setIsConnected] = useState(socket.connected);
   const [timeRemaining, setTimeRemaining] = useState(null);
+  const [isGameStarted, setIsGameStarted] = useState(false);
 
   const userId = localStorage.getItem('userId');
 
@@ -91,11 +92,14 @@ const SpeedArena = () => {
     if (socket.connected) {
       setIsConnected(true);
       socket.emit('joinGame', { gameId });
+      // Signal we are ready. If both are ready, game starts.
+      socket.emit('playerReady', { gameId, userId });
     }
 
     socket.on('connect', () => {
       setIsConnected(true);
       socket.emit('joinGame', { gameId });
+      socket.emit('playerReady', { gameId, userId });
     });
 
     socket.on('disconnect', () => {
@@ -110,6 +114,10 @@ const SpeedArena = () => {
       // Update timer from gameState
       if (state.timer !== undefined) {
         setTimeRemaining(state.timer);
+      }
+
+      if (state.isGameStarted) {
+        setIsGameStarted(true);
       }
 
       // Send state to game iframe if needed
@@ -164,6 +172,23 @@ const SpeedArena = () => {
       setTimeout(() => navigate('/dashboard'), 3000);
     };
 
+    const handleStartMatch = (data) => {
+      console.log('[SpeedArena] Match Started!', data);
+      setIsGameStarted(true);
+      setGameState(data.gameState);
+      setTimeRemaining(data.gameState.timer);
+      showToast('Start!', 'success');
+
+      // Notify iframe
+      const iframe = document.querySelector('iframe');
+      if (iframe && iframe.contentWindow) {
+        iframe.contentWindow.postMessage({
+          type: 'matchStart',
+          state: data.gameState
+        }, '*');
+      }
+    };
+
     const handleError = (error) => {
       showToast(error.message || 'An error occurred', 'error');
 
@@ -178,6 +203,7 @@ const SpeedArena = () => {
     };
 
     socket.on('gameState', handleGameState);
+    socket.on('startMatch', handleStartMatch);
     socket.on('shotResult', handleShotResult);
     socket.on('opponentShotStart', handleOpponentShotStart);
     socket.on('gameEnded', handleGameEnded);
@@ -189,6 +215,7 @@ const SpeedArena = () => {
       socket.off('connect');
       socket.off('disconnect');
       socket.off('gameState');
+      socket.off('startMatch');
       socket.off('shotResult');
       socket.off('opponentShotStart');
       socket.off('gameEnded');
@@ -201,6 +228,12 @@ const SpeedArena = () => {
     const handleMessage = (event) => {
       if (event.data.type === 'takeShot') {
         // Player took a shot in the game, send to server
+        // GATE: Only allow if it's my turn
+        if (gameState && gameState.turn !== userId) {
+          console.warn('[SpeedArena] Blocked shot: Not my turn');
+          return;
+        }
+
         console.log('[SpeedArena] Sending shot to server:', event.data);
         socket.emit('takeShot', {
           gameId,
@@ -216,6 +249,7 @@ const SpeedArena = () => {
 
   // Local countdown timer effect
   useEffect(() => {
+    if (!isGameStarted) return;
     if (timeRemaining === null || timeRemaining <= 0) return;
 
     const timer = setInterval(() => {
@@ -260,6 +294,16 @@ const SpeedArena = () => {
         onEndSession={() => console.log('Game ended')}
         onSaveScore={(score) => console.log('Score:', score)}
       />
+
+      {/* Waiting Overlay */}
+      {!isGameStarted && gameState && (
+        <div className="absolute inset-0 z-[10000] flex items-center justify-center bg-black/80 backdrop-blur-sm">
+          <div className="text-center">
+            <div className="text-4xl font-bold text-white mb-4 animate-bounce">Waiting for opponent...</div>
+            <div className="text-white/60">Game starts when both players connect.</div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
