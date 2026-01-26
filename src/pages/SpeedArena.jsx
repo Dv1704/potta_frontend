@@ -23,8 +23,8 @@ const PlayerInfoOverlay = ({ player1, player2, myId, stake, timeRemaining }) => 
         </div>
       </div>
 
-      {/* Player 2 Info - Top Right */}
-      <div className="absolute top-4 right-4 z-[9999] pointer-events-none">
+      {/* Player 2 Info - Top Right - Moved down to avoid overlapping game menu */}
+      <div className="absolute top-24 right-4 z-[9999] pointer-events-none">
         <div className="bg-gradient-to-r from-orange-600/90 to-red-600/90 backdrop-blur-sm rounded-lg px-4 py-2 shadow-xl border border-white/20">
           <div className="flex items-center gap-3">
             <div className="text-white font-bold text-sm text-right">
@@ -76,7 +76,9 @@ const SpeedArena = () => {
   const [gameState, setGameState] = useState(null);
   const [isConnected, setIsConnected] = useState(socket.connected);
   const [timeRemaining, setTimeRemaining] = useState(null);
+  const [timeRemaining, setTimeRemaining] = useState(null);
   const [isGameStarted, setIsGameStarted] = useState(false);
+  const [hasFirstShotTaken, setHasFirstShotTaken] = useState(false);
 
   const userId = localStorage.getItem('userId');
 
@@ -132,6 +134,19 @@ const SpeedArena = () => {
           type: 'gameStateUpdate',
           state: state
         }, '*');
+        iframe.contentWindow.postMessage({
+          type: 'gameStateUpdate',
+          state: state
+        }, '*');
+
+        // Send player names to game engine
+        if (state.players && state.players.length >= 2) {
+          iframe.contentWindow.postMessage({
+            type: 'updatePlayerNames',
+            player1Name: state.players[0].name,
+            player2Name: state.players[1].name
+          }, '*');
+        }
       }
     };
 
@@ -153,6 +168,8 @@ const SpeedArena = () => {
       if (shooterId !== userId) {
         showToast('Opponent scored!', 'info');
       }
+      // Start timer on any shot if not already started
+      setHasFirstShotTaken(true);
     };
 
     const handleOpponentShotStart = (data) => {
@@ -240,6 +257,8 @@ const SpeedArena = () => {
           userId,
           ...event.data.shot
         });
+        // Start timer on my shot
+        setHasFirstShotTaken(true);
       }
     };
 
@@ -249,7 +268,8 @@ const SpeedArena = () => {
 
   // Local countdown timer effect
   useEffect(() => {
-    if (!isGameStarted) return;
+    // Only run timer if game started AND first shot taken
+    if (!isGameStarted || !hasFirstShotTaken) return;
 
     const timer = setInterval(() => {
       setTimeRemaining(prev => {
@@ -259,7 +279,7 @@ const SpeedArena = () => {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [isGameStarted]);
+  }, [isGameStarted, hasFirstShotTaken]);
 
   if (!gameState) {
     return <LoadingSpinner text="Finding opponent..." />;

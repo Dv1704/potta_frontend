@@ -1,5 +1,6 @@
 function CGame() {
     var _bUpdate = false;
+    var _bGameReady = false;
 
     var _bSuitAssigned;
     var _iCurTurn;                //Current Turn in game 
@@ -35,9 +36,13 @@ function CGame() {
         _bSuitAssigned = false;
         _bHoldStickCommand = false;
         _iDirStickCommand = 1;
-        _iDirStickSpeedCommand = COMMAND_STICK_START_SPEED;
 
-        _iScore = 0;
+        // Default ready for CPU mode, wait for match start in multiplayer
+        if (s_iPlayerMode === GAME_MODE_CPU) {
+            _bGameReady = true;
+        } else {
+            _bGameReady = false;
+        }
 
         switch (s_iGameMode) {
             case GAME_MODE_NINE: {
@@ -207,6 +212,13 @@ function CGame() {
                     s_oTable.resetShotState();
                 }
             }
+            if (event.data.type === 'matchStart') {
+                _bGameReady = true;
+            }
+            if (event.data.type === 'updatePlayerNames') {
+                if (_oPlayer1) _oPlayer1.setPlayerName(event.data.player1Name);
+                if (_oPlayer2) _oPlayer2.setPlayerName(event.data.player2Name);
+            }
         };
         window.addEventListener('message', this._oMessageListener);
     };
@@ -268,17 +280,20 @@ function CGame() {
     };
 
     this._onMouseDownPowerBar = function () {
+        if (!_bGameReady) return;
         if (typeof s_bIsMyTurn !== 'undefined' && !s_bIsMyTurn) return;
         s_oTable.startToShot();
     };
 
     this._onPressMovePowerBar = function (iOffset) {
+        if (!_bGameReady) return;
         if (typeof s_bIsMyTurn !== 'undefined' && !s_bIsMyTurn) return;
 
         s_oTable.holdShotStickMovement(iOffset);
     };
 
     this._onPressUpPowerBar = function () {
+        if (!_bGameReady) return;
         if (typeof s_bIsMyTurn !== 'undefined' && !s_bIsMyTurn) return;
 
         if (s_oTable.startStickAnimation()) {
