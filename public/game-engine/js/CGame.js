@@ -201,9 +201,9 @@ function CGame() {
             }
 
             if (event.data.type === 'opponentShot') {
-                if (s_oTable && event.data.data && event.data.data.vector) {
-                    console.log("[GameEngine] Executing remote shot...");
-                    s_oTable.executeRemoteShot(event.data.data.vector);
+                if (s_oTable && event.data.data) {
+                    console.log("[GameEngine] Executing remote shot...", event.data.data);
+                    s_oTable.executeRemoteShot(event.data.data);
                 }
             }
             if (event.data.type === 'error') {

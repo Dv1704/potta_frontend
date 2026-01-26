@@ -1625,6 +1625,59 @@ function CTable(oParentContainer, oCpuDifficultyParams) {
                 _oStick.setVisible(bValue);
         };
 
+        this.executeRemoteShot = function (oData) {
+                console.log("executeRemoteShot", oData);
+
+                // Convert angle to vector
+                // The game uses: fAngle = radiantsToDegrees(Math.atan2(_vStickDirection.getY(), _vStickDirection.getX()));
+                // So we reverse it:
+                var fAngleRad = toRadian(oData.angle);
+                _vStickDirection.set(Math.cos(fAngleRad), Math.sin(fAngleRad));
+
+                _iPowerShot = oData.power;
+
+                if (oData.sideSpin !== undefined) s_oInterface.setSideSpin(oData.sideSpin);
+                if (oData.backSpin !== undefined) s_oInterface.setBackSpin(oData.backSpin);
+
+                // Hide shot bar as if player took the shot
+                s_oGame.hideShotBar();
+
+                // Audio
+                var fVolume = linearFunction(
+                        _iPowerShot,
+                        MIN_POWER_SHOT, MAX_POWER_SHOT,
+                        0.3, 1
+                );
+                playSound("stick_shot", fVolume, false);
+
+                _iTimeAnimStick = 0;
+                _bReadyForShot = false;
+                _iPowerShot *= 0.2; // Scaling factor used in updateStick
+
+                _vStickDirection.scalarProduct(_iPowerShot);
+
+                _oCueBall.addForce(_vStickDirection);
+                _vStickDirection.normalize();
+
+                // Apply spin
+                var fFactor = 0.5;
+                var fSideSpinForce = s_oInterface.getSideSpin() * (fFactor * Math.sign(_vStickDirection.getX()));
+                var fBackSpinForce = s_oInterface.getBackSpin() * (fFactor * Math.sign(_vStickDirection.getY()));
+
+                var fSideSpinNorm = fSideSpinForce + (fBackSpinForce * _vStickDirection.getX());
+                var fBackSpinNorm = fBackSpinForce - fSideSpinNorm * Math.sign(_vStickDirection.getX());
+
+                _oCueBall.setEffectForceX(-fSideSpinNorm);
+                _oCueBall.setEffectForceY(-fBackSpinNorm);
+
+                var vEffectForce = _oCueBall.getEffectForceVector();
+                vEffectForce.add(_vStickDirection);
+
+                // Hide stick and set state
+                _oStick.setVisible(false);
+                _iState = STATE_TABLE_SHOOTING;
+        };
+
         this._assignSuit = function () {
                 var bSuitToAssigned = ((_aBallsToPotPlayers[0] === 7) && (_aBallsToPotPlayers[1] === 7));
                 if (bSuitToAssigned) {
