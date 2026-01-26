@@ -76,7 +76,7 @@ const SpeedArena = () => {
   const [gameState, setGameState] = useState(null);
   const [isConnected, setIsConnected] = useState(socket.connected);
   const [timeRemaining, setTimeRemaining] = useState(null);
-  const [timeRemaining, setTimeRemaining] = useState(null);
+
   const [isGameStarted, setIsGameStarted] = useState(false);
   const [hasFirstShotTaken, setHasFirstShotTaken] = useState(false);
 
