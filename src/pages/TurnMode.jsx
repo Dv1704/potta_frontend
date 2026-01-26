@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { socket, connectSocket } from '../socket';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -8,7 +8,7 @@ import PoolGameEngineEmbed from '../components/PoolGameEngineEmbed';
 /**
  * PlayerInfoOverlay - Shows player names and game stats on top of the game
  */
-const PlayerInfoOverlay = ({ player1, player2, myId, currentTurn, stake, timeRemaining }) => {
+const PlayerInfoOverlay = ({ player1, player2, myId, currentTurn, stake, timeRemaining, canTakeShot, isAnimating }) => {
   const isMyTurn = currentTurn === myId;
   const isPlayer1Me = player1?.id === myId;
 
@@ -56,8 +56,10 @@ const PlayerInfoOverlay = ({ player1, player2, myId, currentTurn, stake, timeRem
         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-[9999] pointer-events-none">
           <div className="flex flex-col items-center gap-2">
             {isMyTurn && (
-              <div className="bg-green-500/90 backdrop-blur-sm rounded-full px-6 py-2 shadow-xl border border-white/30 animate-pulse">
-                <div className="text-white font-bold text-sm">YOUR TURN</div>
+              <div className={`${isAnimating ? 'bg-yellow-500/90' : canTakeShot ? 'bg-green-500/90' : 'bg-gray-500/90'} backdrop-blur-sm rounded-full px-6 py-2 shadow-xl border border-white/30 ${canTakeShot ? 'animate-pulse' : ''}`}>
+                <div className="text-white font-bold text-sm">
+                  {isAnimating ? '⏳ ANIMATING...' : canTakeShot ? 'YOUR TURN' : 'WAIT...'}
+                </div>
               </div>
             )}
 
@@ -86,7 +88,17 @@ const TurnMode = () => {
   const [isConnected, setIsConnected] = useState(socket.connected);
   const [timeRemaining, setTimeRemaining] = useState(null);
 
+  // Animation lock state (CRITICAL FIX for turn synchronization)
+  const [isEngineAnimating, setIsEngineAnimating] = useState(false);
+  const [pendingTurnUpdate, setPendingTurnUpdate] = useState(null);
+
   const userId = localStorage.getItem('userId');
+
+  // Computed: who can actually take a shot (blocks during animation)
+  const canTakeShot = useMemo(() => {
+    if (!gameState || isEngineAnimating) return false;  // Block if animating
+    return gameState.turn === userId;
+  }, [gameState, isEngineAnimating, userId]);
 
   // Socket connection and event handlers
   useEffect(() => {
@@ -137,12 +149,18 @@ const TurnMode = () => {
     };
 
     const handleShotResult = async (data) => {
-      console.log('[TurnMode] Shot result:', data);
+      console.log('[TurnMode] Shot result received:', data);
       setIsConnected(true);
       const { gameState: newGameState, shooterId } = data;
-      setGameState(newGameState);
 
-      // Notify game iframe
+      // 1. CRITICAL: Lock input IMMEDIATELY to prevent out-of-turn shots
+      console.log('[TurnMode] Locking input for animation');
+      setIsEngineAnimating(true);
+
+      // 2. Store pending turn update (don't apply until animation completes)
+      setPendingTurnUpdate(newGameState);
+
+      // 3. Send to game engine (starts animation)
       const iframe = document.querySelector('iframe');
       if (iframe && iframe.contentWindow) {
         iframe.contentWindow.postMessage({
@@ -150,6 +168,9 @@ const TurnMode = () => {
           data: data
         }, '*');
       }
+
+      // 4. Wait for animation complete (from iframe)
+      // The animationComplete handler will unlock input and apply turn update
 
       if (shooterId !== userId) {
         showToast('Opponent took their shot', 'info');
@@ -209,6 +230,18 @@ const TurnMode = () => {
   useEffect(() => {
     const handleMessage = (event) => {
       if (event.data.type === 'takeShot') {
+        // CRITICAL: Only allow shot if canTakeShot is true
+        if (!canTakeShot) {
+          console.warn('[TurnMode] Blocked shot - not your turn or animating');
+          console.warn('[TurnMode] State:', {
+            isEngineAnimating,
+            currentTurn: gameState?.turn,
+            userId,
+            canTakeShot
+          });
+          return;
+        }
+
         // Player took a shot in the game, send to server
         console.log('[TurnMode] Sending shot to server:', event.data);
         socket.emit('takeShot', {
@@ -217,11 +250,26 @@ const TurnMode = () => {
           ...event.data.shot
         });
       }
+
+      // CRITICAL: Handle animation complete from game engine
+      if (event.data.type === 'animationComplete') {
+        console.log('[TurnMode] Animation complete, unlocking input');
+
+        // Unlock input
+        setIsEngineAnimating(false);
+
+        // Apply pending turn update NOW (after animation finished)
+        if (pendingTurnUpdate) {
+          console.log('[TurnMode] Applying pending turn update:', pendingTurnUpdate);
+          setGameState(pendingTurnUpdate);
+          setPendingTurnUpdate(null);
+        }
+      }
     };
 
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
-  }, [gameId, userId]);
+  }, [gameId, userId, canTakeShot, pendingTurnUpdate, isEngineAnimating, gameState]);
 
   // Local countdown timer effect
   useEffect(() => {
@@ -252,6 +300,8 @@ const TurnMode = () => {
         currentTurn={gameState.turn}
         stake={stake}
         timeRemaining={timeRemaining}
+        canTakeShot={canTakeShot}
+        isAnimating={isEngineAnimating}
       />
 
       {/* Connection Status */}

@@ -173,6 +173,15 @@ function CGame() {
 
                 if (s_oTable && state && state.balls) {
                     s_oTable.updateBallsFromServer(state.balls);
+
+                    // CRITICAL FIX: Notify React that animation is complete
+                    // This allows React to unlock input and apply pending turn updates
+                    setTimeout(function () {
+                        window.parent.postMessage({
+                            type: 'animationComplete'
+                        }, '*');
+                        console.log("[GameEngine] Animation complete, notifying React");
+                    }, 50); // Small delay to ensure balls are rendered
                 }
 
                 if (typeof s_bIsMyTurn !== 'undefined') {
