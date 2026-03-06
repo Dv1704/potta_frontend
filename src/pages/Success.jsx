@@ -64,12 +64,11 @@ const Success = () => {
           const profile = await profileRes.json();
           const wallet = await walletRes.json();
           const stats = await statsRes.json();
-          const historyData = await historyRes.json();
 
           setUserData({
             username: profile.name || profile.email.split('@')[0],
             wallet: wallet.available,
-            currency: 'GHC',
+            currency: 'GHS',
             role: profile.role
           });
 
@@ -80,7 +79,10 @@ const Success = () => {
             streak: stats.streak
           });
 
-          setHistory(historyData);
+          if (historyRes.ok) {
+            const historyData = await historyRes.json();
+            setHistory(Array.isArray(historyData) ? historyData : []);
+          }
         }
       } catch (error) {
         console.error('Failed to fetch user data:', error);
@@ -184,17 +186,17 @@ const Success = () => {
             {history.slice(0, 5).map((item, idx) => (
               <div key={idx} className="flex items-center justify-between p-4 bg-black/40 rounded-2xl border border-white/5">
                 <div className="flex items-center gap-4">
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center ${item.type === 'PAYOUT' || item.type === 'DEPOSIT' ? 'bg-emerald-500/20 text-emerald-500' : 'bg-red-500/20 text-red-500'
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center ${item.amount > 0 ? 'bg-emerald-500/20 text-emerald-500' : 'bg-red-500/20 text-red-500'
                     }`}>
-                    {item.type === 'PAYOUT' ? '🏆' : '💰'}
+                    {item.type === 'PAYOUT' ? '🏆' : item.type === 'DEPOSIT' ? '💰' : item.type === 'WITHDRAWAL' ? '💸' : '🔒'}
                   </div>
                   <div>
-                    <p className="font-black text-sm uppercase">{item.type}</p>
+                    <p className="font-black text-sm uppercase">{item.description || item.type}</p>
                     <p className="text-[10px] text-gray-500 lowercase font-mono">{new Date(item.createdAt).toDateString()}</p>
                   </div>
                 </div>
-                <p className={`font-black ${item.type === 'PAYOUT' || item.type === 'DEPOSIT' ? 'text-emerald-400' : 'text-red-400'}`}>
-                  {item.type === 'PAYOUT' || item.type === 'DEPOSIT' ? '+' : '-'}{userData.currency} {Math.abs(item.amount).toLocaleString()}
+                <p className={`font-black ${item.amount > 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                  {item.amount > 0 ? '+' : ''}{userData.currency} {Math.abs(item.amount).toLocaleString()}
                 </p>
               </div>
             ))}

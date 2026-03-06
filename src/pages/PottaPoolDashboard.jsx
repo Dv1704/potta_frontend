@@ -786,7 +786,7 @@ export default function PottaPoolDashboard() {
                     <div className="text-right">
                       <p className={`font-bold text-lg ${tx.amount > 0 ? 'text-green-400' : 'text-red-400'
                         }`}>
-                        {tx.amount > 0 ? '+' : ''}{currencySymbols[selectedCurrency]}{(Math.abs(tx.amount) * exchangeRates[selectedCurrency]).toLocaleString()}
+                        {tx.amount > 0 ? '+' : ''}{currencySymbols[selectedCurrency]}{(Math.abs(tx.amount) * (exchangeRates[selectedCurrency] / exchangeRates.GHS)).toLocaleString()}
                       </p>
                     </div>
                   </div>
