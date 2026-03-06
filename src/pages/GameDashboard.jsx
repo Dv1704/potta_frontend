@@ -120,6 +120,7 @@ export default function GameDashboard() {
       const res = await api.post('/payments/deposit/initialize', {
         amount: parseFloat(depositAmount),
         currency: 'GHS',
+        email: user.username + '@example.com', // Placeholder if email not in state, but ideally should be from profile
         callbackUrl: window.location.href
       }, token);
 

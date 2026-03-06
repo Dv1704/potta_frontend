@@ -182,11 +182,11 @@ export default function PottaPoolDashboard() {
 
   const paymentMethods = {
     deposit: [
-      { id: 'paystack', name: 'Paystack (Card/MoMo)', icon: 'CreditCard', color: 'from-blue-500 to-emerald-500', fee: '1.5% + GHC 0.1' },
+      { id: 'korapay', name: 'Korapay (Card/MoMo)', icon: 'CreditCard', color: 'from-blue-500 to-emerald-500', fee: '1.5% + GHC 0.1' },
       { id: 'mobile', name: 'Direct Mobile Money', icon: 'Smartphone', color: 'from-green-500 to-emerald-500', fee: '1%' }
     ],
     withdraw: [
-      { id: 'paystack_transfer', name: 'Bank/MoMo Transfer', icon: 'Building2', color: 'from-purple-500 to-pink-500', fee: 'GHC 1.00', time: 'Instant' },
+      { id: 'kora_transfer', name: 'Bank/MoMo Transfer', icon: 'Building2', color: 'from-purple-500 to-pink-500', fee: 'GHC 1.00', time: 'Instant' },
     ],
     transfer: [
       { id: 'username', name: 'Player Username', icon: 'Users', color: 'from-orange-500 to-red-500', fee: 'Free' },
@@ -495,8 +495,8 @@ export default function PottaPoolDashboard() {
                   >
                     <option value="">Select Option</option>
                     <option value="MTN">MTN Mobile Money</option>
-                    <option value="VOD">Vodafone Cash</option>
-                    <option value="AIR">AirtelTigo Money</option>
+                    <option value="VODAFONE">Vodafone Cash</option>
+                    <option value="AIRTELTIGO">AirtelTigo Money</option>
                     <option value="GCB">GCB Bank</option>
                     <option value="CBG">CBG Bank</option>
                   </select>
