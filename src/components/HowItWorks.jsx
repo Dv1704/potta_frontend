@@ -18,7 +18,7 @@ const steps = [
   {
     icon: <FaMoneyBillWave className="text-5xl" />,
     title: "Deposit Funds",
-    desc: "Fund your wallet safely and stake in skill-based competitions.",
+    desc: "Fund your wallet safely and enter skill-based competitions.",
     color: "green",
     gradient: "from-green-500 to-emerald-500",
     bgGradient: "from-green-500/20 to-emerald-500/20",

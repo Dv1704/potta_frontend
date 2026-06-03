@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { Mail, Phone, Facebook, Twitter, Instagram, Send, CheckCircle2, Zap } from 'lucide-react';
+import LegalModal from './LegalModal';
 
 const Footer = () => {
+  const [legalType, setLegalType] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -55,7 +57,7 @@ const Footer = () => {
               </h2>
             </div>
             <p className="text-gray-400 leading-relaxed">
-              Not just a Game, A Hustle. Compete, stake, and show your skills in 8-ball pool.
+              Not Just a Game, a Hustle.
             </p>
             <div className="pt-4">
               <p className="text-sm text-gray-500 mb-2">Join the community</p>
@@ -205,12 +207,13 @@ const Footer = () => {
             &copy; {new Date().getFullYear()} <span className="text-white font-semibold">POTTA</span>. All rights reserved.
           </p>
           <div className="flex gap-6">
-            <a href="#" className="hover:text-purple-400 transition-colors">Privacy Policy</a>
-            <a href="#" className="hover:text-purple-400 transition-colors">Terms of Service</a>
-            <a href="#" className="hover:text-purple-400 transition-colors">Fair Play</a>
+            <button onClick={() => setLegalType('privacy')} className="hover:text-purple-400 transition-colors cursor-pointer bg-transparent border-none outline-none">Privacy Policy</button>
+            <button onClick={() => setLegalType('terms')} className="hover:text-purple-400 transition-colors cursor-pointer bg-transparent border-none outline-none">Terms of Service</button>
+            <button onClick={() => setLegalType('fairplay')} className="hover:text-purple-400 transition-colors cursor-pointer bg-transparent border-none outline-none">Fair Play</button>
           </div>
         </div>
       </div>
+      <LegalModal isOpen={legalType !== null} onClose={() => setLegalType(null)} type={legalType} />
     </footer>
   );
 };

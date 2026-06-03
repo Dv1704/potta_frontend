@@ -7,6 +7,7 @@ import ErrorBoundary from './components/ErrorBoundary';
 import { ToastProvider } from './context/ToastContext';
 import { useAuth } from './context/AuthContext';
 import DashboardLayout from './components/DashboardLayout';
+import CookieBanner from './components/CookieBanner';
 
 // Lazy Load Pages
 const Home = React.lazy(() => import('./pages/Home'));
@@ -144,6 +145,7 @@ function AppContent() {
         <Route path="/pool-engine-test" element={<PoolEngineTest />} />
         <Route path="/game-test" element={<GameEngineTest />} />
       </Routes>
+      <CookieBanner />
     </Suspense>
   );
 }

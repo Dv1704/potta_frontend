@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BarChart3, Users, Wallet, TrendingUp, Settings, Bell, Search, Menu, X, DollarSign, ArrowUpRight, ArrowDownRight, CreditCard, Eye, EyeOff, Download, Filter, MoreVertical, Shield, Activity, PieChart, LogOut, RefreshCw } from 'lucide-react';
+import { BarChart3, Users, Wallet, TrendingUp, Settings, Bell, Search, Menu, X, DollarSign, ArrowUpRight, ArrowDownRight, CreditCard, Eye, EyeOff, Shield, Activity, PieChart, LogOut, RefreshCw } from 'lucide-react';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { useToast } from '../context/ToastContext';
 
@@ -11,55 +11,139 @@ export default function AdminDashboard() {
   const [balanceVisible, setBalanceVisible] = useState(true);
   const [selectedCurrency, setSelectedCurrency] = useState('GHS');
   const [loading, setLoading] = useState(true);
+  const [users, setUsers] = useState([]);
+  const [fraudAlerts, setFraudAlerts] = useState([]);
   const [dashboardData, setDashboardData] = useState({
-    stats: { totalUsers: 0, totalWallets: 0, transactionVolume: 0, activeSessions: 0 },
+    stats: { 
+      totalUsers: 0, 
+      totalWallets: 0, 
+      transactionVolume: 0, 
+      activeSessions: 0,
+      totalSystemRevenue: 0,
+      totalCreatorPayouts: 0,
+      activeRooms: 0,
+      openFraudAlertsCount: 0
+    },
     recentTransactions: [],
     topUsers: [],
     platformBalance: 0,
-    monthlySummary: { totalDeposits: 0, totalWithdrawals: 0, netGrowth: 0 }
+    monthlySummary: { totalDeposits: 0, totalWithdrawals: 0, netGrowth: 0 },
+    retentionMetrics: { dau: 0, wau: 0, mau: 0, stickiness: 0 },
+    topCreators: []
   });
   const [currencies, setCurrencies] = useState([
     { code: 'GHS', symbol: 'GHC ', rate: 1, name: 'Ghanaian Cedi' },
     { code: 'USD', symbol: '$', rate: 0.062, name: 'US Dollar' },
   ]);
 
+  const fetchDashboardData = async () => {
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+      const token = localStorage.getItem('token');
+
+      // Fetch dashboard data
+      const dashResponse = await fetch(`${apiUrl}/admin/dashboard`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const dashData = await dashResponse.json();
+      if (dashResponse.ok) {
+        setDashboardData(dashData);
+      }
+
+      // Fetch live currency rates
+      if (token) {
+        const ratesResponse = await fetch(`${apiUrl}/wallet/rates`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const ratesData = await ratesResponse.json();
+        if (ratesResponse.ok) {
+          const liveCurrencies = [
+            { code: 'GHS', symbol: 'GHC ', rate: ratesData.GHS || 1, name: 'Ghanaian Cedi' },
+            { code: 'USD', symbol: '$', rate: ratesData.USD || 0.062, name: 'US Dollar' },
+          ];
+          setCurrencies(liveCurrencies);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to fetch dashboard:', err);
+      showToast('Failed to load dashboard data', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchDashboard = async () => {
+    fetchDashboardData();
+  }, [showToast]);
+
+  useEffect(() => {
+    // Fetch users when user management section is active
+    const fetchUsers = async () => {
+      if (activeSection !== 'users') return;
       try {
         const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
         const token = localStorage.getItem('token');
-
-        // Fetch dashboard data
-        const dashResponse = await fetch(`${apiUrl}/admin/dashboard`);
-        const dashData = await dashResponse.json();
-        if (dashResponse.ok) {
-          setDashboardData(dashData);
-        }
-
-        // Fetch live currency rates
-        if (token) {
-          const ratesResponse = await fetch(`${apiUrl}/wallet/rates`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-          });
-          const ratesData = await ratesResponse.json();
-          if (ratesResponse.ok) {
-            // Convert to currency format, only keep GHS and USD
-            const liveCurrencies = [
-              { code: 'GHS', symbol: 'GHC ', rate: ratesData.GHS || 1, name: 'Ghanaian Cedi' },
-              { code: 'USD', symbol: '$', rate: ratesData.USD || 0.062, name: 'US Dollar' },
-            ];
-            setCurrencies(liveCurrencies);
-          }
-        }
+        const res = await fetch(`${apiUrl}/users`, { headers: { 'Authorization': `Bearer ${token}` } });
+        const data = await res.json();
+        if (res.ok) setUsers(data);
       } catch (err) {
-        console.error('Failed to fetch dashboard:', err);
-        showToast('Failed to load dashboard data', 'error');
-      } finally {
-        setLoading(false);
+        console.error('Failed to fetch users', err);
+        showToast('Failed to load users', 'error');
       }
     };
-    fetchDashboard();
-  }, [showToast]);
+    fetchUsers();
+  }, [activeSection, showToast]);
+
+  useEffect(() => {
+    const fetchFraudAlerts = async () => {
+      if (activeSection !== 'fraud') return;
+      try {
+        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+        const token = localStorage.getItem('token');
+        const res = await fetch(`${apiUrl}/admin/fraud/alerts`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (res.ok) setFraudAlerts(data);
+      } catch (err) {
+        console.error('Failed to fetch fraud alerts', err);
+        showToast('Failed to load fraud alerts', 'error');
+      }
+    };
+    fetchFraudAlerts();
+  }, [activeSection, showToast]);
+
+  const handleResolveAlert = async (alertId, status) => {
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${apiUrl}/admin/fraud/alerts/${alertId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ status })
+      });
+      if (res.ok) {
+        showToast(`Fraud alert ${status.toLowerCase()} successfully`, 'success');
+        setFraudAlerts(prev => prev.map(alert => alert.id === alertId ? { ...alert, status } : alert));
+        fetchDashboardData();
+      } else {
+        const errorData = await res.json();
+        showToast(errorData.message || 'Failed to update alert', 'error');
+      }
+    } catch (err) {
+      console.error(err);
+      showToast('Error updating alert', 'error');
+    }
+  };
+
+  const convertAmount = (amount) => {
+    const currency = currencies.find(c => c.code === selectedCurrency);
+    const converted = amount * currency.rate;
+    return `${currency.symbol}${converted.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  };
 
   if (loading) return <LoadingSpinner text="Loading Admin Dashboard..." />;
 
@@ -67,16 +151,17 @@ export default function AdminDashboard() {
     { id: 'overview', name: 'Overview', icon: BarChart3 },
     { id: 'users', name: 'User Management', icon: Users },
     { id: 'wallets', name: 'Wallet Operations', icon: Wallet },
-    { id: 'transactions', name: 'Transactions', icon: Activity },
+    { id: 'fraud', name: 'Fraud Management', icon: Shield },
     { id: 'analytics', name: 'Analytics', icon: PieChart },
     { id: 'settings', name: 'Settings', icon: Settings },
   ];
 
   const stats = [
     { label: 'Total Users', value: dashboardData.stats.totalUsers.toLocaleString(), change: '+12.5%', trend: 'up', icon: Users },
-    { label: 'Total Wallets', value: dashboardData.stats.totalWallets.toLocaleString(), change: '+8.2%', trend: 'up', icon: Wallet },
-    { label: 'Transaction Volume', value: convertAmount(dashboardData.stats.transactionVolume), change: '+23.1%', trend: 'up', icon: TrendingUp },
-    { label: 'Active Sessions', value: dashboardData.stats.activeSessions.toLocaleString(), change: '-3.2%', trend: 'down', icon: Activity },
+    { label: 'Platform Revenue', value: convertAmount(dashboardData.stats.totalSystemRevenue || 0), change: '+23.1%', trend: 'up', icon: DollarSign },
+    { label: 'Creator Payouts', value: convertAmount(dashboardData.stats.totalCreatorPayouts || 0), change: '+18.2%', trend: 'up', icon: CreditCard },
+    { label: 'Active Lobbies', value: (dashboardData.stats.activeRooms || 0).toLocaleString(), change: 'Live', trend: 'up', icon: Activity },
+    { label: 'Open Fraud Alerts', value: (dashboardData.stats.openFraudAlertsCount || 0).toLocaleString(), change: 'Needs Review', trend: (dashboardData.stats.openFraudAlertsCount || 0) > 0 ? 'down' : 'up', icon: Shield },
   ];
 
   const theme = darkMode ? {
@@ -93,12 +178,6 @@ export default function AdminDashboard() {
     text: 'text-slate-900',
     textMuted: 'text-slate-600',
     accent: 'bg-gradient-to-r from-violet-600 to-indigo-600',
-  };
-
-  const convertAmount = (amount) => {
-    const currency = currencies.find(c => c.code === selectedCurrency);
-    const converted = amount * currency.rate;
-    return `${currency.symbol}${converted.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   };
 
   const renderOverview = () => (
@@ -259,10 +338,281 @@ export default function AdminDashboard() {
     </div>
   );
 
+  const renderUsers = () => (
+    <div className="space-y-6">
+      <div className={`${theme.card} ${theme.border} border rounded-xl p-6`}>
+        <h3 className={`${theme.text} text-xl font-semibold mb-4`}>User Management</h3>
+        <div className="overflow-x-auto">
+          <table className="min-w-full table-auto">
+            <thead>
+              <tr className="text-left text-sm text-gray-400">
+                <th className="px-4 py-2">Email</th>
+                <th className="px-4 py-2">Role</th>
+                <th className="px-4 py-2">Balance</th>
+                <th className="px-4 py-2">Referrals</th>
+                <th className="px-4 py-2">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {users.map(u => (
+                <tr key={u.id} className="border-t border-white/5">
+                  <td className="px-4 py-3">{u.email}</td>
+                  <td className="px-4 py-3">
+                    <select defaultValue={u.role} onChange={async (e) => {
+                      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+                      const token = localStorage.getItem('token');
+                      const res = await fetch(`${apiUrl}/users/${u.id}/role`, { method: 'PATCH', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ role: e.target.value }) });
+                      if (res.ok) {
+                        showToast('Role updated', 'success');
+                        setUsers(prev => prev.map(p => p.id === u.id ? { ...p, role: e.target.value } : p));
+                      } else showToast('Failed to update role', 'error');
+                    }} className="bg-transparent border p-2 rounded text-slate-200 bg-slate-900 border-slate-700">
+                      <option value="USER">USER</option>
+                      <option value="INFLUENCER">INFLUENCER</option>
+                      <option value="ADMIN">ADMIN</option>
+                    </select>
+                  </td>
+                  <td className="px-4 py-3">{u.wallet ? `GHC ${Number(u.wallet.availableBalance).toLocaleString()}` : '—'}</td>
+                  <td className="px-4 py-3">{u.referrals ? u.referrals.length : 0}</td>
+                  <td className="px-4 py-3">
+                    <button onClick={async () => {
+                      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+                      const token = localStorage.getItem('token');
+                      const res = await fetch(`${apiUrl}/users/${u.id}/ban`, { method: 'PATCH', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ isBanned: !u.isBanned }) });
+                      if (res.ok) {
+                        showToast(u.isBanned ? 'User unbanned' : 'User banned', 'success');
+                        setUsers(prev => prev.map(p => p.id === u.id ? { ...p, isBanned: !p.isBanned } : p));
+                      } else showToast('Failed to update ban status', 'error');
+                    }} className="px-3 py-2 rounded bg-white/5 hover:bg-white/10">{u.isBanned ? 'Unban' : 'Ban'}</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderFraud = () => (
+    <div className="space-y-6">
+      <div className={`${theme.card} ${theme.border} border rounded-xl p-6`}>
+        <div className="flex items-center justify-between mb-6">
+          <h3 className={`${theme.text} text-xl font-semibold`}>Fraud Alerts & Platform Integrity Logs</h3>
+          <span className="bg-red-500/10 text-red-500 border border-red-500/20 text-xs font-bold px-3 py-1 rounded-full animate-pulse">
+            Real-time Threat Monitoring
+          </span>
+        </div>
+
+        {fraudAlerts.length === 0 ? (
+          <div className="text-center py-12 text-gray-500">
+            No fraud alerts detected. The platform is secure.
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full table-auto">
+              <thead>
+                <tr className="text-left text-sm text-gray-400 border-b border-white/5">
+                  <th className="px-4 py-3">Alert Type</th>
+                  <th className="px-4 py-3">Details / Explanation</th>
+                  <th className="px-4 py-3">Severity</th>
+                  <th className="px-4 py-3">Status</th>
+                  <th className="px-4 py-3">Triggered At</th>
+                  <th className="px-4 py-3">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {fraudAlerts.map(alert => (
+                  <tr key={alert.id} className="border-t border-white/5 hover:bg-slate-800/10 transition-colors">
+                    <td className="px-4 py-4">
+                      <span className="font-bold text-white block">{alert.type}</span>
+                      <span className="text-xs text-gray-500">ID: {alert.id.substring(0, 8)}...</span>
+                    </td>
+                    <td className="px-4 py-4 text-sm text-gray-300 max-w-xs truncate" title={alert.details}>
+                      {alert.details}
+                    </td>
+                    <td className="px-4 py-4">
+                      <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
+                        alert.severity === 'HIGH' ? 'bg-red-500/20 text-red-500' :
+                        alert.severity === 'MEDIUM' ? 'bg-yellow-500/20 text-yellow-500' : 'bg-blue-500/20 text-blue-500'
+                      }`}>
+                        {alert.severity}
+                      </span>
+                    </td>
+                    <td className="px-4 py-4 text-sm">
+                      <span className={`text-xs px-2.5 py-1 rounded-full font-bold uppercase ${
+                        alert.status === 'RESOLVED' ? 'bg-green-500/20 text-green-500' :
+                        alert.status === 'DISMISSED' ? 'bg-slate-500/20 text-gray-400' : 'bg-orange-500/20 text-orange-500 animate-pulse'
+                      }`}>
+                        {alert.status}
+                      </span>
+                    </td>
+                    <td className="px-4 py-4 text-xs text-gray-400">
+                      {new Date(alert.createdAt).toLocaleString()}
+                    </td>
+                    <td className="px-4 py-4 space-x-2">
+                      {alert.status === 'OPEN' ? (
+                        <>
+                          <button
+                            onClick={() => handleResolveAlert(alert.id, 'RESOLVED')}
+                            className="bg-green-600 hover:bg-green-700 text-white text-xs font-bold px-3 py-1.5 rounded-lg transition-all"
+                          >
+                            Resolve
+                          </button>
+                          <button
+                            onClick={() => handleResolveAlert(alert.id, 'DISMISSED')}
+                            className="bg-slate-700 hover:bg-slate-600 text-white text-xs font-bold px-3 py-1.5 rounded-lg transition-all"
+                          >
+                            Dismiss
+                          </button>
+                        </>
+                      ) : (
+                        <span className="text-xs text-gray-500">No actions required</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  const renderAnalytics = () => (
+    <div className="space-y-6">
+      {/* Retention Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className={`${theme.card} ${theme.border} border rounded-xl p-5 text-center`}>
+          <p className="text-gray-400 text-xs font-bold uppercase tracking-wider mb-1">Daily Active Users (DAU)</p>
+          <p className="text-white text-3xl font-black">{dashboardData.retentionMetrics?.dau || 0}</p>
+        </div>
+        <div className={`${theme.card} ${theme.border} border rounded-xl p-5 text-center`}>
+          <p className="text-gray-400 text-xs font-bold uppercase tracking-wider mb-1">Weekly Active Users (WAU)</p>
+          <p className="text-white text-3xl font-black">{dashboardData.retentionMetrics?.wau || 0}</p>
+        </div>
+        <div className={`${theme.card} ${theme.border} border rounded-xl p-5 text-center`}>
+          <p className="text-gray-400 text-xs font-bold uppercase tracking-wider mb-1">Monthly Active Users (MAU)</p>
+          <p className="text-white text-3xl font-black">{dashboardData.retentionMetrics?.mau || 0}</p>
+        </div>
+        <div className={`${theme.card} ${theme.border} border rounded-xl p-5 text-center`}>
+          <p className="text-gray-400 text-xs font-bold uppercase tracking-wider mb-1">User Stickiness (DAU/MAU)</p>
+          <p className="text-white text-3xl font-black">{dashboardData.retentionMetrics?.stickiness || 0}%</p>
+        </div>
+      </div>
+
+      {/* Top Creators / Tier Management */}
+      <div className={`${theme.card} ${theme.border} border rounded-xl p-6`}>
+        <div className="flex justify-between items-center mb-6">
+          <h3 className="text-xl font-bold text-white">Creator Tier Management</h3>
+          <span className="text-xs text-gray-400">Total earnings & referral-based commissions</span>
+        </div>
+
+        {(!dashboardData.topCreators || dashboardData.topCreators.length === 0) ? (
+          <div className="text-center py-12 text-gray-500">
+            No active creators in influencer program.
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full table-auto">
+              <thead>
+                <tr className="text-left text-sm text-gray-400 border-b border-white/5">
+                  <th className="px-4 py-3">Creator Name / Email</th>
+                  <th className="px-4 py-3">Current Tier</th>
+                  <th className="px-4 py-3">Verified Badge</th>
+                  <th className="px-4 py-3">Referrals Count</th>
+                  <th className="px-4 py-3">Total Commissions</th>
+                  <th className="px-4 py-3">Override Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {dashboardData.topCreators.map(creator => (
+                  <tr key={creator.id} className="border-t border-white/5 hover:bg-slate-800/10 transition-colors">
+                    <td className="px-4 py-4">
+                      <span className="font-bold text-white block">{creator.name || 'Anonymous'}</span>
+                      <span className="text-xs text-gray-400">{creator.email}</span>
+                    </td>
+                    <td className="px-4 py-4">
+                      <select
+                        value={creator.tier}
+                        onChange={async (e) => {
+                          const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+                          const token = localStorage.getItem('token');
+                          const res = await fetch(`${apiUrl}/admin/users/${creator.id}/tier`, {
+                            method: 'PATCH',
+                            headers: {
+                              'Content-Type': 'application/json',
+                              'Authorization': `Bearer ${token}`
+                            },
+                            body: JSON.stringify({ tier: e.target.value, isVerified: creator.isVerified })
+                          });
+                          if (res.ok) {
+                            showToast('Creator tier updated successfully', 'success');
+                            fetchDashboardData();
+                          } else {
+                            showToast('Failed to update creator tier', 'error');
+                          }
+                        }}
+                        className="bg-slate-950 border border-slate-700 text-xs rounded p-2 text-white bg-slate-900"
+                      >
+                        <option value="BRONZE">BRONZE</option>
+                        <option value="SILVER">SILVER</option>
+                        <option value="GOLD">GOLD</option>
+                        <option value="ELITE">ELITE</option>
+                      </select>
+                    </td>
+                    <td className="px-4 py-4">
+                      <input
+                        type="checkbox"
+                        checked={creator.isVerified}
+                        onChange={async (e) => {
+                          const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+                          const token = localStorage.getItem('token');
+                          const res = await fetch(`${apiUrl}/admin/users/${creator.id}/tier`, {
+                            method: 'PATCH',
+                            headers: {
+                              'Content-Type': 'application/json',
+                              'Authorization': `Bearer ${token}`
+                            },
+                            body: JSON.stringify({ tier: creator.tier, isVerified: e.target.checked })
+                          });
+                          if (res.ok) {
+                            showToast('Verification badge status updated', 'success');
+                            fetchDashboardData();
+                          } else {
+                            showToast('Failed to update verification status', 'error');
+                          }
+                        }}
+                        className="w-4 h-4 rounded text-purple-600 focus:ring-purple-500 bg-slate-950 border-slate-700"
+                      />
+                    </td>
+                    <td className="px-4 py-4 text-sm text-gray-300">
+                      {creator.referralsCount} users
+                    </td>
+                    <td className="px-4 py-4 text-sm font-bold text-white">
+                      {convertAmount(creator.totalEarnings || 0)}
+                    </td>
+                    <td className="px-4 py-4">
+                      <span className="text-xs text-gray-500">Tier dynamic scaling enabled</span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
   const renderSection = () => {
     switch (activeSection) {
       case 'overview': return renderOverview();
+      case 'users': return renderUsers();
       case 'wallets': return renderWallets();
+      case 'fraud': return renderFraud();
+      case 'analytics': return renderAnalytics();
       default: return (
         <div className={`${theme.card} ${theme.border} border rounded-xl p-12 text-center`}>
           <p className={`${theme.text} text-xl mb-2`}>{sections.find(s => s.id === activeSection)?.name}</p>
@@ -274,14 +624,6 @@ export default function AdminDashboard() {
 
   return (
     <div className={`min-h-screen ${theme.bg} ${theme.text} transition-colors duration-300`}>
-      {/* Mobile Overlay */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        ></div>
-      )}
-
       {/* Sidebar */}
       <aside className={`fixed left-0 top-0 h-full ${theme.card} ${theme.border} border-r transition-all duration-300 z-50 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         } lg:translate-x-0 ${sidebarOpen ? 'w-64' : 'lg:w-20 w-64'}`}>

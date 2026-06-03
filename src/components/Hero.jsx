@@ -78,7 +78,6 @@ const Hero = () => {
   return (
     <section
       className="h-screen min-h-screen bg-black pt-4 relative overflow-hidden"
-
     >
 
       {/* Animated Glow Effects */}
@@ -167,7 +166,7 @@ const Hero = () => {
             sequence={[
               'Not Just a Game,', 2000,
               'Not Just a Game, a Hustle.', 3000,
-              'Where Skill Meets Stakes.', 2000,
+              'Where Skill Meets Mastery.', 2000,
               'Play. Compete. Win.', 2000,
               '',
             ]}
@@ -186,7 +185,7 @@ const Hero = () => {
           transition={{ delay: 0.7 }}
         >
           Step into the arena of skill-based competition. Challenge opponents,
-          stake real cash, and prove your mastery in every shot. This is where
+          enter with real cash, and prove your mastery in every shot. This is where
           players become <span className="text-yellow-400 font-semibold">hustlers</span>.
         </motion.p>
 

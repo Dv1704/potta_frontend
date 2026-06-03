@@ -27,7 +27,7 @@ const GameModes = () => {
           <h2 className="text-4xl md:text-5xl font-bold text-blue-400">Game Modes</h2>
           <p className="text-gray-300 text-lg leading-relaxed">
             Whether you're a strategist or a speed demon, there's a mode for you.
-            Potta lets you stake, play, and earn while mastering your skills. It’s
+            Potta lets you enter, play, and earn while mastering your skills. It’s
             not just a game — it’s a way of life.
           </p>
 

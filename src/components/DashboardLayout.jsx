@@ -1,8 +1,9 @@
 import React from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { ArrowLeft, Home, User, Wallet } from 'lucide-react';
-import logo from '../assets/Logo.png';
 import { motion, AnimatePresence } from 'framer-motion';
+
+const logo = '/potta_logo_dark_transparent.png';
 
 const DashboardLayout = ({ children }) => {
     const navigate = useNavigate();
@@ -39,9 +40,14 @@ const DashboardLayout = ({ children }) => {
                 {/* Center: Centered Logo/Branding - Links to Stats (Success) Page if logged in */}
                 <Link
                     to={localStorage.getItem('token') ? "/success" : "/"}
-                    className="flex items-center transition-transform hover:scale-105 active:scale-95"
+                    className="relative flex items-center justify-center h-24 w-[160px] transition-transform hover:scale-105 active:scale-95"
                 >
-                    <img src={logo} alt="Potta" className="h-12 md:h-14 w-auto object-contain filter brightness-110" />
+                    <img
+                        src={logo}
+                        alt="Potta"
+                        className="relative z-10 h-full w-full object-contain"
+                        style={{ filter: 'drop-shadow(0 0 8px rgba(168,85,247,0.6))' }}
+                    />
                 </Link>
 
                 {/* Right: Quick Action Group */}

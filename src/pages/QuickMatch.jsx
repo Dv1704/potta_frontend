@@ -34,7 +34,7 @@ const QuickMatch = () => {
 
   const queryParams = new URLSearchParams(location.search);
   const mode = queryParams.get('mode') || 'turn';
-  const stake = parseFloat(queryParams.get('stake')) || 10;
+  const entryFee = parseFloat(queryParams.get('entryFee')) || 10;
 
   const matchedRef = useRef(false);
 
@@ -43,7 +43,7 @@ const QuickMatch = () => {
     "CALIBRATING SKILL BRACKETS...",
     "MATCHING WITH ACTIVE PROS...",
     "HANDSHAKING ENCRYPTION...",
-    "LOCKING STAKES IN ESCROW...",
+    "SECURING ENTRY FEES...",
     "POOL TABLE DETECTED...",
     "READYING CUE STICKS...",
   ];
@@ -72,8 +72,8 @@ const QuickMatch = () => {
         const balance = await balRes.json();
         const stats = await statsRes.json();
 
-        if (balance.available < stake) {
-          showToast(`Insufficient balance! Need GHC ${stake.toLocaleString()}`, 'error');
+        if (balance.available < entryFee) {
+          showToast(`Insufficient balance! Need GHC ${entryFee.toLocaleString()}`, 'error');
           navigate('/dashboard');
           return;
         }
@@ -91,7 +91,7 @@ const QuickMatch = () => {
 
         // DELAYED JOIN: Prove we are "searching"
         setTimeout(() => {
-          socket.emit('joinQueue', { userId: profile.id, stake, mode });
+          socket.emit('joinQueue', { userId: profile.id, entryFee, mode });
         }, 1000);
 
       } catch (err) {
@@ -142,7 +142,7 @@ const QuickMatch = () => {
         socket.emit('leaveQueue', { userId: userData.id });
       }
     };
-  }, [navigate, stake, mode]);
+}, [navigate, entryFee, mode]);
 
   if (loading || !userData) return <LoadingSpinner text="Connecting to Matchmaker..." />;
 
@@ -275,7 +275,7 @@ const QuickMatch = () => {
           </div>
         </div>
 
-        {/* Stake Board - Only show prize pool after match */}
+        {/* Entry Fee Board - Only show prize pool after match */}
         <motion.div
           initial={{ y: 50, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -286,10 +286,10 @@ const QuickMatch = () => {
               <CircleDot size={20} className="text-blue-400" />
             </div>
             <div>
-              <p className="text-gray-500 text-[10px] font-black uppercase tracking-widest">Your Stake</p>
+              <p className="text-gray-500 text-[10px] font-black uppercase tracking-widest">Your Entry Fee</p>
               <p className="text-3xl font-black tracking-tight flex items-center gap-1">
                 <span className="text-blue-500">GHC </span>
-                <span>{stake.toLocaleString()}</span>
+                <span>{entryFee.toLocaleString()}</span>
               </p>
             </div>
           </div>

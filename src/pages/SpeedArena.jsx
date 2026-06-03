@@ -8,7 +8,7 @@ import PoolGameEngineEmbed from '../components/PoolGameEngineEmbed';
 /**
  * PlayerInfoOverlay - Shows player names and game stats on top of the game
  */
-const PlayerInfoOverlay = ({ player1, player2, myId, stake, timeRemaining }) => {
+const PlayerInfoOverlay = ({ player1, player2, myId, entryFee, timeRemaining }) => {
   return (
     <>
       {/* Player 1 Info - Top Left */}
@@ -35,15 +35,15 @@ const PlayerInfoOverlay = ({ player1, player2, myId, stake, timeRemaining }) => 
         </div>
       </div>
 
-      {/* Stake Info - Top Center */}
+      {/* Entry Fee Info - Top Center */}
       {
-        stake && (
+        entryFee && (
           <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[9999] pointer-events-none">
             <div className="bg-gradient-to-r from-yellow-600/90 to-amber-600/90 backdrop-blur-sm rounded-lg px-6 py-2 shadow-xl border border-white/20">
               <div className="text-center">
-                <div className="text-yellow-100 text-xs font-semibold">STAKE</div>
-                <div className="text-white font-bold text-lg">GH₵{stake.toLocaleString()}</div>
-                <div className="text-yellow-200 text-xs">Winner takes: GH₵{(stake * 1.8).toLocaleString()}</div>
+                <div className="text-yellow-100 text-xs font-semibold">ENTRY FEE</div>
+                <div className="text-white font-bold text-lg">GH₵{entryFee.toLocaleString()}</div>
+                <div className="text-yellow-200 text-xs">Winner reward: GH₵{(entryFee * 1.8).toLocaleString()}</div>
               </div>
             </div>
           </div>
@@ -287,7 +287,7 @@ const SpeedArena = () => {
 
   const player1 = gameState.players?.[0];
   const player2 = gameState.players?.[1];
-  const stake = gameState.stake || gameState.betAmount || 0;
+  const entryFee = gameState.stake || gameState.betAmount || 0;
 
   return (
     <div className="relative w-full h-screen bg-black overflow-hidden">
@@ -296,7 +296,7 @@ const SpeedArena = () => {
         player1={player1}
         player2={player2}
         myId={userId}
-        stake={stake}
+        entryFee={entryFee}
         timeRemaining={timeRemaining}
       />
 

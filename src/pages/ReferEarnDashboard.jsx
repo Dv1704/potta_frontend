@@ -10,6 +10,45 @@ const ReferEarnDashboard = () => {
   const [copied, setCopied] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
   const [user, setUser] = useState(null);
+  const [influencerStats, setInfluencerStats] = useState(null);
+  const [customBranding, setCustomBranding] = useState({ headerText: '', accentColor: '#a855f7' });
+
+  useEffect(() => {
+    if (influencerStats?.customBranding) {
+      setCustomBranding({
+        headerText: influencerStats.customBranding.headerText || '',
+        accentColor: influencerStats.customBranding.accentColor || '#a855f7'
+      });
+    }
+  }, [influencerStats]);
+
+  const handleSaveBranding = async (e) => {
+    e.preventDefault();
+    try {
+      const token = localStorage.getItem('token');
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+      const res = await fetch(`${apiUrl}/users/profile/branding`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(customBranding)
+      });
+      if (res.ok) {
+        showToast('Branding updated successfully!', 'success');
+        const freshRes = await fetch(`${apiUrl}/users/influencer/stats`, { headers: { 'Authorization': `Bearer ${token}` } });
+        const freshData = await freshRes.json();
+        if (freshRes.ok) setInfluencerStats(freshData);
+      } else {
+        const errorData = await res.json();
+        showToast(errorData.message || 'Failed to update branding', 'error');
+      }
+    } catch (err) {
+      console.error(err);
+      showToast('Error updating branding', 'error');
+    }
+  };
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -37,6 +76,22 @@ const ReferEarnDashboard = () => {
     };
     fetchUser();
   }, [showToast]);
+
+  useEffect(() => {
+    const fetchInfluencerStats = async () => {
+      if (!user) return;
+      try {
+        const token = localStorage.getItem('token');
+        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+        const res = await fetch(`${apiUrl}/users/influencer/stats`, { headers: { 'Authorization': `Bearer ${token}` } });
+        const data = await res.json();
+        if (res.ok) setInfluencerStats(data);
+      } catch (err) {
+        console.error('Failed to fetch influencer stats', err);
+      }
+    };
+    fetchInfluencerStats();
+  }, [user]);
 
   if (loading) return <LoadingSpinner text="Loading Referral Dashboard..." />;
 
@@ -172,6 +227,73 @@ const ReferEarnDashboard = () => {
     show: { opacity: 1, y: 0 }
   };
 
+  // Influencer Hub
+  if (user && user.role === 'INFLUENCER') {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 p-3 sm:p-4 md:p-6 lg:p-8">
+        <div className="max-w-6xl mx-auto space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-white">Influencer Hub</h1>
+              <p className="text-gray-400">Overview of your commissions and referrals</p>
+            </div>
+            <div className="text-right">
+              <p className="text-gray-400 text-sm">Total GHS Earned</p>
+              <p className="text-3xl font-bold text-white">GHC {influencerStats ? influencerStats.totalEarnings : 0}</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="bg-slate-900 rounded-xl p-4 border border-slate-700">
+              <h3 className="text-white font-semibold mb-3">Referral Metrics</h3>
+              <div className="space-y-2">
+                <p className="text-sm text-gray-400">Games Influenced: <span className="text-white font-bold">{influencerStats ? influencerStats.gamesPlayed : 0}</span></p>
+                <p className="text-sm text-gray-400">Total Referrals: <span className="text-white font-bold">{influencerStats ? influencerStats.referrals.length : 0}</span></p>
+              </div>
+              <h4 className="text-white font-semibold mt-4 mb-2">Commission per Referral</h4>
+              <div className="max-h-80 overflow-y-auto">
+                <table className="w-full text-left text-sm">
+                  <thead>
+                    <tr className="text-gray-400">
+                      <th className="pb-2">User</th>
+                      <th className="pb-2">Commission (GHS)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {influencerStats && influencerStats.perReferral.map(p => (
+                      <tr key={p.userId} className="border-t border-white/5">
+                        <td className="py-2">{p.email || p.userId}</td>
+                        <td className="py-2">{p.totalCommission}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div className="bg-slate-900 rounded-xl p-4 border border-slate-700">
+              <h3 className="text-white font-semibold mb-3">Commission History</h3>
+              <div className="max-h-80 overflow-y-auto">
+                {influencerStats && influencerStats.earnings.length === 0 && <p className="text-gray-400">No payouts yet</p>}
+                <ul className="space-y-2">
+                  {influencerStats && influencerStats.earnings.map(e => (
+                    <li key={e.id} className="flex items-center justify-between bg-slate-800 p-3 rounded">
+                      <div>
+                        <div className="text-sm text-gray-300">Match: {e.matchId}</div>
+                        <div className="text-xs text-gray-500">{new Date(e.createdAt).toLocaleString()}</div>
+                      </div>
+                      <div className="text-white font-bold">GHC {Number(e.amount).toFixed(4)}</div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 p-3 sm:p-4 md:p-6 lg:p-8">
       <motion.div
@@ -283,35 +405,153 @@ const ReferEarnDashboard = () => {
           ))}
         </motion.div>
 
-        {/* Progress to Next Tier */}
-        {nextTier && (
-          <motion.div variants={item} className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-4 sm:p-6 border border-slate-700 shadow-xl">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0 mb-3">
-              <div className="flex items-center gap-2">
-                <TrendingUp className="text-cyan-400" size={20} />
-                <h3 className="text-white font-semibold text-sm sm:text-base">Next Bonus Tier</h3>
+        {/* Creator Tiers & Progress */}
+        <motion.div variants={item} className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Progress Card */}
+          <div className="lg:col-span-2 bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-6 border border-slate-700 shadow-xl space-y-6">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <div>
+                <span className="text-xs font-semibold text-purple-400 uppercase tracking-widest">Creator Journey</span>
+                <h3 className="text-2xl font-black text-white flex items-center gap-2 mt-1">
+                  Creator Tier Status
+                  {influencerStats?.isVerified && (
+                    <span className="inline-flex items-center justify-center bg-blue-500 text-white rounded-full p-0.5" title="Verified Creator">
+                      <Check className="w-3.5 h-3.5 stroke-[3]" />
+                    </span>
+                  )}
+                </h3>
               </div>
-              <div className="flex items-center gap-2 bg-cyan-500/20 rounded-lg px-3 py-1 border border-cyan-500/30">
-                <Gift className="text-cyan-400" size={16} />
-                <span className="text-cyan-400 font-bold text-sm sm:text-base">{nextTier.bonus} Coins Bonus</span>
+              <div className="bg-white/5 border border-white/10 rounded-xl px-4 py-2 flex items-center gap-3">
+                <div className={`w-3 h-3 rounded-full ${
+                  (influencerStats?.creatorTier || 'BRONZE') === 'ELITE' ? 'bg-purple-500 animate-pulse' :
+                  (influencerStats?.creatorTier || 'BRONZE') === 'GOLD' ? 'bg-yellow-400' :
+                  (influencerStats?.creatorTier || 'BRONZE') === 'SILVER' ? 'bg-slate-300' : 'bg-amber-600'
+                }`} />
+                <span className="text-sm font-bold text-gray-200">
+                  {influencerStats?.creatorTier || 'BRONZE'} TIER
+                </span>
               </div>
             </div>
-            <div className="bg-slate-950 rounded-full h-4 overflow-hidden mb-2 border border-slate-700">
-              <motion.div
-                initial={{ width: 0 }}
-                animate={{ width: `${progress}%` }}
-                transition={{ duration: 1, ease: "easeOut" }}
-                className="h-full bg-gradient-to-r from-cyan-500 via-blue-500 to-purple-500 relative"
-              >
-                <div className="absolute inset-0 bg-white/20 animate-pulse"></div>
-              </motion.div>
+
+            {/* Progression Bar */}
+            {(() => {
+              const currentRef = referrals.length;
+              let nextTierLabel = '';
+              let needed = 0;
+              let pct = 100;
+              if (currentRef < 6) {
+                nextTierLabel = 'Silver (6 referrals)';
+                needed = 6 - currentRef;
+                pct = (currentRef / 6) * 100;
+              } else if (currentRef < 16) {
+                nextTierLabel = 'Gold (16 referrals)';
+                needed = 16 - currentRef;
+                pct = ((currentRef - 6) / 10) * 100;
+              } else if (currentRef < 31) {
+                nextTierLabel = 'Elite (31 referrals)';
+                needed = 31 - currentRef;
+                pct = ((currentRef - 16) / 15) * 100;
+              } else {
+                nextTierLabel = 'Max Level Reached!';
+                needed = 0;
+                pct = 100;
+              }
+
+              return (
+                <div className="space-y-2">
+                  <div className="flex justify-between text-xs font-bold text-gray-400">
+                    <span>Progress to {nextTierLabel}</span>
+                    <span>{needed > 0 ? `${needed} referrals left` : 'Fully Unlocked'}</span>
+                  </div>
+                  <div className="bg-slate-950 rounded-full h-4 overflow-hidden border border-slate-700 p-0.5">
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: `${pct}%` }}
+                      transition={{ duration: 1 }}
+                      className="h-full bg-gradient-to-r from-purple-500 via-pink-500 to-yellow-500 rounded-full relative"
+                    >
+                      <div className="absolute inset-0 bg-white/20 animate-pulse" />
+                    </motion.div>
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* Creator Perks Matrix */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
+              <div className="p-3 bg-white/5 border border-white/5 rounded-xl space-y-1 text-center">
+                <span className="text-[10px] uppercase font-bold text-gray-400">Bronze</span>
+                <p className="text-xs text-white font-semibold">20% Fee Share</p>
+                <span className="text-[9px] text-gray-500 block">&lt;6 Referrals</span>
+              </div>
+              <div className={`p-3 border rounded-xl space-y-1 text-center ${(influencerStats?.creatorTier || 'BRONZE') === 'SILVER' ? 'bg-slate-400/10 border-slate-400' : 'bg-white/5 border-white/5'}`}>
+                <span className="text-[10px] uppercase font-bold text-gray-300">Silver</span>
+                <p className="text-xs text-white font-semibold">25% + Verified</p>
+                <span className="text-[9px] text-gray-500 block">6-15 Referrals</span>
+              </div>
+              <div className={`p-3 border rounded-xl space-y-1 text-center ${(influencerStats?.creatorTier || 'BRONZE') === 'GOLD' ? 'bg-yellow-500/10 border-yellow-500' : 'bg-white/5 border-white/5'}`}>
+                <span className="text-[10px] uppercase font-bold text-yellow-400">Gold</span>
+                <p className="text-xs text-white font-semibold">30% + Featured</p>
+                <span className="text-[9px] text-gray-500 block">16-30 Referrals</span>
+              </div>
+              <div className={`p-3 border rounded-xl space-y-1 text-center ${(influencerStats?.creatorTier || 'BRONZE') === 'ELITE' ? 'bg-purple-600/10 border-purple-500' : 'bg-white/5 border-white/5'}`}>
+                <span className="text-[10px] uppercase font-bold text-purple-400">Elite</span>
+                <p className="text-xs text-white font-semibold">40% + Branding</p>
+                <span className="text-[9px] text-gray-500 block">31+ Referrals</span>
+              </div>
             </div>
-            <p className="text-gray-400 text-xs sm:text-sm flex items-center gap-2">
-              <Target size={14} className="text-cyan-400" />
-              {nextTier.referrals - stats.successfulReferrals} more referrals to unlock {nextTier.bonus} bonus coins!
-            </p>
-          </motion.div>
-        )}
+          </div>
+
+          {/* Elite Room Customization Form */}
+          <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-6 border border-slate-700 shadow-xl flex flex-col justify-between">
+            <div>
+              <span className="text-xs font-semibold text-pink-500 uppercase tracking-widest">Custom Branding</span>
+              <h3 className="text-xl font-black text-white mt-1 mb-2">Elite Room Controls</h3>
+              <p className="text-xs text-gray-400 leading-relaxed mb-4">
+                Elite status allows you to customize the color scheme and header messages of rooms you host or share.
+              </p>
+
+              {(influencerStats?.creatorTier || 'BRONZE') === 'ELITE' ? (
+                <form onSubmit={handleSaveBranding} className="space-y-4">
+                  <div>
+                    <label className="text-xs font-bold text-gray-400 block mb-1">Accent Accent Color</label>
+                    <div className="flex gap-2 items-center">
+                      <input
+                        type="color"
+                        value={customBranding.accentColor}
+                        onChange={(e) => setCustomBranding({ ...customBranding, accentColor: e.target.value })}
+                        className="w-10 h-10 rounded border border-white/10 bg-transparent cursor-pointer"
+                      />
+                      <span className="text-xs font-mono text-gray-300 uppercase">{customBranding.accentColor}</span>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-gray-400 block mb-1">Room Header Text</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Welcome to Victor's Pro Room!"
+                      value={customBranding.headerText}
+                      onChange={(e) => setCustomBranding({ ...customBranding, headerText: e.target.value })}
+                      className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-500"
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-xl py-2.5 text-xs font-bold transition-all mt-2"
+                  >
+                    Apply Custom Theme
+                  </button>
+                </form>
+              ) : (
+                <div className="h-full flex flex-col items-center justify-center text-center p-4 bg-slate-950/40 border border-dashed border-slate-800 rounded-xl mt-2 flex-1">
+                  <Crown className="w-10 h-10 text-gray-600 mb-2" />
+                  <p className="text-xs text-gray-500 font-semibold">Branding Locked</p>
+                  <p className="text-[10px] text-gray-600 mt-1">Unlock by reaching Elite Creator tier (31+ referrals)</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </motion.div>
 
         {/* Unlockable Features Grid */}
         <motion.div variants={item} className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-4 sm:p-6 border border-slate-700 shadow-xl">

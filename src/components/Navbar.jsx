@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
-import logo from '../assets/Logo.png';
 import { RiShareCircleLine } from "react-icons/ri";
 import {
   FaHome,
@@ -13,6 +12,8 @@ import {
   FaUserPlus,
   FaSignOutAlt
 } from 'react-icons/fa';
+
+const logo = '/potta_logo_dark_transparent.png';
 
 const Navbar = () => {
   const { token, logout } = useAuth();
@@ -92,16 +93,31 @@ const Navbar = () => {
           : 'bg-transparent text-white'
           }`}
       >
-        <div className="max-w-screen-xl mx-auto px-6 h-20 flex justify-between items-center relative">
+        <div className="max-w-screen-xl mx-auto px-6 h-20 flex justify-between items-center relative overflow-hidden">
+          <div className="pointer-events-none absolute inset-0 overflow-hidden">
+            <motion.div
+              className="absolute -left-12 top-1/2 h-36 w-36 rounded-full bg-blue-500/20 blur-3xl opacity-60"
+              animate={{ x: [0, 20, 0], y: [0, -10, 0], opacity: [0.4, 0.8, 0.4] }}
+              transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut' }}
+            />
+            <motion.div
+              className="absolute right-0 top-2 h-28 w-28 rounded-full bg-pink-500/20 blur-3xl opacity-50"
+              animate={{ x: [0, -18, 0], y: [0, 7, 0], opacity: [0.3, 0.7, 0.3] }}
+              transition={{ duration: 12, repeat: Infinity, ease: 'easeInOut' }}
+            />
+          </div>
+
           <motion.div
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
+            className="relative z-10"
           >
-            <Link to="/" onClick={handleLinkClick} className="flex items-center h-12">
+            <Link to="/" onClick={handleLinkClick} className="relative flex items-center justify-center h-20 w-[160px] ml-3 transition-transform hover:scale-105 active:scale-95">
               <motion.img
                 src={logo}
                 alt="POTTA Logo"
-                className="h-32 w-auto object-contain filter brightness-110"
+                className="h-full w-full object-contain"
+                style={{ filter: 'drop-shadow(0 0 8px rgba(168,85,247,0.6))' }}
                 whileHover={{ rotate: [0, -5, 5, 0] }}
                 transition={{ duration: 0.5 }}
               />
@@ -271,7 +287,7 @@ const Navbar = () => {
                 className="mb-12"
               >
                 <Link to="/" onClick={handleLinkClick}>
-                  <img src={logo} alt="Potta" className="w-24 h-auto" />
+                  <img src={logo} alt="Potta" className="w-full max-w-[7rem] h-auto object-contain" />
                 </Link>
               </motion.div>
 
@@ -365,7 +381,7 @@ const Navbar = () => {
                 className="absolute bottom-8 left-8 right-8 text-center"
               >
                 <p className="text-gray-400 text-sm">
-                  Where Skill Meets Stakes
+                  Where Skill Meets Mastery
                 </p>
               </motion.div>
             </motion.div>
