@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import { useToast } from '../context/ToastContext';
 import LoadingSpinner from '../components/LoadingSpinner';
 
+const logo = '/potta_logo_dark_transparent.png';
+
 const ForgotPassword = () => {
     const { showToast } = useToast();
     const [email, setEmail] = useState('');
@@ -41,6 +43,11 @@ const ForgotPassword = () => {
         return (
             <div className="min-h-screen flex items-center justify-center bg-slate-900 text-white p-6">
                 <div className="bg-slate-800 p-8 rounded-lg shadow-lg w-full max-w-md text-center space-y-4">
+                    <div className="flex justify-center mb-6">
+                        <Link to="/">
+                            <img src={logo} alt="POTTA Logo" className="h-16 w-auto object-contain" style={{ filter: 'drop-shadow(0 0 8px rgba(168,85,247,0.6))' }} />
+                        </Link>
+                    </div>
                     <div className="text-6xl mb-4">📧</div>
                     <h2 className="text-3xl font-bold text-blue-400">Check Your Email</h2>
                     <p className="text-slate-300">
@@ -73,6 +80,11 @@ const ForgotPassword = () => {
     return (
         <div className="min-h-screen flex items-center justify-center bg-slate-900 text-white p-6">
             <form onSubmit={handleSubmit} className="bg-slate-800 p-8 rounded-lg shadow-lg w-full max-w-md space-y-4">
+                <div className="flex justify-center mb-6">
+                    <Link to="/">
+                        <img src={logo} alt="POTTA Logo" className="h-16 w-auto object-contain" style={{ filter: 'drop-shadow(0 0 8px rgba(168,85,247,0.6))' }} />
+                    </Link>
+                </div>
                 <h2 className="text-3xl font-bold mb-4 text-center text-blue-400">Forgot Password</h2>
 
                 <p className="text-sm text-slate-300 mb-6">

@@ -40,12 +40,12 @@ const DashboardLayout = ({ children }) => {
                 {/* Center: Centered Logo/Branding - Links to Stats (Success) Page if logged in */}
                 <Link
                     to={localStorage.getItem('token') ? "/success" : "/"}
-                    className="relative flex items-center justify-center h-24 w-[160px] transition-transform hover:scale-105 active:scale-95"
+                    className="relative flex items-center justify-center h-12 w-auto transition-transform hover:scale-105 active:scale-95"
                 >
                     <img
                         src={logo}
                         alt="Potta"
-                        className="relative z-10 h-full w-full object-contain"
+                        className="relative z-10 h-full w-auto object-contain"
                         style={{ filter: 'drop-shadow(0 0 8px rgba(168,85,247,0.6))' }}
                     />
                 </Link>

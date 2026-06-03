@@ -112,11 +112,11 @@ const Navbar = () => {
             whileTap={{ scale: 0.95 }}
             className="relative z-10"
           >
-            <Link to="/" onClick={handleLinkClick} className="relative flex items-center justify-center h-20 w-[160px] ml-3 transition-transform hover:scale-105 active:scale-95">
+            <Link to="/" onClick={handleLinkClick} className="relative flex items-center justify-center h-12 w-auto ml-3 transition-transform hover:scale-105 active:scale-95">
               <motion.img
                 src={logo}
                 alt="POTTA Logo"
-                className="h-full w-full object-contain"
+                className="h-full w-auto object-contain"
                 style={{ filter: 'drop-shadow(0 0 8px rgba(168,85,247,0.6))' }}
                 whileHover={{ rotate: [0, -5, 5, 0] }}
                 transition={{ duration: 0.5 }}
