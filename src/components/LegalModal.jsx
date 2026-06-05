@@ -22,7 +22,7 @@ const LegalModal = ({ isOpen, onClose, type }) => {
                         },
                         {
                             title: '3. Data Security and Sharing',
-                            body: 'All transactions are encrypted. We share details with payment processors (e.g. Korapay, Paystack) and security services to complete payouts. We never sell your personal data to advertisers.'
+                            body: 'All transactions are encrypted. We share details with payment processors (e.g. Paystack) and security services to complete payouts. We never sell your personal data to advertisers.'
                         },
                         {
                             title: '4. Cookies Policy',

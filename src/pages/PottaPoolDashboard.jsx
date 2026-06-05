@@ -190,11 +190,11 @@ export default function PottaPoolDashboard() {
 
   const paymentMethods = {
     deposit: [
-      { id: 'korapay', name: 'Korapay (Card/MoMo)', icon: 'CreditCard', color: 'from-blue-500 to-emerald-500', fee: '1.5% + GHC 0.1' },
+      { id: 'paystack', name: 'Paystack (Card/MoMo)', icon: 'CreditCard', color: 'from-blue-500 to-emerald-500', fee: '1.95%' },
       { id: 'mobile', name: 'Direct Mobile Money', icon: 'Smartphone', color: 'from-green-500 to-emerald-500', fee: '1%' }
     ],
     withdraw: [
-      { id: 'kora_transfer', name: 'Bank/MoMo Transfer', icon: 'Building2', color: 'from-purple-500 to-pink-500', fee: 'GHC 1.00', time: 'Instant' },
+      { id: 'paystack_transfer', name: 'Bank/MoMo Transfer', icon: 'Building2', color: 'from-purple-500 to-pink-500', fee: 'GHC 1.00', time: 'Instant' },
     ],
     transfer: [
       { id: 'username', name: 'Player Username', icon: 'Users', color: 'from-orange-500 to-red-500', fee: 'Free' },
