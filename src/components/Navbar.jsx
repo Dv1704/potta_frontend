@@ -13,7 +13,7 @@ import {
   FaSignOutAlt
 } from 'react-icons/fa';
 
-const logo = '/potta_logo_dark_transparent.png';
+import { logoBase64 as logo } from '../utils/logoBase64';
 
 const Navbar = () => {
   const { token, logout } = useAuth();
@@ -120,6 +120,7 @@ const Navbar = () => {
                 style={{ filter: 'drop-shadow(0 0 8px rgba(168,85,247,0.6))' }}
                 whileHover={{ rotate: [0, -5, 5, 0] }}
                 transition={{ duration: 0.5 }}
+                fetchPriority="high"
               />
             </Link>
           </motion.div>

@@ -134,10 +134,6 @@ const SpeedArena = () => {
           type: 'gameStateUpdate',
           state: state
         }, '*');
-        iframe.contentWindow.postMessage({
-          type: 'gameStateUpdate',
-          state: state
-        }, '*');
 
         // Send player names to game engine
         if (state.players && state.players.length >= 2) {

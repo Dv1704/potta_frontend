@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { useToast } from '../context/ToastContext';
 import LoadingSpinner from '../components/LoadingSpinner';
 
-const logo = '/potta_logo_dark_transparent.png';
+import { logoBase64 as logo } from '../utils/logoBase64';
 
 const Signup = () => {
   const navigate = useNavigate();
@@ -60,7 +60,7 @@ const Signup = () => {
       >
         <div className="flex justify-center mb-6">
           <Link to="/">
-            <img src={logo} alt="POTTA Logo" className="h-16 w-auto object-contain" style={{ filter: 'drop-shadow(0 0 8px rgba(168,85,247,0.6))' }} />
+            <img src={logo} alt="POTTA Logo" className="h-16 w-auto object-contain" style={{ filter: 'drop-shadow(0 0 8px rgba(168,85,247,0.6))' }} fetchPriority="high" />
           </Link>
         </div>
         <h2 className="text-3xl font-bold mb-4 text-center text-blue-400">Create an Account</h2>

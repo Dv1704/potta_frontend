@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Eye, EyeOff, ArrowUpRight, ArrowDownLeft, Send, TrendingUp, QrCode, Gift, DollarSign, Bell, Settings, Check, X, Clock, Trophy, Target, CreditCard, Smartphone, Building2, Activity, Award, Zap, Lock, Star, ChevronRight, Users } from 'lucide-react';
+import { Eye, EyeOff, ArrowUpRight, ArrowDownLeft, Send, TrendingUp, QrCode, Gift, DollarSign, Bell, Settings, Check, X, Clock, Trophy, Target, CreditCard, Smartphone, Building2, Activity, Award, Zap, Lock, Star, ChevronRight, Users, Mail } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
 import LoadingSpinner from '../components/LoadingSpinner';
 import QRCode from 'react-qr-code';
@@ -22,6 +22,14 @@ export default function PottaPoolDashboard() {
   const [verificationCode, setVerificationCode] = useState('');
   const [transferSessionId, setTransferSessionId] = useState('');
   const [pendingTransferAmount, setPendingTransferAmount] = useState(0);
+  const [pending2faType, setPending2faType] = useState('transfer'); // 'transfer' or 'withdrawal'
+
+  // Email Verification states
+  const [showEmailVerificationModal, setShowEmailVerificationModal] = useState(false);
+  const [isSendingVerification, setIsSendingVerification] = useState(false);
+  const [isVerifyingEmail, setIsVerifyingEmail] = useState(false);
+  const [emailVerificationSessionId, setEmailVerificationSessionId] = useState('');
+  const [emailVerificationCode, setEmailVerificationCode] = useState('');
 
   const [wallet, setWallet] = useState({ availableBalance: 0, lockedBalance: 0 });
   const [user, setUser] = useState(null);
@@ -281,8 +289,17 @@ export default function PottaPoolDashboard() {
         });
         const data = await res.json();
         if (res.ok) {
-          showToast('Withdrawal initiated successfully!', 'success');
-          setShowModal(null);
+          if (data.requires2FA) {
+            setTransferSessionId(data.sessionId);
+            setPendingTransferAmount(parseFloat(amount));
+            setPending2faType('withdrawal');
+            setShowModal(null);
+            setShow2FAModal(true);
+            showToast(data.message || 'Confirmation code sent to your email', 'info');
+          } else {
+            showToast('Withdrawal initiated successfully!', 'success');
+            setShowModal(null);
+          }
         } else {
           showToast(data.message || 'Withdrawal failed', 'error');
         }
@@ -311,6 +328,7 @@ export default function PottaPoolDashboard() {
             // Large transfer - requires 2FA
             setTransferSessionId(data.sessionId);
             setPendingTransferAmount(parseFloat(amount));
+            setPending2faType('transfer');
             setShowModal(null); // Close transfer modal
             setShow2FAModal(true); // Show 2FA modal
             showToast(data.message || 'Confirmation code sent to your email', 'info');
@@ -355,7 +373,11 @@ export default function PottaPoolDashboard() {
     }
 
     try {
-      const res = await fetch(`${apiUrl}/wallet/transfer/confirm`, {
+      const endpoint = pending2faType === 'withdrawal'
+        ? `${apiUrl}/payments/withdraw/confirm`
+        : `${apiUrl}/wallet/transfer/confirm`;
+
+      const res = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -370,7 +392,11 @@ export default function PottaPoolDashboard() {
       const data = await res.json();
 
       if (res.ok) {
-        showToast(`Transfer successful! Sent ${currencySymbols[selectedCurrency]}${pendingTransferAmount} to ${data.recipient.name}`, 'success');
+        const successMsg = pending2faType === 'withdrawal'
+          ? `Withdrawal successful! Sent ${currencySymbols[selectedCurrency]}${pendingTransferAmount.toFixed(2)} to mobile money.`
+          : `Transfer successful! Sent ${currencySymbols[selectedCurrency]}${pendingTransferAmount} to ${data.recipient.name}`;
+
+        showToast(successMsg, 'success');
         setShow2FAModal(false);
         setVerificationCode('');
         setTransferSessionId('');
@@ -389,6 +415,92 @@ export default function PottaPoolDashboard() {
     } catch (err) {
       console.error(err);
       showToast('Connection error', 'error');
+    }
+  };
+
+  const handleSendEmailVerification = async () => {
+    setIsSendingVerification(true);
+    const token = localStorage.getItem('token');
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+
+    if (!token) {
+      showToast('Please log in first', 'error');
+      setIsSendingVerification(false);
+      return;
+    }
+
+    try {
+      const res = await fetch(`${apiUrl}/users/verify-email/send`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setEmailVerificationSessionId(data.sessionId);
+        setShowEmailVerificationModal(true);
+        showToast('Verification code sent to your email!', 'success');
+      } else {
+        showToast(data.message || 'Failed to send verification code', 'error');
+      }
+    } catch (err) {
+      console.error(err);
+      showToast('Connection error', 'error');
+    } finally {
+      setIsSendingVerification(false);
+    }
+  };
+
+  const handleConfirmEmailVerification = async (e) => {
+    e.preventDefault();
+    setIsVerifyingEmail(true);
+    const token = localStorage.getItem('token');
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+
+    if (!emailVerificationCode || emailVerificationCode.length !== 6) {
+      showToast('Please enter a valid 6-digit code', 'error');
+      setIsVerifyingEmail(false);
+      return;
+    }
+
+    try {
+      const res = await fetch(`${apiUrl}/users/verify-email/confirm`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          sessionId: emailVerificationSessionId,
+          code: emailVerificationCode
+        })
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        showToast('Email verified successfully!', 'success');
+        setShowEmailVerificationModal(false);
+        setEmailVerificationCode('');
+        setEmailVerificationSessionId('');
+
+        // Refresh stats to show emailVerified as true
+        setStats(prev => ({
+          ...prev,
+          security: {
+            ...prev.security,
+            emailVerified: true
+          }
+        }));
+      } else {
+        showToast(data.message || 'Invalid code. Please try again.', 'error');
+      }
+    } catch (err) {
+      console.error(err);
+      showToast('Connection error', 'error');
+    } finally {
+      setIsVerifyingEmail(false);
     }
   };
 
@@ -882,8 +994,19 @@ export default function PottaPoolDashboard() {
                   {stats.security?.twoFactorEnabled ? <Check className="text-green-400" size={18} /> : <X className="text-gray-400" size={18} />}
                 </div>
                 <div className={`flex items-center justify-between p-3 rounded-xl border ${stats.security?.emailVerified ? 'border-green-500/50 bg-green-500/10' : 'border-yellow-500/50 bg-yellow-500/10'}`}>
-                  <span className="text-sm">Email Verified</span>
-                  {stats.security?.emailVerified ? <Check className="text-green-400" size={18} /> : <Clock className="text-yellow-400" size={18} />}
+                  <div className="flex items-center gap-2">
+                    {stats.security?.emailVerified ? <Check className="text-green-400" size={18} /> : <Clock className="text-yellow-400" size={18} />}
+                    <span className="text-sm">Email Verified</span>
+                  </div>
+                  {!stats.security?.emailVerified && (
+                    <button
+                      onClick={handleSendEmailVerification}
+                      disabled={isSendingVerification}
+                      className="text-xs px-3 py-1 bg-yellow-500 hover:bg-yellow-400 text-slate-900 font-bold rounded-lg transition-all disabled:opacity-50"
+                    >
+                      {isSendingVerification ? 'Sending...' : 'Verify'}
+                    </button>
+                  )}
                 </div>
                 <div className={`flex items-center justify-between p-3 rounded-xl border ${stats.security?.phoneVerified ? 'border-green-500/50 bg-green-500/10' : 'border-red-500/30'}`}>
                   <span className="text-sm">Phone Verified</span>
@@ -901,7 +1024,7 @@ export default function PottaPoolDashboard() {
                   <QRCode
                     size={256}
                     style={{ height: "auto", maxWidth: "100%", width: "100%" }}
-                    value={user?.id || 'PottaPool'}
+                    value={user?.referralCode ? `${window.location.origin}/signup?ref=${user.referralCode}` : window.location.origin}
                     viewBox={`0 0 256 256`}
                     bgColor={darkMode ? '#ffffff' : '#111827'}
                     fgColor={darkMode ? '#000000' : '#ffffff'}
@@ -973,12 +1096,14 @@ export default function PottaPoolDashboard() {
               <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Lock className="w-8 h-8 text-green-400" />
               </div>
-              <h3 className="text-2xl font-bold mb-2 text-white">Confirm Transfer</h3>
+              <h3 className="text-2xl font-bold mb-2 text-white">
+                {pending2faType === 'withdrawal' ? 'Confirm Withdrawal' : 'Confirm Transfer'}
+              </h3>
               <p className="text-gray-400 text-sm">
                 We've sent a 6-digit confirmation code to your email.
               </p>
               <p className="text-green-400 font-bold text-lg mt-2">
-                Transfer Amount: {currencySymbols[selectedCurrency]}{pendingTransferAmount.toFixed(2)}
+                {pending2faType === 'withdrawal' ? 'Withdrawal Amount' : 'Transfer Amount'}: {currencySymbols[selectedCurrency]}{pendingTransferAmount.toFixed(2)}
               </p>
             </div>
 
@@ -1008,7 +1133,7 @@ export default function PottaPoolDashboard() {
                   : 'bg-gray-700 text-gray-500 cursor-not-allowed'
                   }`}
               >
-                Confirm Transfer
+                {pending2faType === 'withdrawal' ? 'Confirm Withdrawal' : 'Confirm Transfer'}
               </button>
 
               <button
@@ -1016,11 +1141,68 @@ export default function PottaPoolDashboard() {
                 onClick={() => {
                   setShow2FAModal(false);
                   setVerificationCode('');
-                  showToast('Transfer cancelled', 'info');
+                  showToast(pending2faType === 'withdrawal' ? 'Withdrawal cancelled' : 'Transfer cancelled', 'info');
                 }}
                 className="w-full py-3 rounded-xl font-medium text-gray-400 hover:text-white hover:bg-slate-700 transition-colors"
               >
                 Cancel
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Email Verification Modal */}
+      {showEmailVerificationModal && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className={"bg-gradient-to-br from-slate-900 to-slate-800 rounded-3xl p-6 md:p-8 max-w-md w-full shadow-2xl relative border border-slate-700 text-white"}>
+            <button
+              onClick={() => {
+                setShowEmailVerificationModal(false);
+                setEmailVerificationCode('');
+              }}
+              className="absolute top-4 right-4 p-2 hover:bg-slate-700 rounded-full transition-colors text-gray-400 hover:text-white"
+            >
+              <X className="w-6 h-6" />
+            </button>
+
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Mail className="w-8 h-8 text-blue-400" />
+              </div>
+              <h3 className="text-2xl font-bold mb-2 text-white">Verify Email</h3>
+              <p className="text-gray-400 text-sm">
+                We've sent a 6-digit verification code to <strong>{user?.email}</strong>.
+              </p>
+            </div>
+
+            <form onSubmit={handleConfirmEmailVerification} className="space-y-6">
+              <div>
+                <label className="block text-sm font-medium mb-2 text-gray-300">Verification Code</label>
+                <input
+                  type="text"
+                  value={emailVerificationCode}
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/\D/g, '').slice(0, 6);
+                    setEmailVerificationCode(value);
+                  }}
+                  placeholder="Enter code"
+                  maxLength={6}
+                  className="w-full px-4 py-4 rounded-xl bg-slate-950 border border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-center text-2xl font-bold tracking-widest text-white placeholder-gray-600"
+                  autoFocus
+                />
+                <p className="text-xs text-gray-500 mt-2 text-center">Code expires in 10 minutes</p>
+              </div>
+
+              <button
+                type="submit"
+                disabled={emailVerificationCode.length !== 6 || isVerifyingEmail}
+                className={`w-full py-4 rounded-xl font-bold text-lg transition-all ${emailVerificationCode.length === 6 && !isVerifyingEmail
+                  ? 'bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white transform hover:scale-[1.02]'
+                  : 'bg-gray-700 text-gray-500 cursor-not-allowed'
+                  }`}
+              >
+                {isVerifyingEmail ? 'Verifying...' : 'Verify Code'}
               </button>
             </form>
           </div>

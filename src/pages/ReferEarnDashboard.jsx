@@ -3,6 +3,7 @@ import { useToast } from '../context/ToastContext';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { motion } from 'framer-motion';
 import { Copy, Share2, Check, Users, Clock, Gift, ChevronRight, TrendingUp, MessageCircle, Send, Sparkles, Award, Twitter, Mail, Zap, Crown, Target, Palette, Trophy, BookOpen, ShieldOff } from 'lucide-react';
+import QRCode from 'react-qr-code';
 
 const ReferEarnDashboard = () => {
   const { showToast } = useToast();
@@ -342,7 +343,7 @@ const ReferEarnDashboard = () => {
 
         {/* Referral Code Section */}
         <motion.div variants={item} className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-4 sm:p-6 border border-slate-700 shadow-xl">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-center">
             <div>
               <label className="text-gray-400 text-xs sm:text-sm mb-2 block">Your Referral Code</label>
               <div className="flex gap-2">
@@ -376,6 +377,19 @@ const ReferEarnDashboard = () => {
                   <span className="hidden sm:inline">{copiedLink ? 'Copied!' : 'Copy'}</span>
                 </motion.button>
               </div>
+            </div>
+            <div className="flex flex-col items-center justify-center">
+              <div className="bg-white p-2.5 rounded-xl border border-slate-700 shadow-2xl flex items-center justify-center">
+                <QRCode
+                  size={100}
+                  style={{ height: "auto", maxWidth: "100px", width: "100px" }}
+                  value={referralLink}
+                  viewBox={`0 0 100 100`}
+                  bgColor="#ffffff"
+                  fgColor="#0b0f19"
+                />
+              </div>
+              <span className="text-[10px] text-cyan-400 mt-2 font-bold uppercase tracking-widest">Scan Referral QR Code</span>
             </div>
           </div>
         </motion.div>

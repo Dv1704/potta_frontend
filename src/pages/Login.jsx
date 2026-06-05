@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import LoadingSpinner from '../components/LoadingSpinner';
 
-const logo = '/potta_logo_dark_transparent.png';
+import { logoBase64 as logo } from '../utils/logoBase64';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -85,7 +85,7 @@ const Login = () => {
       <form onSubmit={handleLogin} className="bg-slate-800 p-8 rounded-lg shadow-lg w-full max-w-md space-y-4">
         <div className="flex justify-center mb-6">
           <Link to="/">
-            <img src={logo} alt="POTTA Logo" className="h-16 w-auto object-contain" style={{ filter: 'drop-shadow(0 0 8px rgba(168,85,247,0.6))' }} />
+            <img src={logo} alt="POTTA Logo" className="h-16 w-auto object-contain" style={{ filter: 'drop-shadow(0 0 8px rgba(168,85,247,0.6))' }} fetchPriority="high" />
           </Link>
         </div>
         <h2 className="text-3xl font-bold mb-4 text-center text-blue-400">Login</h2>

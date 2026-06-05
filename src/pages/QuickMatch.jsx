@@ -91,7 +91,7 @@ const QuickMatch = () => {
 
         // DELAYED JOIN: Prove we are "searching"
         setTimeout(() => {
-          socket.emit('joinQueue', { userId: profile.id, entryFee, mode });
+          socket.emit('joinQueue', { userId: profile.id, stake: entryFee, mode });
         }, 1000);
 
       } catch (err) {

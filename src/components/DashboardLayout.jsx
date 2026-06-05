@@ -3,7 +3,7 @@ import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { ArrowLeft, Home, User, Wallet } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const logo = '/potta_logo_dark_transparent.png';
+import { logoBase64 as logo } from '../utils/logoBase64';
 
 const DashboardLayout = ({ children }) => {
     const navigate = useNavigate();
@@ -47,6 +47,7 @@ const DashboardLayout = ({ children }) => {
                         alt="Potta"
                         className="relative z-10 h-full w-auto object-contain"
                         style={{ filter: 'drop-shadow(0 0 8px rgba(168,85,247,0.6))' }}
+                        fetchPriority="high"
                     />
                 </Link>
 

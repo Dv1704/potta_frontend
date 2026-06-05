@@ -112,16 +112,33 @@ const TurnMode = () => {
     if (socket.connected) {
       setIsConnected(true);
       socket.emit('joinGame', { gameId });
+      // Signal we are ready; backend will call startGame() when both players have signalled
+      socket.emit('playerReady', { gameId, userId });
     }
 
     socket.on('connect', () => {
       setIsConnected(true);
       socket.emit('joinGame', { gameId });
+      socket.emit('playerReady', { gameId, userId });
     });
 
     socket.on('disconnect', () => {
       setIsConnected(false);
     });
+
+    const handleStartMatch = (data) => {
+      console.log('[TurnMode] Match started!', data);
+      setGameState(data.gameState);
+      if (data.gameState?.timer !== undefined) {
+        setTimeRemaining(data.gameState.timer);
+      }
+      showToast('Game started!', 'success');
+      // Forward to game iframe
+      const iframe = document.querySelector('iframe');
+      if (iframe && iframe.contentWindow) {
+        iframe.contentWindow.postMessage({ type: 'matchStart', state: data.gameState }, '*');
+      }
+    };
 
     const handleGameState = (state) => {
       console.log('[TurnMode] Game state received:', state);
@@ -208,6 +225,7 @@ const TurnMode = () => {
     };
 
     socket.on('gameState', handleGameState);
+    socket.on('startMatch', handleStartMatch);
     socket.on('shotResult', handleShotResult);
     socket.on('opponentShotStart', handleOpponentShotStart);
     socket.on('gameEnded', handleGameEnded);
@@ -219,6 +237,7 @@ const TurnMode = () => {
       socket.off('connect');
       socket.off('disconnect');
       socket.off('gameState');
+      socket.off('startMatch');
       socket.off('shotResult');
       socket.off('opponentShotStart');
       socket.off('gameEnded');
