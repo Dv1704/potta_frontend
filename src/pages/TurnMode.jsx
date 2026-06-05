@@ -55,10 +55,16 @@ const PlayerInfoOverlay = ({ player1, player2, myId, currentTurn, entryFee, time
       {currentTurn && (
         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-[9999] pointer-events-none">
           <div className="flex flex-col items-center gap-2">
-            {isMyTurn && (
+            {isMyTurn ? (
               <div className={`${isAnimating ? 'bg-yellow-500/90' : canTakeShot ? 'bg-green-500/90' : 'bg-gray-500/90'} backdrop-blur-sm rounded-full px-6 py-2 shadow-xl border border-white/30 ${canTakeShot ? 'animate-pulse' : ''}`}>
                 <div className="text-white font-bold text-sm">
                   {isAnimating ? '⏳ ANIMATING...' : canTakeShot ? 'YOUR TURN' : 'WAIT...'}
+                </div>
+              </div>
+            ) : (
+              <div className={`${isAnimating ? 'bg-yellow-500/90' : 'bg-red-600/90'} backdrop-blur-sm rounded-full px-6 py-2 shadow-xl border border-white/30`}>
+                <div className="text-white font-bold text-sm">
+                  {isAnimating ? '⏳ OPPONENT ANIMATING...' : 'OPPONENT\'S TURN'}
                 </div>
               </div>
             )}
@@ -282,6 +288,26 @@ const TurnMode = () => {
           console.log('[TurnMode] Applying pending turn update:', pendingTurnUpdate);
           setGameState(pendingTurnUpdate);
           setPendingTurnUpdate(null);
+        }
+      }
+
+      // Sync engine once it is ready
+      if (event.data.type === 'engineReady') {
+        console.log('[TurnMode] Game engine reported ready, sending initial state');
+        const iframe = document.querySelector('iframe');
+        if (iframe && iframe.contentWindow) {
+          iframe.contentWindow.postMessage({
+            type: 'initUser',
+            userId: userId
+          }, '*');
+
+          if (gameState) {
+            console.log('[TurnMode] Forwarding current gameState to newly ready engine:', gameState);
+            iframe.contentWindow.postMessage({
+              type: 'gameStateUpdate',
+              state: gameState
+            }, '*');
+          }
         }
       }
     };

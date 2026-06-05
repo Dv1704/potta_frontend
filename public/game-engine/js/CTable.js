@@ -603,11 +603,12 @@ function CTable(oParentContainer, oCpuDifficultyParams) {
 
                                 if (_aBalls[ballId]) {
                                         // Convert percentage to pixels
-                                        var pixelX = (bState.x / 100) * CANVAS_WIDTH;
-                                        var pixelY = (bState.y / 100) * CANVAS_HEIGHT;
+                                        var pixelX = (bState.x / 100) * 1280;
+                                        var pixelY = (bState.y / 100) * 770;
 
                                         _aBalls[ballId].setPos(pixelX, pixelY);
                                         _aBalls[ballId].setFlagOnTable(bState.onTable);
+                                        _aBalls[ballId].setVisible(bState.onTable);
 
                                         // Reset velocities to prevent ghost movement after sync
                                         _aBalls[ballId].setCurForce(0, 0);
@@ -621,6 +622,20 @@ function CTable(oParentContainer, oCpuDifficultyParams) {
                                 }
                         }
                 }
+        };
+
+        var _oPendingServerState = null;
+
+        this.setPendingServerState = function (state) {
+                _oPendingServerState = state;
+        };
+
+        this.getPendingServerState = function () {
+                return _oPendingServerState;
+        };
+
+        this.areBallsStopped = function () {
+                return _oPhysicsController.areBallsStopped();
         };
 
         /**
@@ -2590,7 +2605,29 @@ function CTable(oParentContainer, oCpuDifficultyParams) {
                 if (!bAllBallsStoppedPrev && bAllBallsStoppedAfter) {
                         s_oInterface.resetSpin();
 
-                        this.prepareNextTurn();
+                        if (_oPendingServerState) {
+                                console.log("[GameEngine] Physics stopped. Applying pending server state:", _oPendingServerState);
+                                this.updateBallsFromServer(_oPendingServerState.balls);
+
+                                s_bIsMyTurn = (_oPendingServerState.turn === s_szUserId);
+                                if (s_bIsMyTurn) {
+                                        s_oGame.showShotBar();
+                                        this.setStickVisible(true);
+                                } else {
+                                        s_oGame.hideShotBar();
+                                        this.setStickVisible(false);
+                                }
+
+                                _oPendingServerState = null;
+
+                                // Notify React that animation is complete
+                                window.parent.postMessage({
+                                        type: 'animationComplete'
+                                }, '*');
+                        } else {
+                                this.prepareNextTurn();
+                        }
+
                         _iPowerShot = 0;
                         for (var i = 0; i < _aBalls.length; i++) {
                                 _aBalls[i].resetEdgeCollisionCount();

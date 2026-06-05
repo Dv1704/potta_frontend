@@ -171,31 +171,35 @@ function CGame() {
             if (event.data.type === 'gameStateUpdate' || event.data.type === 'shotResult') {
                 var state = event.data.type === 'gameStateUpdate' ? event.data.state : event.data.data.gameState;
 
-                if (state && state.turn) {
-                    s_bIsMyTurn = (state.turn === s_szUserId);
-                    console.log("[GameEngine] Turn update. Is My Turn?", s_bIsMyTurn);
-                }
-
-                if (s_oTable && state && state.balls) {
-                    s_oTable.updateBallsFromServer(state.balls);
-
-                    // CRITICAL FIX: Notify React that animation is complete
-                    // This allows React to unlock input and apply pending turn updates
-                    setTimeout(function () {
-                        window.parent.postMessage({
-                            type: 'animationComplete'
-                        }, '*');
-                        console.log("[GameEngine] Animation complete, notifying React");
-                    }, 50); // Small delay to ensure balls are rendered
-                }
-
-                if (typeof s_bIsMyTurn !== 'undefined') {
-                    if (s_bIsMyTurn) {
-                        s_oGame.showShotBar();
-                        if (s_oTable) s_oTable.setStickVisible(true);
-                    } else {
-                        s_oGame.hideShotBar();
-                        if (s_oTable) s_oTable.setStickVisible(false);
+                if (state) {
+                    if (s_oTable) {
+                        if (s_oTable.areBallsStopped()) {
+                            console.log("[GameEngine] Balls are stopped. Applying state immediately.");
+                            if (state.balls) {
+                                s_oTable.updateBallsFromServer(state.balls);
+                            }
+                            if (state.turn) {
+                                s_bIsMyTurn = (state.turn === s_szUserId);
+                            }
+                            if (typeof s_bIsMyTurn !== 'undefined') {
+                                if (s_bIsMyTurn) {
+                                    s_oGame.showShotBar();
+                                    s_oTable.setStickVisible(true);
+                                } else {
+                                    s_oGame.hideShotBar();
+                                    s_oTable.setStickVisible(false);
+                                }
+                            }
+                            setTimeout(function () {
+                                window.parent.postMessage({
+                                    type: 'animationComplete'
+                                }, '*');
+                                console.log("[GameEngine] State applied immediately, notifying React");
+                            }, 50);
+                        } else {
+                            console.log("[GameEngine] Balls are moving. Queuing state for reconciliation.");
+                            s_oTable.setPendingServerState(state);
+                        }
                     }
                 }
             }
@@ -221,6 +225,12 @@ function CGame() {
             }
         };
         window.addEventListener('message', this._oMessageListener);
+
+        // Notify parent React window that the game engine is fully loaded and ready
+        console.log("[GameEngine] Engine ready, notifying parent");
+        window.parent.postMessage({
+            type: 'engineReady'
+        }, '*');
     };
 
     this._startInteractiveHelp = function () {
