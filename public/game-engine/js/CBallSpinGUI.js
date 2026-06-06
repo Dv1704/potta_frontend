@@ -48,7 +48,8 @@ function CBallSpinGUI(iX,iY,oParentContainer){
     };
     
     this._onRelease = function(evt){
-        if(((s_iPlayerMode === GAME_MODE_CPU) && (s_oGame.getCurTurn() === 2))){
+        if(((s_iPlayerMode === GAME_MODE_CPU) && (s_oGame.getCurTurn() === 2))
+            || (typeof s_bIsMyTurn !== 'undefined' && !s_bIsMyTurn)){
             return;
         }
         

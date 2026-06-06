@@ -28,6 +28,7 @@ const MatchSummary = React.lazy(() => import('./pages/MatchSummary'));
 const PoolGameDemo = React.lazy(() => import('./pages/PoolGameDemo'));
 const PoolEngineTest = React.lazy(() => import('./pages/PoolEngineTest'));
 const GameEngineTest = React.lazy(() => import('./pages/GameEngineTest'));
+const LocalPVP = React.lazy(() => import('./pages/LocalPVP'));
 
 function AppContent() {
   const { loading } = useAuth();
@@ -139,6 +140,11 @@ function AppContent() {
             <DashboardLayout>
               <MatchSummary />
             </DashboardLayout>
+          </ProtectedRoute>
+        } />
+        <Route path="/local-pvp" element={
+          <ProtectedRoute>
+            <LocalPVP />
           </ProtectedRoute>
         } />
         <Route path="/pool-ui-demo" element={<PoolGameDemo />} />

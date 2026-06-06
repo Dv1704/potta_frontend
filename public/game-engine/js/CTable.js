@@ -749,6 +749,7 @@ function CTable(oParentContainer, oCpuDifficultyParams) {
 
         this._onPressDownCueBall = function (oEvent) {
                 if ((s_iPlayerMode === GAME_MODE_CPU) && (s_oGame.getCurTurn() === 2)
+                        || (typeof s_bIsMyTurn !== 'undefined' && !s_bIsMyTurn)
                         || (_iState !== STATE_TABLE_PLACE_CUE_BALL_BREAKSHOT && _iState !== STATE_TABLE_PLACE_CUE_BALL)) {
                         return;
                 }
@@ -943,6 +944,15 @@ function CTable(oParentContainer, oCpuDifficultyParams) {
                 _oHittenBallDir.graphics.clear();
                 _oCircleShape.x = CANVAS_WIDTH + 100;
                 _oCircleShape.y = CANVAS_HEIGHT + 100;
+                _oCircleShape.visible = false;
+                if (typeof s_bShowGuideLine !== 'undefined' && !s_bShowGuideLine) {
+                        return;
+                }
+
+                if (typeof s_bIsMyTurn !== 'undefined' && !s_bIsMyTurn) {
+                        return;
+                }
+
                 /*if ( (_bForceStopStick == true) || (_isMouseInTable() == false && m_oAnimStick.bAnim == false) ) {
                         return;
                 }*/
@@ -989,7 +999,9 @@ function CTable(oParentContainer, oCpuDifficultyParams) {
                                                                 angle: fAngle,
                                                                 power: _iPowerShot,
                                                                 sideSpin: s_oInterface.getSideSpin(),
-                                                                backSpin: s_oInterface.getBackSpin()
+                                                                backSpin: s_oInterface.getBackSpin(),
+                                                                cueBallX: (_oCueBall.getX() / 1280) * 100,
+                                                                cueBallY: (_oCueBall.getY() / 770) * 100
                                                         }
                                                 }, '*');
                                         }
@@ -1268,6 +1280,7 @@ function CTable(oParentContainer, oCpuDifficultyParams) {
                 if (
                         (_iState === STATE_TABLE_SHOOT || _iState === STATE_TABLE_SHOOTING)
                         || (s_iPlayerMode === GAME_MODE_CPU) && (s_oGame.getCurTurn() === 2)
+                        || (typeof s_bIsMyTurn !== 'undefined' && !s_bIsMyTurn)
                         || _bReadyForShot) {
                         return;
                 }
@@ -1628,6 +1641,20 @@ function CTable(oParentContainer, oCpuDifficultyParams) {
                 }
 
                 _iShotPoints = 0;
+                if (s_iPlayerMode === GAME_MODE_TWO) {
+                        var aPocketedCopy = _aBallsInHoleInCurShot ? _aBallsInHoleInCurShot.slice() : [];
+                        var szFoulReason = null;
+                        if (bFault) {
+                                if (_bCueBallInHole) {
+                                        szFoulReason = 'scratch';
+                                } else if (_aCueBallCollision.length === 0) {
+                                        szFoulReason = 'no_contact';
+                                } else {
+                                        szFoulReason = 'wrong_ball_first';
+                                }
+                        }
+                        s_oGame.notifyLocalStateUpdate(bFault, bEndGame, aPocketedCopy, szFoulReason);
+                }
                 return bEndGame;
         };
 
@@ -2613,6 +2640,9 @@ function CTable(oParentContainer, oCpuDifficultyParams) {
                                 if (s_bIsMyTurn) {
                                         s_oGame.showShotBar();
                                         this.setStickVisible(true);
+                                        if (_oPendingServerState.foulOccurred) {
+                                                this.respotCueBall();
+                                        }
                                 } else {
                                         s_oGame.hideShotBar();
                                         this.setStickVisible(false);
@@ -2702,6 +2732,10 @@ function CTable(oParentContainer, oCpuDifficultyParams) {
                         oBall._updateShadow();
                 }, this);
 
+        };
+
+        this.getBallsToPotPlayers = function () {
+                return _aBallsToPotPlayers;
         };
 
         s_oTable = this;

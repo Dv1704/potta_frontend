@@ -172,6 +172,13 @@ function CGame() {
                 var state = event.data.type === 'gameStateUpdate' ? event.data.state : event.data.data.gameState;
 
                 if (state) {
+                    // CRITICAL FIX: Also unlock the game when we receive a state
+                    // with isGameStarted=true, in case the 'matchStart' message
+                    // was dropped due to the iframe not being ready yet.
+                    if (state.isGameStarted && !_bGameReady) {
+                        console.log("[GameEngine] Unlocking game via gameStateUpdate (isGameStarted=true)");
+                        _bGameReady = true;
+                    }
                     if (s_oTable) {
                         if (s_oTable.areBallsStopped()) {
                             console.log("[GameEngine] Balls are stopped. Applying state immediately.");
@@ -185,6 +192,9 @@ function CGame() {
                                 if (s_bIsMyTurn) {
                                     s_oGame.showShotBar();
                                     s_oTable.setStickVisible(true);
+                                    if (state.foulOccurred) {
+                                        s_oTable.respotCueBall();
+                                    }
                                 } else {
                                     s_oGame.hideShotBar();
                                     s_oTable.setStickVisible(false);
@@ -222,6 +232,27 @@ function CGame() {
             if (event.data.type === 'updatePlayerNames') {
                 if (_oPlayer1) _oPlayer1.setPlayerName(event.data.player1Name);
                 if (_oPlayer2) _oPlayer2.setPlayerName(event.data.player2Name);
+                if (s_iPlayerMode === GAME_MODE_TWO) {
+                    s_oGame.notifyLocalStateUpdate();
+                }
+            }
+            if (event.data.type === 'applySettings') {
+                var s = event.data.settings;
+                if (s) {
+                    if (typeof s.sound !== 'undefined') {
+                        Howler.mute(!s.sound);
+                        s_bAudioActive = s.sound;
+                        console.log("[GameEngine] Apply sound settings:", s_bAudioActive);
+                    }
+                    if (typeof s.guideLine !== 'undefined') {
+                        s_bShowGuideLine = s.guideLine;
+                        console.log("[GameEngine] Apply guideline settings:", s_bShowGuideLine);
+                    }
+                    if (typeof s.difficulty !== 'undefined') {
+                        s_iGameDifficulty = s.difficulty;
+                        console.log("[GameEngine] Apply difficulty settings:", s_iGameDifficulty);
+                    }
+                }
             }
         };
         window.addEventListener('message', this._oMessageListener);
@@ -438,6 +469,10 @@ function CGame() {
         } else {
             new CEffectText(TEXT_CHANGE_TURN, s_oStageUpper3D);
         }
+
+        if (s_iPlayerMode === GAME_MODE_TWO) {
+            this.notifyLocalStateUpdate(bFault);
+        }
     };
 
     this.assignSuits = function (iBallNumber) {
@@ -576,6 +611,39 @@ function CGame() {
         return _oPlayer2.getPlayerName();
     };
 
+    this.getPlayerSuite = function (iPlayer) {
+        if (!_aSuitePlayer) return null;
+        return _aSuitePlayer[iPlayer - 1];
+    };
+
+    this.notifyLocalStateUpdate = function (bFault, bEndGame, aBallsPocketed, szFoulReason) {
+        if (s_iPlayerMode === GAME_MODE_TWO) {
+            var aBallsToPot = s_oTable ? s_oTable.getBallsToPotPlayers() : [7, 7];
+            var player1Suite = _aSuitePlayer ? _aSuitePlayer[0] : null;
+            var player2Suite = _aSuitePlayer ? _aSuitePlayer[1] : null;
+
+            window.parent.postMessage({
+                type: 'localGameStateUpdate',
+                state: {
+                    turn: _iCurTurn, // 1 or 2
+                    player1Name: _oPlayer1.getPlayerName(),
+                    player2Name: _oPlayer2.getPlayerName(),
+                    player1BallsRemaining: aBallsToPot ? aBallsToPot[0] : 7,
+                    player2BallsRemaining: aBallsToPot ? aBallsToPot[1] : 7,
+                    groupAssigned: _bSuitAssigned,
+                    playerGroups: _bSuitAssigned ? {
+                        1: player1Suite,
+                        2: player2Suite
+                    } : {},
+                    foulOccurred: !!bFault,
+                    foulReason: szFoulReason || null,
+                    gameOver: !!bEndGame,
+                    ballsPocketed: aBallsPocketed || []
+                }
+            }, '*');
+        }
+    };
+
     this._updateInput = function () {
         if (!_bHoldStickCommand) {
             return;
@@ -612,3 +680,4 @@ function CGame() {
 var s_oGame = null;
 var s_szUserId = null;
 var s_bIsMyTurn = true;
+var s_bShowGuideLine = true;

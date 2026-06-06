@@ -18,8 +18,11 @@ function CStick(oParentContainer){
     };
     
     this.setVisible = function(bVisible){
-
-        _oContainer.visible = bVisible;
+        if (typeof s_bIsMyTurn !== 'undefined' && !s_bIsMyTurn) {
+            _oContainer.visible = false;
+        } else {
+            _oContainer.visible = bVisible;
+        }
     };
     
     this.setPos = function(iX,iY){

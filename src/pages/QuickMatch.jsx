@@ -15,7 +15,14 @@ import {
   ArrowLeft,
   CircleDot,
   Dna,
-  Cpu
+  Cpu,
+  Settings,
+  Volume2,
+  VolumeX,
+  Eye,
+  EyeOff,
+  Sliders,
+  X
 } from 'lucide-react';
 
 const QuickMatch = () => {
@@ -31,6 +38,30 @@ const QuickMatch = () => {
   const [matchData, setMatchData] = useState(null);
   const [foundTriggered, setFoundTriggered] = useState(false);
   const [showSummary, setShowSummary] = useState(false);
+
+  // Settings state (saved in localStorage)
+  const [soundEnabled, setSoundEnabled] = useState(() => localStorage.getItem('potta_sound') !== 'false');
+  const [guideLineEnabled, setGuideLineEnabled] = useState(() => localStorage.getItem('potta_guideline') !== 'false');
+  const [difficulty, setDifficulty] = useState(() => parseInt(localStorage.getItem('potta_difficulty') || '0'));
+  const [showSettingsMenu, setShowSettingsMenu] = useState(false);
+
+  const toggleSound = () => {
+    const val = !soundEnabled;
+    setSoundEnabled(val);
+    localStorage.setItem('potta_sound', val.toString());
+  };
+
+  const toggleGuideLine = () => {
+    const val = !guideLineEnabled;
+    setGuideLineEnabled(val);
+    localStorage.setItem('potta_guideline', val.toString());
+  };
+
+  const handleDifficultyChange = (e) => {
+    const val = parseInt(e.target.value);
+    setDifficulty(val);
+    localStorage.setItem('potta_difficulty', val.toString());
+  };
 
   const queryParams = new URLSearchParams(location.search);
   const mode = queryParams.get('mode') || 'turn';
@@ -315,6 +346,103 @@ const QuickMatch = () => {
           </div>
         )}
       </div>
+
+      {/* Settings Gear Button - Top Right */}
+      {!foundTriggered && (
+        <div className="absolute top-8 right-8 z-50 pointer-events-auto">
+          <button 
+            onClick={() => setShowSettingsMenu(true)}
+            className="bg-slate-900/90 hover:bg-slate-800 border border-white/10 hover:border-white/20 p-3.5 rounded-2xl shadow-lg transition-all active:scale-95 flex items-center justify-center text-white"
+            title="Settings"
+          >
+            <Settings size={20} className="animate-spin-slow" />
+          </button>
+        </div>
+      )}
+
+      {/* --- SETTINGS MODAL --- */}
+      <AnimatePresence>
+        {showSettingsMenu && (
+          <div className="fixed inset-0 z-[100000] flex items-center justify-center p-4">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowSettingsMenu(false)} className="absolute inset-0 bg-black/85 backdrop-blur-md" />
+            <motion.div 
+              initial={{ scale: 0.95, opacity: 0, y: 10 }} 
+              animate={{ scale: 1, opacity: 1, y: 0 }} 
+              exit={{ scale: 0.95, opacity: 0, y: 10 }}
+              className="bg-[#0c111d]/95 w-full max-w-md rounded-[3rem] border border-white/10 p-10 shadow-2xl relative z-10 overflow-hidden"
+            >
+              <div className="text-center mb-8">
+                <h3 className="text-3xl font-black uppercase italic tracking-tighter">Settings</h3>
+                <p className="text-gray-400 text-xs font-medium mt-1">Configure your preferences before the match starts</p>
+              </div>
+
+              {/* Settings Panel */}
+              <div className="space-y-4 bg-black/40 rounded-3xl p-6 border border-white/5 mb-8 text-white">
+                
+                {/* Sound Toggle */}
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-semibold flex items-center gap-2">
+                    {soundEnabled ? <Volume2 size={16} className="text-blue-400" /> : <VolumeX size={16} className="text-gray-500" />}
+                    Sound Effects
+                  </span>
+                  <button 
+                    onClick={toggleSound} 
+                    className={`w-12 h-6 rounded-full transition-all duration-300 relative border ${
+                      soundEnabled ? 'bg-blue-600 border-blue-400' : 'bg-slate-900 border-slate-700'
+                    }`}
+                  >
+                    <div className={`w-4 h-4 rounded-full bg-white absolute top-0.5 transition-all duration-300 ${
+                      soundEnabled ? 'left-[26px]' : 'left-1'
+                    }`} />
+                  </button>
+                </div>
+
+                {/* Guide Line Toggle */}
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-semibold flex items-center gap-2">
+                    {guideLineEnabled ? <Eye size={16} className="text-blue-400" /> : <EyeOff size={16} className="text-gray-500" />}
+                    Aiming Guide Line
+                  </span>
+                  <button 
+                    onClick={toggleGuideLine} 
+                    className={`w-12 h-6 rounded-full transition-all duration-300 relative border ${
+                      guideLineEnabled ? 'bg-blue-600 border-blue-400' : 'bg-slate-900 border-slate-700'
+                    }`}
+                  >
+                    <div className={`w-4 h-4 rounded-full bg-white absolute top-0.5 transition-all duration-300 ${
+                      guideLineEnabled ? 'left-[26px]' : 'left-1'
+                    }`} />
+                  </button>
+                </div>
+
+                {/* Difficulty Selector */}
+                <div className="flex items-center justify-between pt-2 border-t border-white/5">
+                  <span className="text-sm font-semibold flex items-center gap-2">
+                    <Sliders size={16} className="text-blue-400" />
+                    Difficulty
+                  </span>
+                  <select
+                    value={difficulty}
+                    onChange={handleDifficultyChange}
+                    className="bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 outline-none font-bold text-xs cursor-pointer text-white focus:border-blue-500"
+                  >
+                    <option value="0">Easy</option>
+                    <option value="1">Medium</option>
+                    <option value="2">Hard</option>
+                  </select>
+                </div>
+              </div>
+
+              <button 
+                onClick={() => setShowSettingsMenu(false)}
+                className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-black py-4.5 rounded-2xl transition-all shadow-lg shadow-blue-600/20 text-sm uppercase italic tracking-wider"
+              >
+                Close Settings
+              </button>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
     </div>
   );

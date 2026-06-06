@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '../context/ToastContext';
 import LoadingSpinner from '../components/LoadingSpinner';
-import { Zap, Trophy, Shuffle, Plus, ArrowRight, Sword, X } from 'lucide-react';
+import { Zap, Trophy, Shuffle, Plus, ArrowRight, Sword, X, Users } from 'lucide-react';
 import { api } from '../utils/api';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -51,6 +51,18 @@ const games = [
     players: 'INSTANT PAIR',
     category: 'FAST ENTRY',
     description: 'A streamlined PvP entry point that matches players instantly based on a shared entry fee amount.'
+  },
+  {
+    id: 'local-pvp',
+    name: 'Local 1v1',
+    mode: 'local',
+    icon: Users,
+    image: 'https://images.unsplash.com/photo-1538481199705-c710c4e965fc?w=800&h=400&fit=crop',
+    color: 'from-purple-500 to-indigo-600',
+    minEntry: 0,
+    players: 'OFFLINE PVP',
+    category: '1V1 ON SAME SCREEN',
+    description: 'Challenge a friend on the same device. Standard 8-ball rules, turn management, and suit assignments.'
   }
 ];
 
@@ -239,17 +251,29 @@ export default function GameDashboard() {
 
                 <div className="flex items-center justify-between gap-6">
                   <div>
-                    <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest mb-2">ENTRY FEE FROM</p>
+                    <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest mb-2">
+                      {game.id === 'local-pvp' ? 'PLAY MODE' : 'ENTRY FEE FROM'}
+                    </p>
                     <p className="text-2xl font-black flex items-center gap-1.5">
-                      <span className="text-blue-500 text-lg">GH₵</span>
-                      <span>{game.minEntry}</span>
+                      {game.id === 'local-pvp' ? (
+                        <span className="text-emerald-400 font-black tracking-tight">FREE</span>
+                      ) : (
+                        <>
+                          <span className="text-blue-500 text-lg">GH₵</span>
+                          <span>{game.minEntry}</span>
+                        </>
+                      )}
                     </p>
                   </div>
                   <button
                     onClick={() => {
-                      setSelectedGame(game);
-                      setEntryFee(game.minEntry.toString());
-                      setShowEntryFeeModal(true);
+                      if (game.id === 'local-pvp') {
+                        navigate('/local-pvp');
+                      } else {
+                        setSelectedGame(game);
+                        setEntryFee(game.minEntry.toString());
+                        setShowEntryFeeModal(true);
+                      }
                     }}
                     className="flex-1 bg-white hover:bg-blue-400 text-black font-black py-5 rounded-2xl flex items-center justify-center gap-3 transition-all hover:scale-105 active:scale-95 shadow-xl"
                   >

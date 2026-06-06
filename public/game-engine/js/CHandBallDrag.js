@@ -37,10 +37,19 @@ function CHandBallDrag(oParentContainer){
     };
     
     this.setVisible = function(bVal){
-        _oContainer.visible = bVal;
+        if (typeof s_bIsMyTurn !== 'undefined' && !s_bIsMyTurn) {
+            _oContainer.visible = false;
+        } else {
+            _oContainer.visible = bVal;
+        }
     };
     
     this.show = function(){
+        if (typeof s_bIsMyTurn !== 'undefined' && !s_bIsMyTurn) {
+            this.setVisible(false);
+            _oContainer.alpha = 0;
+            return;
+        }
         this.setVisible(true);
         createjs.Tween.get(_oContainer, {override:true})
                 .to({alpha: 1}, MS_SHOW_FADE_ANIMATION, createjs.Ease.cubicOut);

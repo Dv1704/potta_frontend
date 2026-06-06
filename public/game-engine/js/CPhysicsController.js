@@ -402,7 +402,11 @@ function CPhysicsController(oDebugContainer){
         vRayCollision.invert();
         vRayCollision.normalize();
         vRayCollision.scalarProduct(iForce*(1-iForceTransfer) + (iForce*0.2) );
-        aCollisions[iPos].oBall.addForce(vRayCollision);		
+        
+        var vRayCollisionScaled = new CVector2();
+        vRayCollisionScaled.setV(vRayCollision);
+        vRayCollisionScaled.scalarProduct(4); // Scale up sub-step force addition for frame accumulator
+        aCollisions[iPos].oBall.addForce(vRayCollisionScaled);		
 
         if(_aCbCompleted[ON_BALL_WITH_BALL]){
             _aCbCompleted[ON_BALL_WITH_BALL].call(_aCbOwner[ON_BALL_WITH_BALL],oBall, aCollisions[iPos].oBall,iForce);
@@ -642,81 +646,92 @@ function CPhysicsController(oDebugContainer){
         ];
     };
         
-    //physic loop	
+    //physic loop with 4 sub-steps to prevent physics tunneling on fast shots
     this.update = function(aBalls){
         var oBall;
         _aBalls = aBalls;
         _bAllBallsStopped = true;
-		
-        //check ball physics
+        
+        var SUB_STEPS = 4;
+        
+        // 1. Frame Start: Apply accumulated tmp forces and scale velocity down by SUB_STEPS
         for ( var i = 0; i < aBalls.length; i++ ){
-            oBall = aBalls[i]; 
+            oBall = aBalls[i];
             oBall.addCurForce(oBall.getTmpForce());
-            oBall.setTmpForce(0,0);
-            oBall.setPrevPos(oBall.getPos());
-
-            if ( oBall.isBallOnTable() ){
-                var aHolesTest, aEdgesTest, aPointsNormalsTest;
-                //verify quadrant for each ball considered (so we decrease the number of check)
-                switch( this._chooseQuadrant(oBall) ){
-                    case 0:{
-                            aHolesTest = _aHolesTopLeft; 
-                            aEdgesTest = _aEdgesTopLeft;
-                            aPointsNormalsTest = _aPointsNormalsTopLeft;
-                    }break;
-                    case 1:{
-                            aHolesTest = _aHolesTopRight;
-                            aEdgesTest = _aEdgesTopRight;				
-                            aPointsNormalsTest = _aPointsNormalsTopRight;						
-                    }break;
-                    case 2:{
-                            aHolesTest = _aHolesBottomRight;
-                            aEdgesTest = _aEdgesBottomRight;
-                            aPointsNormalsTest = _aPointsNormalsBottomRight;						
-                    }break;
-                    case 3:{
-                            aHolesTest = _aHolesBottomLeft;
-                            aEdgesTest = _aEdgesBottomLeft;					
-                            aPointsNormalsTest = _aPointsNormalsBottomLeft;						
-                    }break;	
-                }
-
-            //verify if ball position is close to any hole
-
-                if(oBall.getHole() === null){
-                    var oRetHole = this.collideBallWithHoles(oBall, aHolesTest);
-                    if(  oRetHole !== null ){
-                        this.addBallToStack(oBall, oRetHole);
-
-                        var vDirToHole = new CVector2();
-                        vDirToHole.set(oRetHole.getX() - oBall.getX(), oRetHole.getY() - oBall.getY());
-                        vDirToHole.normalize();
-
-                        for (var k = 0; k < 5; k++){
-                            oBall.addPos(vDirToHole);
-                        }
-
-                    }else{
-                            //verify if ball position is close to any edge
-                        this.collideBallWithEdges(oBall, aEdgesTest, aPointsNormalsTest);
+            oBall.setTmpForce(0, 0);
+            
+            var vForce = oBall.getCurForce();
+            oBall.setCurForce(vForce.getX() / SUB_STEPS, vForce.getY() / SUB_STEPS);
+        }
+        
+        // 2. Sub-step Loop: Update positions and check collisions SUB_STEPS times
+        for ( var step = 0; step < SUB_STEPS; step++ ){
+            for ( var i = 0; i < aBalls.length; i++ ){
+                oBall = aBalls[i];
+                if ( oBall.isBallOnTable() ){
+                    oBall.setPrevPos(oBall.getPos());
+                    
+                    var aHolesTest, aEdgesTest, aPointsNormalsTest;
+                    switch( this._chooseQuadrant(oBall) ){
+                        case 0:{
+                                aHolesTest = _aHolesTopLeft; 
+                                aEdgesTest = _aEdgesTopLeft;
+                                aPointsNormalsTest = _aPointsNormalsTopLeft;
+                        }break;
+                        case 1:{
+                                aHolesTest = _aHolesTopRight;
+                                aEdgesTest = _aEdgesTopRight;				
+                                aPointsNormalsTest = _aPointsNormalsTopRight;						
+                        }break;
+                        case 2:{
+                                aHolesTest = _aHolesBottomRight;
+                                aEdgesTest = _aEdgesBottomRight;
+                                aPointsNormalsTest = _aPointsNormalsBottomRight;						
+                        }break;
+                        case 3:{
+                                aHolesTest = _aHolesBottomLeft;
+                                aEdgesTest = _aEdgesBottomLeft;					
+                                aPointsNormalsTest = _aPointsNormalsBottomLeft;						
+                        }break;	
                     }
-                }else{
-                    //verify if ball position is close to any edge
-                    this.collideBallWithEdges(oBall, _aHoleEdges, aPointsNormalsTest);
 
-                    this.checkBallPosInHole(oBall,oBall.getHole());
-                }				
-            }else{	
+                    if(oBall.getHole() === null){
+                        var oRetHole = this.collideBallWithHoles(oBall, aHolesTest);
+                        if(  oRetHole !== null ){
+                            this.addBallToStack(oBall, oRetHole);
+                            var vDirToHole = new CVector2();
+                            vDirToHole.set(oRetHole.getX() - oBall.getX(), oRetHole.getY() - oBall.getY());
+                            vDirToHole.normalize();
+                            for (var k = 0; k < 5; k++){
+                                oBall.addPos(vDirToHole);
+                            }
+                        }else{
+                            this.collideBallWithEdges(oBall, aEdgesTest, aPointsNormalsTest);
+                        }
+                    }else{
+                        this.collideBallWithEdges(oBall, _aHoleEdges, aPointsNormalsTest);
+                        this.checkBallPosInHole(oBall,oBall.getHole());
+                    }				
+                }else{	
+                    oBall.setPrevPos(oBall.getPos());
                     oBall.addPos(oBall.getCurForce());
-            }			
-
+                }
+            }
+        }
+        
+        // 3. Frame End: Scale velocity back up by SUB_STEPS, apply friction and check stop conditions
+        for ( var i = 0; i < aBalls.length; i++ ){
+            oBall = aBalls[i];
+            var vForce = oBall.getCurForce();
+            oBall.setCurForce(vForce.getX() * SUB_STEPS, vForce.getY() * SUB_STEPS);
+            
             oBall.scalarProductCurForce(K_FRICTION);
-
+            
             if (oBall.getCurForceLenght2() < K_MIN_FORCE){
-                    oBall.setCurForce(0,0);
-            }else if ( oBall.isBallOnTable()){
-                    _bAllBallsStopped = false;
-            }				
+                oBall.setCurForce(0, 0);
+            } else if ( oBall.isBallOnTable()){
+                _bAllBallsStopped = false;
+            }
         }
     };
         
