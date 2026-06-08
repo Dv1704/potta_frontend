@@ -127,10 +127,14 @@ export default function GameDashboard() {
 
     setDepositLoading(true);
     try {
+      // Read real email from stored user object
+      const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+      const userEmail = storedUser.email || '';
+
       const res = await api.post('/payments/deposit/initialize', {
         amount: parseFloat(depositAmount),
         currency: 'GHS',
-        email: user.username + '@example.com',
+        email: userEmail,
         callbackUrl: window.location.href
       }, token);
 

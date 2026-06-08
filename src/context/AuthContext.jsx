@@ -1,23 +1,64 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
 
 const AuthContext = createContext(null);
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [token, setToken] = useState(null);
     const [loading, setLoading] = useState(true);
 
+    const logout = useCallback(() => {
+        setToken(null);
+        setUser(null);
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        localStorage.removeItem('userId');
+    }, []);
+
+    // On mount: restore session from localStorage and validate token against server
     useEffect(() => {
-        // Load from localStorage on mount
         const storedToken = localStorage.getItem('token');
         const storedUser = localStorage.getItem('user');
 
-        if (storedToken && storedUser) {
-            setToken(storedToken);
-            setUser(JSON.parse(storedUser));
+        if (!storedToken) {
+            setLoading(false);
+            return;
         }
-        setLoading(false);
-    }, []);
+
+        // Restore optimistically so pages render immediately
+        setToken(storedToken);
+        if (storedUser) {
+            try { setUser(JSON.parse(storedUser)); } catch { /* ignore */ }
+        }
+
+        // Then validate against server — if 401, token is expired
+        fetch(`${API_URL}/auth/profile`, {
+            headers: { 'Authorization': `Bearer ${storedToken}` }
+        })
+            .then(res => {
+                if (res.status === 401) {
+                    // Token expired or invalid — force logout
+                    logout();
+                    return null;
+                }
+                return res.json();
+            })
+            .then(userData => {
+                if (userData) {
+                    // Refresh user data from server (removes stale data / password leak)
+                    setUser(userData);
+                    localStorage.setItem('user', JSON.stringify(userData));
+                }
+            })
+            .catch(() => {
+                // Network error — keep session optimistically, let individual pages handle errors
+            })
+            .finally(() => {
+                setLoading(false);
+            });
+    }, [logout]);
 
     const login = (authToken, userData) => {
         setToken(authToken);
@@ -29,16 +70,28 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
-    const logout = () => {
-        setToken(null);
-        setUser(null);
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        localStorage.removeItem('userId');
-    };
+    /**
+     * Re-fetch user profile from server and update context + localStorage.
+     * Call this after balance changes, profile updates, etc.
+     */
+    const refreshUser = useCallback(async () => {
+        const t = localStorage.getItem('token');
+        if (!t) return;
+        try {
+            const res = await fetch(`${API_URL}/auth/profile`, {
+                headers: { 'Authorization': `Bearer ${t}` }
+            });
+            if (res.status === 401) { logout(); return; }
+            if (res.ok) {
+                const userData = await res.json();
+                setUser(userData);
+                localStorage.setItem('user', JSON.stringify(userData));
+            }
+        } catch { /* network error — ignore */ }
+    }, [logout]);
 
     return (
-        <AuthContext.Provider value={{ user, token, login, logout, loading }}>
+        <AuthContext.Provider value={{ user, token, login, logout, loading, refreshUser }}>
             {children}
         </AuthContext.Provider>
     );

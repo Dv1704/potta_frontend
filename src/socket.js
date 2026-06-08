@@ -12,10 +12,16 @@ export const socket = io(sanitizedUrl, {
 export const connectSocket = (userId) => {
     if (socket.connected) return;
 
+    const token = localStorage.getItem('token');
+
     console.log('[Socket] Connecting to:', sanitizedUrl);
 
-
+    // Pass both userId and JWT token for server-side authentication
     socket.io.opts.query = { userId };
+    if (token) {
+        socket.io.opts.auth = { token };
+    }
+
     socket.connect();
 };
 
