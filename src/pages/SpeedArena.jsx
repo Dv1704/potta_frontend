@@ -4,106 +4,112 @@ import { socket, connectSocket } from '../socket';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { useToast } from '../context/ToastContext';
 import PoolGameEngineEmbed from '../components/PoolGameEngineEmbed';
-import { AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Settings, Volume2, VolumeX, Eye, EyeOff, Sliders, X, List, Trophy, Zap, AlertTriangle, CircleDot, MessageSquare, Send } from 'lucide-react';
 
 /**
  * PlayerInfoOverlay - Shows player names and game stats on top of the game
  */
-const PlayerInfoOverlay = ({ player1, player2, myId, entryFee, timeRemaining, overallTimeRemaining = 180, scores = {}, streaks = {}, turn }) => {
+const PlayerInfoOverlay = ({ player1, player2, myId, entryFee, timeRemaining, overallTimeRemaining = 180, scores = {}, streaks = {}, turn, isGameStarted, onMenuClick }) => {
   return (
     <>
-      {/* Player 1 Info - Top Left */}
-      <div className="absolute top-4 left-2 sm:left-4 z-[9999] pointer-events-none">
-        <div className={`backdrop-blur-sm rounded-2xl px-3 py-2 sm:px-4 sm:py-3 shadow-xl border transition-all duration-300 max-w-[220px] sm:max-w-[280px] ${
-          turn === player1?.id 
-            ? 'bg-gradient-to-r from-purple-600/95 to-blue-600/95 border-purple-400 scale-105 shadow-[0_0_15px_rgba(168,85,247,0.4)]' 
-            : 'bg-slate-800/85 border-slate-700 opacity-90'
+      {/* Unified Top Header Bar */}
+      <div className="fixed top-0 left-0 right-0 z-[9999] w-full pointer-events-auto h-16 sm:h-20 bg-slate-950/80 backdrop-blur-md border-b border-white/10 flex items-center justify-between px-3 sm:px-6">
+        
+        {/* Player 1 (Left) */}
+        <div className={`min-w-0 flex items-center gap-2 sm:gap-3 px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl border transition-all duration-300 ${
+          isGameStarted && turn === player1?.id
+            ? 'bg-purple-600/20 border-purple-500 shadow-[0_0_10px_rgba(168,85,247,0.3)]'
+            : 'bg-slate-900/60 border-slate-800'
         }`}>
-          <div className="flex items-center gap-2 sm:gap-3">
-            {turn === player1?.id && (
-              <div className="w-2.5 h-2.5 rounded-full bg-green-400 animate-pulse"></div>
-            )}
-            <div className="text-white font-bold text-xs sm:text-sm leading-tight">
+          <div className="min-w-0 flex flex-col">
+            <span className="text-white font-black text-[11px] sm:text-xs tracking-tight uppercase truncate max-w-[80px] sm:max-w-[120px]">
               {player1?.name || 'Player 1'} {player1?.id === myId && '(YOU)'}
-            </div>
-          </div>
-          <div className="mt-2 flex flex-col gap-2 text-[11px] sm:text-xs text-white/90">
-            <div>
-              Score: <span className="font-mono font-black text-sm sm:text-base text-yellow-300">{scores[player1?.id] || 0}</span>
-            </div>
-            {(streaks[player1?.id] || 0) >= 2 && (
-              <span className="inline-flex items-center gap-1 text-[9px] sm:text-[10px] bg-yellow-500/20 text-yellow-300 font-bold px-2 py-1 rounded border border-yellow-500/30 animate-bounce">
-                <Zap className="w-3 h-3 text-yellow-300" />
-                {streaks[player1?.id]}x
+            </span>
+            <div className="flex items-center gap-1.5 mt-0.5 sm:mt-1">
+              <span className="text-[10px] sm:text-xs text-yellow-300 font-bold truncate max-w-[90px] sm:max-w-[120px]">
+                Score: <span className="font-mono font-black">{scores[player1?.id] || 0}</span>
               </span>
-            )}
+              {isGameStarted && (streaks[player1?.id] || 0) >= 2 && (
+                <span className="inline-flex items-center gap-0.5 text-[8px] sm:text-[9px] bg-yellow-500/20 text-yellow-300 font-black px-1.5 py-0.5 rounded border border-yellow-500/30">
+                  <Zap className="w-2.5 h-2.5 text-yellow-300" />
+                  {streaks[player1?.id]}x
+                </span>
+              )}
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Player 2 Info - Top Right - Moved down to avoid overlapping game menu */}
-      <div className="absolute top-24 right-2 sm:right-4 z-[9999] pointer-events-none">
-        <div className={`backdrop-blur-sm rounded-2xl px-3 py-2 sm:px-4 sm:py-3 shadow-xl border transition-all duration-300 max-w-[220px] sm:max-w-[280px] ${
-          turn === player2?.id 
-            ? 'bg-gradient-to-r from-orange-600/95 to-red-600/95 border-orange-400 scale-105 shadow-[0_0_15px_rgba(249,115,22,0.4)]' 
-            : 'bg-slate-800/85 border-slate-700 opacity-90'
+        {/* Center Panel (Actions & Match Clock) */}
+        <div className="min-w-0 flex items-center justify-center gap-2 sm:gap-3">
+          {/* Settings Button */}
+          <button
+            onClick={onMenuClick}
+            title="Menu & Settings"
+            className="bg-slate-900/80 hover:bg-slate-800 border border-white/10 hover:border-white/20 p-2 sm:p-2.5 rounded-xl shadow-lg transition-all active:scale-95 text-white flex items-center justify-center"
+          >
+            <Settings size={16} />
+          </button>
+
+          {/* Match Time (Overall Clock) */}
+          {isGameStarted && (
+            <div className="bg-gradient-to-r from-blue-700/30 to-indigo-900/30 border border-blue-500/25 rounded-xl px-2.5 py-1 sm:px-4 sm:py-1.5 text-center min-w-[70px] sm:min-w-[95px] flex flex-col justify-center">
+              <div className="hidden sm:block text-[8px] sm:text-[9px] text-blue-300 font-bold uppercase tracking-wider">Match Time</div>
+              <div className="text-white font-mono font-black text-xs sm:text-sm">
+                {Math.floor(overallTimeRemaining / 60)}:{(overallTimeRemaining % 60).toString().padStart(2, '0')}
+              </div>
+            </div>
+          )}
+
+          {/* Prize Pool */}
+          {entryFee > 0 && (
+            <div className="bg-gradient-to-r from-yellow-600/30 to-amber-600/30 border border-yellow-500/30 rounded-xl px-2.5 py-1 sm:px-4 sm:py-1.5 text-center min-w-[70px] sm:min-w-[95px] flex flex-col justify-center">
+              <div className="hidden sm:flex text-[8px] sm:text-[9px] text-yellow-300 font-bold uppercase tracking-wider items-center justify-center gap-0.5">
+                <Trophy size={10} />
+                <span>Prize</span>
+              </div>
+              <div className="text-white font-black text-[10px] sm:text-xs">GH₵{(entryFee * 1.8).toLocaleString()}</div>
+            </div>
+          )}
+        </div>
+
+        {/* Player 2 (Right) */}
+        <div className={`min-w-0 flex items-center gap-2 sm:gap-3 px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl border transition-all duration-300 ${
+          isGameStarted && turn === player2?.id
+            ? 'bg-purple-600/20 border-purple-500 shadow-[0_0_10px_rgba(168,85,247,0.3)]'
+            : 'bg-slate-900/60 border-slate-800'
         }`}>
-          <div className="flex items-center gap-2 sm:gap-3 justify-end">
-            <div className="text-white font-bold text-xs sm:text-sm leading-tight text-right">
+          <div className="min-w-0 flex flex-col text-right">
+            <span className="text-white font-black text-[11px] sm:text-xs tracking-tight uppercase truncate max-w-[80px] sm:max-w-[120px]">
               {player2?.name || 'Player 2'} {player2?.id === myId && '(YOU)'}
-            </div>
-            {turn === player2?.id && (
-              <div className="w-2.5 h-2.5 rounded-full bg-green-400 animate-pulse"></div>
-            )}
-          </div>
-          <div className="mt-2 flex flex-col gap-2 text-[11px] sm:text-xs text-white/90 text-right">
-            {(streaks[player2?.id] || 0) >= 2 && (
-              <span className="inline-flex items-center justify-end gap-1 text-[9px] sm:text-[10px] bg-yellow-500/20 text-yellow-300 font-bold px-2 py-1 rounded border border-yellow-500/30 animate-bounce">
-                <Zap className="w-3 h-3 text-yellow-300" />
-                {streaks[player2?.id]}x
+            </span>
+            <div className="flex items-center justify-end gap-1.5 mt-0.5 sm:mt-1">
+              {isGameStarted && (streaks[player2?.id] || 0) >= 2 && (
+                <span className="inline-flex items-center gap-0.5 text-[8px] sm:text-[9px] bg-yellow-500/20 text-yellow-300 font-black px-1.5 py-0.5 rounded border border-yellow-500/30">
+                  <Zap className="w-2.5 h-2.5 text-yellow-300" />
+                  {streaks[player2?.id]}x
+                </span>
+              )}
+              <span className="text-[10px] sm:text-xs text-yellow-300 font-bold truncate max-w-[90px] sm:max-w-[120px]">
+                Score: <span className="font-mono font-black">{scores[player2?.id] || 0}</span>
               </span>
-            )}
-            <div>
-              Score: <span className="font-mono font-black text-sm sm:text-base text-yellow-300">{scores[player2?.id] || 0}</span>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Combined Info Panel - Top Center */}
-      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[9999] pointer-events-none flex flex-col sm:flex-row gap-2 items-center">
-        {/* Overall Game Clock */}
-        <div className="bg-gradient-to-r from-blue-700/95 to-indigo-900/95 backdrop-blur-sm rounded-2xl px-4 py-2 sm:px-5 sm:py-2.5 shadow-xl border border-white/20 text-center min-w-[100px] sm:min-w-[120px]">
-          <div className="text-blue-200 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider">Match Time</div>
-          <div className="text-white font-mono font-black text-xl sm:text-2xl tracking-wider">
-            {Math.floor(overallTimeRemaining / 60)}:{(overallTimeRemaining % 60).toString().padStart(2, '0')}
-          </div>
-        </div>
-
-        {/* Entry Fee Info */}
-        {entryFee > 0 && (
-          <div className="bg-gradient-to-r from-yellow-600/90 to-amber-600/90 backdrop-blur-sm rounded-2xl px-4 py-2 sm:px-5 sm:py-2.5 shadow-xl border border-white/20 text-center min-w-[100px] sm:min-w-[120px]">
-            <div className="flex items-center justify-center gap-2 text-yellow-100 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider">
-              <Trophy size={14} />
-              <span>Prize</span>
-            </div>
-            <div className="text-white font-bold text-lg sm:text-xl leading-tight">GH₵{(entryFee * 1.8).toLocaleString()}</div>
-          </div>
-        )}
       </div>
 
       {/* Shot Timer - Bottom Center (for Speed Mode) */}
-      {timeRemaining !== undefined && timeRemaining !== null && (
+      {isGameStarted && timeRemaining !== undefined && timeRemaining !== null && (
         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-[9999] pointer-events-none">
           <div className="flex flex-col items-center gap-2">
             <div className={`${
               timeRemaining <= 5 
                 ? 'bg-red-600/95 border-red-400 shadow-[0_0_20px_rgba(239,68,68,0.6)] animate-pulse scale-110' 
                 : 'bg-blue-600/90 border-blue-400 shadow-lg'
-            } backdrop-blur-sm rounded-lg px-6 py-2 border min-w-[120px] text-center transition-all duration-300`}>
+            } backdrop-blur-sm rounded-full px-6 py-2 border min-w-[120px] text-center transition-all duration-300`}>
               <div className="text-[10px] text-white/90 font-bold uppercase tracking-wider mb-0.5">Shot Timer</div>
-              <div className="text-white font-mono font-black text-3xl">
+              <div className="text-white font-mono font-black text-2xl">
                 {timeRemaining}s
               </div>
             </div>
@@ -229,6 +235,17 @@ const SpeedArena = () => {
   const matchStartReceivedRef = useRef(false);
   const matchStartDataRef = useRef(null);
   const gameStateRef = useRef(null);
+  const isEngineReadyRef = useRef(false);
+
+  const isEngineAnimatingRef = useRef(isEngineAnimating);
+  useEffect(() => {
+    isEngineAnimatingRef.current = isEngineAnimating;
+  }, [isEngineAnimating]);
+
+  const settingsRef = useRef({ soundEnabled, guideLineEnabled, difficulty });
+  useEffect(() => {
+    settingsRef.current = { soundEnabled, guideLineEnabled, difficulty };
+  }, [soundEnabled, guideLineEnabled, difficulty]);
 
   // Computed: who can actually take a shot (blocks during animation)
   const canTakeShot = useMemo(() => {
@@ -281,14 +298,18 @@ const SpeedArena = () => {
     if (socket.connected) {
       setIsConnected(true);
       socket.emit('joinGame', { gameId });
-      // Signal we are ready. If both are ready, game starts.
-      socket.emit('playerReady', { gameId, userId });
+      // Signal we are ready ONLY if the engine is ready, or if game has already started on the server
+      if (isEngineReadyRef.current || gameStateRef.current?.isGameStarted) {
+        socket.emit('playerReady', { gameId, userId });
+      }
     }
 
     socket.on('connect', () => {
       setIsConnected(true);
       socket.emit('joinGame', { gameId });
-      socket.emit('playerReady', { gameId, userId });
+      if (isEngineReadyRef.current || gameStateRef.current?.isGameStarted) {
+        socket.emit('playerReady', { gameId, userId });
+      }
     });
 
     socket.on('disconnect', () => {
@@ -474,9 +495,9 @@ const SpeedArena = () => {
           iframe.contentWindow.postMessage({
             type: 'applySettings',
             settings: {
-              sound: soundEnabled,
-              guideLine: guideLineEnabled,
-              difficulty: difficulty
+              sound: settingsRef.current.soundEnabled,
+              guideLine: settingsRef.current.guideLineEnabled,
+              difficulty: settingsRef.current.difficulty
             }
           }, '*');
         }
@@ -520,7 +541,7 @@ const SpeedArena = () => {
       socket.off('gameEnded');
       socket.off('error');
     };
-  }, [gameId, userId, navigate, showToast, difficulty, guideLineEnabled, soundEnabled]);
+  }, [gameId, userId, navigate, showToast]);
 
   // Listen for messages from the game iframe
   useEffect(() => {
@@ -565,6 +586,11 @@ const SpeedArena = () => {
       // Sync engine once it is ready
       if (event.data.type === 'engineReady') {
         console.log('[SpeedArena] Game engine reported ready, sending initial state');
+        isEngineReadyRef.current = true;
+
+        // Signal we are ready now that engine is loaded
+        socket.emit('playerReady', { gameId, userId });
+
         const iframe = document.querySelector('iframe');
         if (iframe && iframe.contentWindow) {
           iframe.contentWindow.postMessage({
@@ -572,7 +598,7 @@ const SpeedArena = () => {
             userId: userId
           }, '*');
 
-          const currentState = gameStateRef.current || gameState;
+          const currentState = gameStateRef.current;
           if (currentState) {
             console.log('[SpeedArena] Forwarding current gameState to newly ready engine');
             iframe.contentWindow.postMessage({
@@ -588,9 +614,9 @@ const SpeedArena = () => {
           iframe.contentWindow.postMessage({
             type: 'applySettings',
             settings: {
-              sound: soundEnabled,
-              guideLine: guideLineEnabled,
-              difficulty: difficulty
+              sound: settingsRef.current.soundEnabled,
+              guideLine: settingsRef.current.guideLineEnabled,
+              difficulty: settingsRef.current.difficulty
             }
           }, '*');
 
@@ -613,7 +639,7 @@ const SpeedArena = () => {
 
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
-  }, [gameId, userId, canTakeShot, pendingTurnUpdate, isEngineAnimating, gameState, soundEnabled, guideLineEnabled, difficulty]);
+  }, [gameId, userId, canTakeShot, pendingTurnUpdate]);
 
   // Local countdown timer effect
   useEffect(() => {
@@ -681,19 +707,9 @@ const SpeedArena = () => {
         scores={gameState?.scores || {}}
         streaks={gameState?.streaks || {}}
         turn={gameState?.turn}
+        isGameStarted={isGameStarted}
+        onMenuClick={() => setShowPauseMenu(true)}
       />
-
-      {/* Header Settings Button - Top Center */}
-      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[9999] pointer-events-auto flex items-center justify-center mt-14">
-        <button 
-          onClick={() => setShowPauseMenu(true)}
-          title="Menu & Settings"
-          className="bg-slate-900/90 hover:bg-slate-800 border border-white/10 hover:border-white/20 px-3 sm:px-4 py-2 rounded-2xl shadow-lg transition-all active:scale-95 flex items-center gap-2 font-bold uppercase tracking-wider text-[10px]"
-        >
-          <Settings size={14} />
-          <span className="hidden sm:inline">Menu & Settings</span>
-        </button>
-      </div>
 
       {/* --- POTTED BALL TOAST FLOATER --- */}
       <div className="absolute inset-0 pointer-events-none z-[1000] flex items-center justify-center">

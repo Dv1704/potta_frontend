@@ -4,116 +4,109 @@ import { socket, connectSocket } from '../socket';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { useToast } from '../context/ToastContext';
 import PoolGameEngineEmbed from '../components/PoolGameEngineEmbed';
-import { AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Settings, Volume2, VolumeX, Eye, EyeOff, Sliders, RotateCcw, X, List, Trophy, AlertTriangle, CircleDot, MessageSquare, Send } from 'lucide-react';
 import '../utils/pvpTestSuite';
 
 /**
  * PlayerInfoOverlay - Shows player names and game stats on top of the game
  */
-const PlayerInfoOverlay = ({ player1, player2, myId, currentTurn, entryFee, timeRemaining, canTakeShot, isAnimating, playerGroups = {}, groupAssigned = false }) => {
+const PlayerInfoOverlay = ({ player1, player2, myId, currentTurn, entryFee, timeRemaining, isAnimating, playerGroups = {}, groupAssigned = false, isGameStarted, onMenuClick }) => {
   const isMyTurn = currentTurn === myId;
 
   return (
     <>
-      {/* Player 1 Info - Top Left */}
-      <div className="absolute top-3 left-2 sm:top-4 sm:left-4 z-[9999] pointer-events-none">
-        <div className={`backdrop-blur-sm rounded-2xl px-3 py-2 sm:px-4 sm:py-3 shadow-xl border transition-all duration-300 max-w-[220px] sm:max-w-[260px] ${
-          currentTurn === player1?.id 
-            ? 'bg-gradient-to-r from-purple-600/95 to-blue-600/95 border-purple-400 scale-105 shadow-[0_0_15px_rgba(168,85,247,0.4)]' 
-            : 'bg-slate-800/85 border-slate-700 opacity-90'
+      {/* Unified Top Header Bar */}
+      <div className="fixed top-0 left-0 right-0 z-[9999] w-full pointer-events-auto h-16 sm:h-20 bg-slate-950/80 backdrop-blur-md border-b border-white/10 flex items-center justify-between px-3 sm:px-6">
+        
+        {/* Player 1 (Left) */}
+        <div className={`min-w-0 flex items-center gap-2 sm:gap-3 px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl border transition-all duration-300 ${
+          isGameStarted && currentTurn === player1?.id
+            ? 'bg-purple-600/20 border-purple-500 shadow-[0_0_10px_rgba(168,85,247,0.3)]'
+            : 'bg-slate-900/60 border-slate-800'
         }`}>
-          <div className="flex items-center gap-2 sm:gap-3">
-            {currentTurn === player1?.id && (
-              <div className="w-2.5 h-2.5 rounded-full bg-green-400 animate-pulse"></div>
-            )}
-            <div className="text-white font-bold text-xs sm:text-sm leading-tight">
+          <div className="min-w-0 flex flex-col">
+            <span className="text-white font-black text-[11px] sm:text-xs tracking-tight uppercase truncate max-w-[80px] sm:max-w-[120px]">
               {player1?.name || 'Player 1'} {player1?.id === myId && '(YOU)'}
-            </div>
-          </div>
-          <div className="mt-2 flex flex-col gap-1 text-[11px] sm:text-xs text-white/80">
-            <div>
-              Group: {' '}
+            </span>
+            <span className="text-[10px] sm:text-xs text-purple-300 font-bold truncate max-w-[90px] sm:max-w-[120px]">
               {groupAssigned ? (
-                <span className={`font-bold uppercase ${playerGroups[player1?.id] === 'solids' ? 'text-red-400 font-black' : 'text-yellow-400 font-black'}`}>
+                <span className={`uppercase font-black ${playerGroups[player1?.id] === 'solids' ? 'text-red-400' : 'text-yellow-400'}`}>
                   {playerGroups[player1?.id]}
                 </span>
               ) : (
-                <span className="text-gray-400 font-bold uppercase">Open Table</span>
+                'Open Table'
               )}
-            </div>
+            </span>
           </div>
         </div>
-      </div>
 
-      {/* Player 2 Info - Top Right */}
-      <div className="absolute top-3 right-2 sm:top-4 sm:right-4 z-[9999] pointer-events-none">
-        <div className={`backdrop-blur-sm rounded-2xl px-3 py-2 sm:px-4 sm:py-3 shadow-xl border transition-all duration-300 max-w-[220px] sm:max-w-[260px] ${
-          currentTurn === player2?.id 
-            ? 'bg-gradient-to-r from-orange-600/95 to-red-600/95 border-orange-400 scale-105 shadow-[0_0_15px_rgba(249,115,22,0.4)]' 
-            : 'bg-slate-800/85 border-slate-700 opacity-90'
-        }`}>
-          <div className="flex items-center gap-2 sm:gap-3 justify-end">
-            <div className="text-white font-bold text-xs sm:text-sm leading-tight text-right">
-              {player2?.name || 'Player 2'} {player2?.id === myId && '(YOU)'}
+        {/* Center Panel (Actions & Turn Timer) */}
+        <div className="min-w-0 flex items-center justify-center gap-2 sm:gap-3">
+          {/* Settings Button */}
+          <button
+            onClick={onMenuClick}
+            title="Menu & Settings"
+            className="bg-slate-900/80 hover:bg-slate-800 border border-white/10 hover:border-white/20 p-2 sm:p-2.5 rounded-xl shadow-lg transition-all active:scale-95 text-white flex items-center justify-center"
+          >
+            <Settings size={16} />
+          </button>
+
+          {/* Turn Timer */}
+          {isGameStarted && timeRemaining !== undefined && timeRemaining !== null && (
+            <div className={`border rounded-xl px-2.5 py-1 sm:px-4 sm:py-1.5 text-center min-w-[70px] sm:min-w-[90px] transition-all duration-300 ${
+              timeRemaining < 10 ? 'bg-red-950/80 border-red-500/50 animate-pulse shadow-[0_0_10px_rgba(239,68,68,0.3)]' : 'bg-slate-900/90 border-white/10'
+            }`}>
+              <div className="hidden sm:block text-[8px] sm:text-[9px] text-slate-400 font-bold uppercase tracking-wider">Turn Timer</div>
+              <div className="text-white font-mono font-black text-xs sm:text-sm">
+                {Math.floor(timeRemaining / 60)}:{(timeRemaining % 60).toString().padStart(2, '0')}
+              </div>
             </div>
-            {currentTurn === player2?.id && (
-              <div className="w-2.5 h-2.5 rounded-full bg-green-400 animate-pulse"></div>
-            )}
-          </div>
-          <div className="mt-2 flex flex-col gap-1 text-[11px] sm:text-xs text-white/80 text-right">
-            <div>
-              Group: {' '}
+          )}
+
+          {/* Prize Pool */}
+          {entryFee > 0 && (
+            <div className="bg-gradient-to-r from-yellow-600/30 to-amber-600/30 border border-yellow-500/30 rounded-xl px-2.5 py-1 sm:px-4 sm:py-1.5 text-center min-w-[70px] sm:min-w-[95px] flex flex-col justify-center">
+              <div className="hidden sm:flex text-[8px] sm:text-[9px] text-yellow-300 font-bold uppercase tracking-wider items-center justify-center gap-0.5">
+                <Trophy size={10} />
+                <span>Prize</span>
+              </div>
+              <div className="text-white font-black text-[10px] sm:text-xs">GH₵{(entryFee * 1.8).toLocaleString()}</div>
+            </div>
+          )}
+        </div>
+
+        {/* Player 2 (Right) */}
+        <div className={`min-w-0 flex items-center gap-2 sm:gap-3 px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl border transition-all duration-300 ${
+          isGameStarted && currentTurn === player2?.id
+            ? 'bg-purple-600/20 border-purple-500 shadow-[0_0_10px_rgba(168,85,247,0.3)]'
+            : 'bg-slate-900/60 border-slate-800'
+        }`}>
+          <div className="min-w-0 flex flex-col text-right">
+            <span className="text-white font-black text-[11px] sm:text-xs tracking-tight uppercase truncate max-w-[80px] sm:max-w-[120px]">
+              {player2?.name || 'Player 2'} {player2?.id === myId && '(YOU)'}
+            </span>
+            <span className="text-[10px] sm:text-xs text-purple-300 font-bold truncate max-w-[90px] sm:max-w-[120px]">
               {groupAssigned ? (
-                <span className={`font-bold uppercase ${playerGroups[player2?.id] === 'solids' ? 'text-red-400 font-black' : 'text-yellow-400 font-black'}`}>
+                <span className={`uppercase font-black ${playerGroups[player2?.id] === 'solids' ? 'text-red-400' : 'text-yellow-400'}`}>
                   {playerGroups[player2?.id]}
                 </span>
               ) : (
-                <span className="text-gray-400 font-bold uppercase">Open Table</span>
+                'Open Table'
               )}
-            </div>
+            </span>
           </div>
         </div>
+
       </div>
 
-      {/* Entry Fee Info - Top Center */}
-      {entryFee && (
-        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[9999] pointer-events-none">
-          <div className="bg-gradient-to-r from-yellow-600/90 to-amber-600/90 backdrop-blur-sm rounded-lg px-6 py-2 shadow-xl border border-white/20">
-            <div className="text-center">
-              <div className="text-yellow-100 text-[10px] font-bold uppercase tracking-wider">PRIZE POOL</div>
-              <div className="text-white font-bold text-lg leading-tight">GH₵{(entryFee * 1.8).toLocaleString()}</div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Turn Indicator & Timer */}
-      {currentTurn && (
+      {/* Turn State Indicator (Bottom Center, simplified) */}
+      {isGameStarted && currentTurn && (
         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-[9999] pointer-events-none">
-          <div className="flex flex-col items-center gap-2">
-            {isMyTurn ? (
-              <div className={`${isAnimating ? 'bg-yellow-500/90' : canTakeShot ? 'bg-green-500/90 shadow-[0_0_15px_rgba(34,197,94,0.4)]' : 'bg-gray-500/90'} backdrop-blur-sm rounded-full px-4 py-2 sm:px-6 sm:py-2 shadow-xl border border-white/30 transition-all duration-300 ${canTakeShot ? 'animate-pulse' : ''}`}>
-                <div className="text-white font-bold text-xs sm:text-sm leading-tight flex items-center justify-center gap-2">
-                  {isAnimating ? <><CircleDot className="h-3.5 w-3.5" /> ANIMATING...</> : canTakeShot ? 'YOUR TURN' : 'WAIT...'}
-                </div>
-              </div>
-            ) : (
-              <div className={`${isAnimating ? 'bg-yellow-500/90' : 'bg-red-600/90 border-red-500/40'} backdrop-blur-sm rounded-full px-4 py-2 sm:px-6 sm:py-2 shadow-xl border border-white/30 transition-all duration-300`}>
-                <div className="text-white font-bold text-xs sm:text-sm leading-tight flex items-center justify-center gap-2">
-                  {isAnimating ? <><CircleDot className="h-3.5 w-3.5" /> OPPONENT ANIMATING...</> : 'OPPONENT\'S TURN'}
-                </div>
-              </div>
-            )}
-
-            {timeRemaining !== undefined && (
-              <div className={`${timeRemaining < 10 ? 'bg-red-500/90 border-red-400 shadow-[0_0_15px_rgba(239,68,68,0.5)] animate-pulse' : 'bg-blue-600/90 border-blue-400'} backdrop-blur-sm rounded-lg px-3 py-1.5 sm:px-4 sm:py-2 shadow-lg border min-w-[72px] text-center transition-all duration-300`}>
-                <div className="text-white font-mono font-bold text-xl sm:text-lg">
-                  {Math.floor(timeRemaining / 60)}:{(timeRemaining % 60).toString().padStart(2, '0')}
-                </div>
-                <div className="text-[9px] sm:text-[10px] text-blue-100 font-bold uppercase tracking-wider">Time Left</div>
-              </div>
-            )}
+          <div className={`${isAnimating ? 'bg-yellow-500/90' : isMyTurn ? 'bg-green-500/90 shadow-[0_0_15px_rgba(34,197,94,0.4)]' : 'bg-red-600/90 border-red-500/40'} backdrop-blur-sm rounded-full px-4 py-2 sm:px-6 sm:py-2 shadow-xl border border-white/30 transition-all duration-300`}>
+            <div className="text-white font-bold text-xs sm:text-sm leading-tight flex items-center justify-center gap-2">
+              {isAnimating ? <><CircleDot className="h-3.5 w-3.5" /> ANIMATING</> : isMyTurn ? 'YOUR TURN' : "OPPONENT'S TURN"}
+            </div>
           </div>
         </div>
       )}
@@ -164,6 +157,19 @@ const TurnMode = () => {
   // Animation lock state (CRITICAL FIX for turn synchronization)
   const [isEngineAnimating, setIsEngineAnimating] = useState(false);
   const [pendingTurnUpdate, setPendingTurnUpdate] = useState(null);
+
+  const [isGameStarted, setIsGameStarted] = useState(false);
+  const isEngineReadyRef = useRef(false);
+
+  const isEngineAnimatingRef = useRef(isEngineAnimating);
+  useEffect(() => {
+    isEngineAnimatingRef.current = isEngineAnimating;
+  }, [isEngineAnimating]);
+
+  const settingsRef = useRef({ soundEnabled, guideLineEnabled, difficulty });
+  useEffect(() => {
+    settingsRef.current = { soundEnabled, guideLineEnabled, difficulty };
+  }, [soundEnabled, guideLineEnabled, difficulty]);
 
   // Refs to track match start data and latest game state (avoids stale closures)
   const matchStartReceivedRef = useRef(false);
@@ -236,9 +242,7 @@ const TurnMode = () => {
     setDifficulty(val);
     localStorage.setItem('potta_difficulty', val.toString());
     applySettingsToIframe(soundEnabled, guideLineEnabled, val);
-  };
-
-  // Socket connection and event handlers
+  };  // Socket connection and event handlers
   useEffect(() => {
     if (!userId) {
       navigate('/login');
@@ -250,14 +254,18 @@ const TurnMode = () => {
     if (socket.connected) {
       setIsConnected(true);
       socket.emit('joinGame', { gameId });
-      // Signal we are ready; backend will call startGame() when both players have signalled
-      socket.emit('playerReady', { gameId, userId });
+      // Signal we are ready ONLY if the engine is ready, or if game has already started on the server
+      if (isEngineReadyRef.current || gameStateRef.current?.isGameStarted) {
+        socket.emit('playerReady', { gameId, userId });
+      }
     }
 
     socket.on('connect', () => {
       setIsConnected(true);
       socket.emit('joinGame', { gameId });
-      socket.emit('playerReady', { gameId, userId });
+      if (isEngineReadyRef.current || gameStateRef.current?.isGameStarted) {
+        socket.emit('playerReady', { gameId, userId });
+      }
     });
 
     socket.on('disconnect', () => {
@@ -270,6 +278,7 @@ const TurnMode = () => {
       matchStartDataRef.current = data;
       setGameState(data.gameState);
       gameStateRef.current = data.gameState;
+      setIsGameStarted(true);
       if (data.gameState?.timer !== undefined) {
         setTimeRemaining(data.gameState.timer);
       }
@@ -291,9 +300,9 @@ const TurnMode = () => {
           iframe.contentWindow.postMessage({
             type: 'applySettings',
             settings: {
-              sound: soundEnabled,
-              guideLine: guideLineEnabled,
-              difficulty: difficulty
+              sound: settingsRef.current.soundEnabled,
+              guideLine: settingsRef.current.guideLineEnabled,
+              difficulty: settingsRef.current.difficulty
             }
           }, '*');
         }
@@ -309,7 +318,7 @@ const TurnMode = () => {
       setIsConnected(true);
 
       // Check for shot timeout turn-change log
-      if (gameStateRef.current && state.turn !== gameStateRef.current.turn && !isEngineAnimating) {
+      if (gameStateRef.current && state.turn !== gameStateRef.current.turn && !isEngineAnimatingRef.current) {
         const player1 = state.players?.[0];
         const player2 = state.players?.[1];
         const oldTurnId = gameStateRef.current.turn;
@@ -317,8 +326,15 @@ const TurnMode = () => {
         const oldPlayerName = oldTurnId === userId ? 'You' : (oldPlayer?.name || 'Opponent');
         setShotLogs(prev => [...prev, `${oldPlayerName} timed out! Turn passed.`]);
       }
+
+      setGameState(state);
+      gameStateRef.current = state;
+
       if (state.timer !== undefined) {
         setTimeRemaining(state.timer);
+      }
+      if (state.isGameStarted) {
+        setIsGameStarted(true);
       }
 
       // Send state to game iframe if needed
@@ -353,8 +369,8 @@ const TurnMode = () => {
       const { gameState: newGameState, shooterId, shotResult } = data;
 
       // Log shot result to history
-      const player1 = gameStateRef.current?.players?.[0] || gameState?.players?.[0];
-      const player2 = gameStateRef.current?.players?.[1] || gameState?.players?.[1];
+      const player1 = gameStateRef.current?.players?.[0];
+      const player2 = gameStateRef.current?.players?.[1];
       const shooter = player1?.id === shooterId ? player1 : player2;
       const shooterName = shooterId === userId ? 'You' : (shooter?.name || 'Opponent');
 
@@ -463,7 +479,6 @@ const TurnMode = () => {
       }
     };
 
-
     const handleGameEnded = (data) => {
       showToast(data.message || 'Game Over', 'success');
       setTimeout(() => navigate('/dashboard'), 3000);
@@ -503,7 +518,7 @@ const TurnMode = () => {
       socket.off('gameEnded');
       socket.off('error');
     };
-  }, [gameId, userId, navigate, showToast, difficulty, guideLineEnabled, soundEnabled, isEngineAnimating, gameState]);
+  }, [gameId, userId, navigate, showToast]);
 
   // Listen for messages from the game iframe
   useEffect(() => {
@@ -540,6 +555,7 @@ const TurnMode = () => {
         if (pendingTurnUpdate) {
           console.log('[TurnMode] Applying pending turn update:', pendingTurnUpdate);
           setGameState(pendingTurnUpdate);
+          gameStateRef.current = pendingTurnUpdate;
           setPendingTurnUpdate(null);
         }
       }
@@ -548,6 +564,11 @@ const TurnMode = () => {
       // Sync engine once it is ready
       if (event.data.type === 'engineReady') {
         console.log('[TurnMode] Game engine reported ready, sending initial state');
+        isEngineReadyRef.current = true;
+
+        // Signal we are ready now that engine is loaded
+        socket.emit('playerReady', { gameId, userId });
+
         const iframe = document.querySelector('iframe');
         if (iframe && iframe.contentWindow) {
           iframe.contentWindow.postMessage({
@@ -556,7 +577,7 @@ const TurnMode = () => {
           }, '*');
 
           // Use the ref to get the latest gameState (avoids stale closure)
-          const currentState = gameStateRef.current || gameState;
+          const currentState = gameStateRef.current;
           if (currentState) {
             console.log('[TurnMode] Forwarding current gameState to newly ready engine:', currentState);
             iframe.contentWindow.postMessage({
@@ -572,9 +593,9 @@ const TurnMode = () => {
           iframe.contentWindow.postMessage({
             type: 'applySettings',
             settings: {
-              sound: soundEnabled,
-              guideLine: guideLineEnabled,
-              difficulty: difficulty
+              sound: settingsRef.current.soundEnabled,
+              guideLine: settingsRef.current.guideLineEnabled,
+              difficulty: settingsRef.current.difficulty
             }
           }, '*');
 
@@ -597,18 +618,18 @@ const TurnMode = () => {
 
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
-  }, [gameId, userId, canTakeShot, pendingTurnUpdate, isEngineAnimating, gameState, soundEnabled, guideLineEnabled, difficulty]);
+  }, [gameId, userId, canTakeShot, pendingTurnUpdate]);
 
   // Local countdown timer effect
   useEffect(() => {
-    if (timeRemaining === null || timeRemaining <= 0) return;
+    if (!isGameStarted || timeRemaining === null || timeRemaining <= 0) return;
 
     const timer = setInterval(() => {
       setTimeRemaining(prev => (prev !== null && prev > 0) ? prev - 1 : 0);
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [timeRemaining]);
+  }, [isGameStarted, timeRemaining]);
 
   // Scroll shot log to bottom
   useEffect(() => {
@@ -635,23 +656,12 @@ const TurnMode = () => {
         currentTurn={gameState.turn}
         entryFee={entryFee}
         timeRemaining={timeRemaining}
-        canTakeShot={canTakeShot}
         isAnimating={isEngineAnimating}
         playerGroups={gameState.playerGroups}
         groupAssigned={gameState.groupAssigned}
+        isGameStarted={isGameStarted}
+        onMenuClick={() => setShowPauseMenu(true)}
       />
-
-      {/* Header Menu Button - Top Center */}
-      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[9999] pointer-events-auto flex items-center justify-center mt-14">
-        <button 
-          onClick={() => setShowPauseMenu(true)}
-          title="Menu & Settings"
-          className="bg-slate-900/90 hover:bg-slate-800 border border-white/10 hover:border-white/20 px-3 sm:px-4 py-2 rounded-2xl shadow-lg transition-all active:scale-95 flex items-center gap-2 font-bold uppercase tracking-wider text-[10px]"
-        >
-          <Settings size={14} />
-          <span className="hidden sm:inline">Menu & Settings</span>
-        </button>
-      </div>
 
       {/* Turn History / Shot Log Drawer - Bottom Left */}
       <div className="absolute bottom-4 left-2 sm:left-4 z-[9999] w-[calc(100vw-1rem)] max-w-[280px] sm:w-64 max-h-40 bg-slate-950/85 backdrop-blur-md border border-white/10 rounded-xl p-3 shadow-2xl flex flex-col gap-2 pointer-events-auto">
@@ -889,6 +899,16 @@ const TurnMode = () => {
         onEndSession={() => console.log('Game ended')}
         onSaveScore={(score) => console.log('Score:', score)}
       />
+
+      {/* Waiting Overlay */}
+      {!isGameStarted && gameState && (
+        <div className="absolute inset-0 z-[10000] flex items-center justify-center bg-black/80 backdrop-blur-sm">
+          <div className="text-center">
+            <div className="text-4xl font-bold text-white mb-4 animate-bounce">Waiting for opponent...</div>
+            <div className="text-white/60">Game starts when both players connect.</div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
