@@ -25,6 +25,7 @@ const Success = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { showToast } = useToast();
+  const token = localStorage.getItem('token');
   const [loading, setLoading] = useState(true);
   const [userData, setUserData] = useState({
     username: location.state?.username || 'Guest',
@@ -41,15 +42,14 @@ const Success = () => {
   const [history, setHistory] = useState([]);
 
   useEffect(() => {
+    if (!token) {
+      navigate('/login', { replace: true });
+      return;
+    }
+
     const fetchData = async () => {
       try {
         const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
-        const token = localStorage.getItem('token');
-        if (!token) {
-          navigate('/login');
-          return;
-        }
-
         const headers = { 'Authorization': `Bearer ${token}` };
 
         // Parallel Fetch
@@ -86,14 +86,17 @@ const Success = () => {
         }
       } catch (error) {
         console.error('Failed to fetch user data:', error);
-        showToast('Failed to load dashboard data.', 'error');
+        showToast('Session expired. Redirecting to login.', 'error');
+        navigate('/login', { replace: true });
       } finally {
         setLoading(false);
       }
     };
 
     fetchData();
-  }, [showToast, navigate]);
+  }, [showToast, navigate, token]);
+
+  if (!token) return null;
 
   const stats = [
     { label: 'Games Played', value: statsData.gamesPlayed.toString(), color: 'from-gray-600 to-gray-500' },

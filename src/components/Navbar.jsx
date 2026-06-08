@@ -281,16 +281,9 @@ const Navbar = () => {
               initial="closed"
               animate="open"
               exit="closed"
-              className="md:hidden fixed top-0 left-0 w-80 h-full bg-gray-900/95 backdrop-blur-xl text-white p-8 z-40 border-r border-purple-500/20 shadow-2xl"
+              className="md:hidden fixed top-0 left-0 w-72 max-w-[85vw] h-full bg-gray-900/95 backdrop-blur-xl text-white p-6 z-40 border-r border-purple-500/20 shadow-2xl"
             >
-              <motion.div
-                variants={menuItemVariants}
-                className="mb-12"
-              >
-                <Link to="/" onClick={handleLinkClick}>
-                  <img src={logo} alt="Potta" className="w-full max-w-[7rem] h-auto object-contain" />
-                </Link>
-              </motion.div>
+              {/* Removed logo from mobile sidebar to prevent overlap/inappropriate display */}
 
               <motion.ul
                 variants={staggerContainer}

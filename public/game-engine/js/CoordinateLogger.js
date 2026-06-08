@@ -10,8 +10,8 @@
  */
 
 function CCoordinateLogger() {
-    var CANVAS_WIDTH = 1800;
-    var CANVAS_HEIGHT = 900;
+    var CANVAS_WIDTH = 1280;
+    var CANVAS_HEIGHT = 770;
     var _aConversionHistory = [];
     var _bEnabled = true;
 
@@ -151,12 +151,12 @@ function CCoordinateLogger() {
      */
     this.verifyConstants = function () {
         console.group('🔍 Verifying Coordinate Conversion Constants');
-        console.log('Frontend CANVAS_WIDTH:', CANVAS_WIDTH, '(should be 1800)');
-        console.log('Frontend CANVAS_HEIGHT:', CANVAS_HEIGHT, '(should be 900)');
-        console.log('Backend Constants.CANVAS_WIDTH:', '1800 (hardcoded in server)');
-        console.log('Backend Constants.CANVAS_HEIGHT:', '900 (hardcoded in server)');
+        console.log('Frontend CANVAS_WIDTH:', CANVAS_WIDTH, '(should be 1280)');
+        console.log('Frontend CANVAS_HEIGHT:', CANVAS_HEIGHT, '(should be 770)');
+        console.log('Backend Constants.CANVAS_WIDTH:', '1280 (hardcoded in server)');
+        console.log('Backend Constants.CANVAS_HEIGHT:', '770 (hardcoded in server)');
 
-        if (CANVAS_WIDTH === 1800 && CANVAS_HEIGHT === 900) {
+        if (CANVAS_WIDTH === 1280 && CANVAS_HEIGHT === 770) {
             console.log('%c✅ Constants match! Conversion should be accurate.', 'color: green; font-weight: bold');
         } else {
             console.error('❌ MISMATCH! Frontend and backend canvas sizes don\'t match.');

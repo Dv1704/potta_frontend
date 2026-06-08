@@ -65,13 +65,13 @@ function calculateMockBallPositions(shotData, currentGameState) {
 
     const testPositions = {
         // Cue ball moves to center
-        0: { x: 50, y: 50, onTable: true },    // Center (should be 900px, 450px)
+        0: { x: 50, y: 50, onTable: true },    // Center (should be 640px, 385px)
 
         // Other balls in predictable positions for visual verification
-        1: { x: 25, y: 25, onTable: true },    // Top-left quarter (450px, 225px)
-        2: { x: 75, y: 25, onTable: true },    // Top-right quarter (1350px, 225px)
-        3: { x: 25, y: 75, onTable: true },    // Bottom-left quarter (450px, 675px)
-        4: { x: 75, y: 75, onTable: true },    // Bottom-right quarter (1350px, 675px)
+        1: { x: 25, y: 25, onTable: true },    // Top-left quarter (320px, 192.5px)
+        2: { x: 75, y: 25, onTable: true },    // Top-right quarter (960px, 192.5px)
+        3: { x: 25, y: 75, onTable: true },    // Bottom-left quarter (320px, 577.5px)
+        4: { x: 75, y: 75, onTable: true },    // Bottom-right quarter (960px, 577.5px)
 
         // Rest stay in rack formation (server would track all)
         5: { x: 60, y: 50, onTable: true },
@@ -113,16 +113,16 @@ export const mockOpponentShot = () => {
  */
 export const testCoordinateConversion = () => {
     const testCases = [
-        { name: 'Center', x: 50, y: 50, expectedX: 900, expectedY: 450 },
+        { name: 'Center', x: 50, y: 50, expectedX: 640, expectedY: 385 },
         { name: 'Top-Left', x: 0, y: 0, expectedX: 0, expectedY: 0 },
-        { name: 'Top-Right', x: 100, y: 0, expectedX: 1800, expectedY: 0 },
-        { name: 'Bottom-Left', x: 0, y: 100, expectedX: 0, expectedY: 900 },
-        { name: 'Bottom-Right', x: 100, y: 100, expectedX: 1800, expectedY: 900 },
-        { name: 'Quarter-Top-Left', x: 25, y: 25, expectedX: 450, expectedY: 225 }
+        { name: 'Top-Right', x: 100, y: 0, expectedX: 1280, expectedY: 0 },
+        { name: 'Bottom-Left', x: 0, y: 100, expectedX: 0, expectedY: 770 },
+        { name: 'Bottom-Right', x: 100, y: 100, expectedX: 1280, expectedY: 770 },
+        { name: 'Quarter-Top-Left', x: 25, y: 25, expectedX: 320, expectedY: 192.5 }
     ];
 
-    const CANVAS_WIDTH = 1800;
-    const CANVAS_HEIGHT = 900;
+    const CANVAS_WIDTH = 1280;
+    const CANVAS_HEIGHT = 770;
 
     console.log('🧪 Testing Coordinate Conversion:');
     console.table(testCases.map(tc => ({
@@ -159,5 +159,5 @@ export const sendMockGameState = (ballPositions = null) => {
     }, '*');
 
     console.log('✅ Sent mock game state to iframe');
-    console.log('Expected: Ball 0 at (900px, 450px) - center of canvas');
+    console.log('Expected: Ball 0 at (640px, 385px) - center of canvas');
 };

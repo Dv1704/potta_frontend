@@ -96,6 +96,10 @@ function CGUIExpandible(iX, iY, oSprite, oParentContainer){
         };
     };
     
+    this.setVisible = function(bVisible){
+        _oGUIContainer.visible = bVisible;
+    };
+
     _oParent = this;
     this._init(iX, iY, oSprite, oParentContainer);
 }

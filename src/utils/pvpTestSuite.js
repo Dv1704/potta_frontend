@@ -35,17 +35,17 @@ export const enableLocalPVPTesting = (TurnModeComponent) => {
 
         setTimeout(() => {
             // Test Case 1: Center Position (Perfect Conversion Test)
-            // Server: 50%, 50% → Frontend: 900px, 450px
+            // Server: 50%, 50% → Frontend: 640px, 385px
             const mockAuthoritativeResult = {
                 shooterId: userId,
                 shotResult: {
                     finalState: {
                         // Test positions for coordinate conversion verification
                         0: { x: 50.0, y: 50.0, onTable: true },  // Center
-                        1: { x: 10.0, y: 10.0, onTable: true },  // Top-left (180px, 90px)
-                        2: { x: 90.0, y: 90.0, onTable: true },  // Bottom-right (1620px, 810px)
-                        3: { x: 25.0, y: 50.0, onTable: true },  // Left-center (450px, 450px)
-                        4: { x: 75.0, y: 50.0, onTable: true },  // Right-center (1350px, 450px)
+                        1: { x: 10.0, y: 10.0, onTable: true },  // Top-left (128px, 77px)
+                        2: { x: 90.0, y: 90.0, onTable: true },  // Bottom-right (1152px, 693px)
+                        3: { x: 25.0, y: 50.0, onTable: true },  // Left-center (320px, 385px)
+                        4: { x: 75.0, y: 50.0, onTable: true },  // Right-center (960px, 385px)
                     },
                     animationFrames: [], // Empty = instant snap (tests velocity reset)
                     pocketedBalls: []
@@ -113,7 +113,7 @@ window.testPVPSync = function () {
     }, '*');
 
     console.log("✅ Sent center position (50%, 50%)");
-    console.log("Expected: Ball 0 at (900px, 450px)");
+    console.log("Expected: Ball 0 at (640px, 385px)");
     console.log("Check CoordinateLogger for accuracy");
     console.groupEnd();
 
@@ -158,13 +158,13 @@ export const runAutomatedPVPTests = async () => {
     console.log("📊 Test 1: Coordinate Conversion");
     const conversionTests = [
         { x: 0, y: 0, expectedX: 0, expectedY: 0 },
-        { x: 50, y: 50, expectedX: 900, expectedY: 450 },
-        { x: 100, y: 100, expectedX: 1800, expectedY: 900 },
-        { x: 25, y: 75, expectedX: 450, expectedY: 675 }
+        { x: 50, y: 50, expectedX: 640, expectedY: 385 },
+        { x: 100, y: 100, expectedX: 1280, expectedY: 770 },
+        { x: 25, y: 75, expectedX: 320, expectedY: 577.5 }
     ];
 
-    const CANVAS_WIDTH = 1800;
-    const CANVAS_HEIGHT = 900;
+    const CANVAS_WIDTH = 1280;
+    const CANVAS_HEIGHT = 770;
 
     let conversionsPassed = 0;
     conversionTests.forEach(test => {

@@ -1,11 +1,11 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { socket, connectSocket } from '../socket';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { useToast } from '../context/ToastContext';
 import PoolGameEngineEmbed from '../components/PoolGameEngineEmbed';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Settings, Volume2, VolumeX, Eye, EyeOff, Sliders, X, List, Trophy } from 'lucide-react';
+import { AnimatePresence } from 'framer-motion';
+import { Settings, Volume2, VolumeX, Eye, EyeOff, Sliders, X, List, Trophy, Zap, AlertTriangle, CircleDot, MessageSquare, Send } from 'lucide-react';
 
 /**
  * PlayerInfoOverlay - Shows player names and game stats on top of the game
@@ -14,27 +14,28 @@ const PlayerInfoOverlay = ({ player1, player2, myId, entryFee, timeRemaining, ov
   return (
     <>
       {/* Player 1 Info - Top Left */}
-      <div className="absolute top-4 left-4 z-[9999] pointer-events-none">
-        <div className={`backdrop-blur-sm rounded-lg px-4 py-3 shadow-xl border transition-all duration-300 ${
+      <div className="absolute top-4 left-2 sm:left-4 z-[9999] pointer-events-none">
+        <div className={`backdrop-blur-sm rounded-2xl px-3 py-2 sm:px-4 sm:py-3 shadow-xl border transition-all duration-300 max-w-[220px] sm:max-w-[280px] ${
           turn === player1?.id 
-            ? 'bg-gradient-to-r from-purple-600/90 to-blue-600/90 border-purple-400 scale-105 shadow-[0_0_15px_rgba(168,85,247,0.4)]' 
-            : 'bg-slate-800/80 border-slate-700 opacity-80'
+            ? 'bg-gradient-to-r from-purple-600/95 to-blue-600/95 border-purple-400 scale-105 shadow-[0_0_15px_rgba(168,85,247,0.4)]' 
+            : 'bg-slate-800/85 border-slate-700 opacity-90'
         }`}>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             {turn === player1?.id && (
-              <div className="w-3 h-3 rounded-full bg-green-400 animate-pulse"></div>
+              <div className="w-2.5 h-2.5 rounded-full bg-green-400 animate-pulse"></div>
             )}
-            <div className="text-white font-bold text-sm">
+            <div className="text-white font-bold text-xs sm:text-sm leading-tight">
               {player1?.name || 'Player 1'} {player1?.id === myId && '(YOU)'}
             </div>
           </div>
-          <div className="mt-2 flex items-center justify-between gap-6">
-            <div className="text-xs text-white/95">
-              Score: <span className="font-mono font-black text-sm text-yellow-300">{scores[player1?.id] || 0}</span>
+          <div className="mt-2 flex flex-col gap-2 text-[11px] sm:text-xs text-white/90">
+            <div>
+              Score: <span className="font-mono font-black text-sm sm:text-base text-yellow-300">{scores[player1?.id] || 0}</span>
             </div>
             {(streaks[player1?.id] || 0) >= 2 && (
-              <span className="text-[10px] bg-yellow-500/20 text-yellow-300 font-bold px-1.5 py-0.5 rounded border border-yellow-500/30 animate-bounce">
-                Streak: {streaks[player1?.id]}x
+              <span className="inline-flex items-center gap-1 text-[9px] sm:text-[10px] bg-yellow-500/20 text-yellow-300 font-bold px-2 py-1 rounded border border-yellow-500/30 animate-bounce">
+                <Zap className="w-3 h-3 text-yellow-300" />
+                {streaks[player1?.id]}x
               </span>
             )}
           </div>
@@ -42,48 +43,52 @@ const PlayerInfoOverlay = ({ player1, player2, myId, entryFee, timeRemaining, ov
       </div>
 
       {/* Player 2 Info - Top Right - Moved down to avoid overlapping game menu */}
-      <div className="absolute top-24 right-4 z-[9999] pointer-events-none">
-        <div className={`backdrop-blur-sm rounded-lg px-4 py-3 shadow-xl border transition-all duration-300 ${
+      <div className="absolute top-24 right-2 sm:right-4 z-[9999] pointer-events-none">
+        <div className={`backdrop-blur-sm rounded-2xl px-3 py-2 sm:px-4 sm:py-3 shadow-xl border transition-all duration-300 max-w-[220px] sm:max-w-[280px] ${
           turn === player2?.id 
-            ? 'bg-gradient-to-r from-orange-600/90 to-red-600/90 border-orange-400 scale-105 shadow-[0_0_15px_rgba(249,115,22,0.4)]' 
-            : 'bg-slate-800/80 border-slate-700 opacity-80'
+            ? 'bg-gradient-to-r from-orange-600/95 to-red-600/95 border-orange-400 scale-105 shadow-[0_0_15px_rgba(249,115,22,0.4)]' 
+            : 'bg-slate-800/85 border-slate-700 opacity-90'
         }`}>
-          <div className="flex items-center gap-3 justify-end">
-            <div className="text-white font-bold text-sm text-right">
+          <div className="flex items-center gap-2 sm:gap-3 justify-end">
+            <div className="text-white font-bold text-xs sm:text-sm leading-tight text-right">
               {player2?.name || 'Player 2'} {player2?.id === myId && '(YOU)'}
             </div>
             {turn === player2?.id && (
-              <div className="w-3 h-3 rounded-full bg-green-400 animate-pulse"></div>
+              <div className="w-2.5 h-2.5 rounded-full bg-green-400 animate-pulse"></div>
             )}
           </div>
-          <div className="mt-2 flex items-center justify-between gap-6">
+          <div className="mt-2 flex flex-col gap-2 text-[11px] sm:text-xs text-white/90 text-right">
             {(streaks[player2?.id] || 0) >= 2 && (
-              <span className="text-[10px] bg-yellow-500/20 text-yellow-300 font-bold px-1.5 py-0.5 rounded border border-yellow-500/30 animate-bounce">
-                Streak: {streaks[player2?.id]}x
+              <span className="inline-flex items-center justify-end gap-1 text-[9px] sm:text-[10px] bg-yellow-500/20 text-yellow-300 font-bold px-2 py-1 rounded border border-yellow-500/30 animate-bounce">
+                <Zap className="w-3 h-3 text-yellow-300" />
+                {streaks[player2?.id]}x
               </span>
             )}
-            <div className="text-xs text-white/95 text-right">
-              Score: <span className="font-mono font-black text-sm text-yellow-300">{scores[player2?.id] || 0}</span>
+            <div>
+              Score: <span className="font-mono font-black text-sm sm:text-base text-yellow-300">{scores[player2?.id] || 0}</span>
             </div>
           </div>
         </div>
       </div>
 
       {/* Combined Info Panel - Top Center */}
-      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[9999] pointer-events-none flex gap-4">
+      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[9999] pointer-events-none flex flex-col sm:flex-row gap-2 items-center">
         {/* Overall Game Clock */}
-        <div className="bg-gradient-to-r from-blue-700/95 to-indigo-900/95 backdrop-blur-sm rounded-lg px-6 py-2 shadow-xl border border-white/20 text-center min-w-[120px]">
-          <div className="text-blue-200 text-[10px] font-bold uppercase tracking-wider">Match Time</div>
-          <div className="text-white font-mono font-black text-2xl tracking-wider">
+        <div className="bg-gradient-to-r from-blue-700/95 to-indigo-900/95 backdrop-blur-sm rounded-2xl px-4 py-2 sm:px-5 sm:py-2.5 shadow-xl border border-white/20 text-center min-w-[100px] sm:min-w-[120px]">
+          <div className="text-blue-200 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider">Match Time</div>
+          <div className="text-white font-mono font-black text-xl sm:text-2xl tracking-wider">
             {Math.floor(overallTimeRemaining / 60)}:{(overallTimeRemaining % 60).toString().padStart(2, '0')}
           </div>
         </div>
 
         {/* Entry Fee Info */}
         {entryFee > 0 && (
-          <div className="bg-gradient-to-r from-yellow-600/90 to-amber-600/90 backdrop-blur-sm rounded-lg px-6 py-2 shadow-xl border border-white/20 text-center">
-            <div className="text-yellow-100 text-[10px] font-bold uppercase tracking-wider">PRIZE POOL</div>
-            <div className="text-white font-bold text-lg leading-tight">GH₵{(entryFee * 1.8).toLocaleString()}</div>
+          <div className="bg-gradient-to-r from-yellow-600/90 to-amber-600/90 backdrop-blur-sm rounded-2xl px-4 py-2 sm:px-5 sm:py-2.5 shadow-xl border border-white/20 text-center min-w-[100px] sm:min-w-[120px]">
+            <div className="flex items-center justify-center gap-2 text-yellow-100 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider">
+              <Trophy size={14} />
+              <span>Prize</span>
+            </div>
+            <div className="text-white font-bold text-lg sm:text-xl leading-tight">GH₵{(entryFee * 1.8).toLocaleString()}</div>
           </div>
         )}
       </div>
@@ -109,6 +114,20 @@ const PlayerInfoOverlay = ({ player1, player2, myId, entryFee, timeRemaining, ov
   );
 };
 
+const toPixels = (balls) => {
+  if (!balls) return balls;
+  return Object.fromEntries(
+    Object.entries(balls).map(([id, pos]) => [
+      id,
+      {
+        x: (pos.x / 100) * 1280,
+        y: (pos.y / 100) * 770,
+        onTable: pos.onTable
+      }
+    ])
+  );
+};
+
 const SpeedArena = () => {
   const { id: gameId } = useParams();
   const navigate = useNavigate();
@@ -131,11 +150,41 @@ const SpeedArena = () => {
   const [overallTimeRemaining, setOverallTimeRemaining] = useState(180);
 
   const [isGameStarted, setIsGameStarted] = useState(false);
-  const [hasFirstShotTaken, setHasFirstShotTaken] = useState(false);
+  const [chatOpen, setChatOpen] = useState(false);
+  const [chatInput, setChatInput] = useState('');
+  const [chatMessages, setChatMessages] = useState([
+    { id: 'welcome', sender: 'System', text: 'Quick chat is available during gameplay. Keep it short and slick.' }
+  ]);
+  const chatEndRef = useRef(null);
+
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [chatMessages]);
+
+  const handleSendChat = () => {
+    const trimmed = chatInput.trim();
+    if (!trimmed || !userId || !gameId) return;
+
+    const messageId = Date.now().toString();
+    socket.emit('gameChat', {
+      gameId,
+      userId,
+      messageId,
+      text: trimmed,
+    });
+    setChatInput('');
+  };
+
+  const handleChatKeyDown = (event) => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      handleSendChat();
+    }
+  };
 
   const audioContextRef = useRef(null);
 
-  const playTickSound = (frequency = 800, duration = 0.05) => {
+  const playTickSound = useCallback((frequency = 800, duration = 0.05) => {
     // Only play audio alarm if sound is enabled in Settings
     if (!soundEnabled) return;
     try {
@@ -164,7 +213,7 @@ const SpeedArena = () => {
     } catch (e) {
       console.warn('Web Audio API is not supported or blocked:', e);
     }
-  };
+  }, [soundEnabled]);
 
   const userId = localStorage.getItem('userId');
 
@@ -274,7 +323,10 @@ const SpeedArena = () => {
 
         iframe.contentWindow.postMessage({
           type: 'gameStateUpdate',
-          state: state
+          state: state ? {
+            ...state,
+            balls: toPixels(state.balls)
+          } : state
         }, '*');
 
         // Send player names to game engine
@@ -286,6 +338,14 @@ const SpeedArena = () => {
           }, '*');
         }
       }
+    };
+
+    const handleGameChat = (data) => {
+      setChatMessages((prev) => [...prev, {
+        id: data.messageId,
+        sender: data.userId === userId ? 'You' : data.senderName,
+        text: data.text,
+      }]);
     };
 
     const handleShotResult = async (data) => {
@@ -348,16 +408,24 @@ const SpeedArena = () => {
       // Send to game engine (starts animation)
       const iframe = document.querySelector('iframe');
       if (iframe && iframe.contentWindow) {
+        const convertedData = {
+          ...data,
+          gameState: data.gameState ? {
+            ...data.gameState,
+            balls: toPixels(data.gameState.balls)
+          } : data.gameState
+        };
         iframe.contentWindow.postMessage({
           type: 'shotResult',
-          data: data
+          data: convertedData,
+          payload: data.shotResult
         }, '*');
       }
+
 
       if (shooterId !== userId) {
         showToast('Opponent scored!', 'info');
       }
-      setHasFirstShotTaken(true);
     };
 
     const handleOpponentShotStart = (data) => {
@@ -367,10 +435,11 @@ const SpeedArena = () => {
       if (iframe && iframe.contentWindow) {
         iframe.contentWindow.postMessage({
           type: 'opponentShot',
-          data: data
+          data: data.vector || data
         }, '*');
       }
     };
+
 
     const handleGameEnded = (data) => {
       showToast(data.message || 'Game Over', 'success');
@@ -394,8 +463,12 @@ const SpeedArena = () => {
       const sendMatchStart = () => {
         const iframe = document.querySelector('iframe');
         if (iframe && iframe.contentWindow) {
-          iframe.contentWindow.postMessage({ type: 'matchStart', state: data.gameState }, '*');
-          iframe.contentWindow.postMessage({ type: 'gameStateUpdate', state: data.gameState }, '*');
+          const convertedGameState = data.gameState ? {
+            ...data.gameState,
+            balls: toPixels(data.gameState.balls)
+          } : data.gameState;
+          iframe.contentWindow.postMessage({ type: 'matchStart', state: convertedGameState }, '*');
+          iframe.contentWindow.postMessage({ type: 'gameStateUpdate', state: convertedGameState }, '*');
           
           // Send settings down
           iframe.contentWindow.postMessage({
@@ -428,6 +501,7 @@ const SpeedArena = () => {
 
     socket.on('gameState', handleGameState);
     socket.on('startMatch', handleStartMatch);
+    socket.on('gameChat', handleGameChat);
     socket.on('shotResult', handleShotResult);
     socket.on('opponentShotStart', handleOpponentShotStart);
     socket.on('gameEnded', handleGameEnded);
@@ -440,12 +514,13 @@ const SpeedArena = () => {
       socket.off('disconnect');
       socket.off('gameState');
       socket.off('startMatch');
+      socket.off('gameChat');
       socket.off('shotResult');
       socket.off('opponentShotStart');
       socket.off('gameEnded');
       socket.off('error');
     };
-  }, [gameId, userId, navigate, showToast]);
+  }, [gameId, userId, navigate, showToast, difficulty, guideLineEnabled, soundEnabled]);
 
   // Listen for messages from the game iframe
   useEffect(() => {
@@ -463,13 +538,19 @@ const SpeedArena = () => {
           userId,
           ...event.data.shot
         });
-        setHasFirstShotTaken(true);
+        
       }
 
       // Handle animation complete from game engine
       if (event.data.type === 'animationComplete') {
         console.log('[SpeedArena] Animation complete, unlocking input');
         setIsEngineAnimating(false);
+
+        // Emit animationComplete to backend
+        socket.emit('animationComplete', {
+          gameId,
+          ballPositions: event.data.payload?.ballPositions || event.data.ballPositions
+        });
 
         // Apply pending turn update NOW (after animation finished)
         if (pendingTurnUpdate) {
@@ -479,6 +560,7 @@ const SpeedArena = () => {
           setPendingTurnUpdate(null);
         }
       }
+
 
       // Sync engine once it is ready
       if (event.data.type === 'engineReady') {
@@ -495,7 +577,10 @@ const SpeedArena = () => {
             console.log('[SpeedArena] Forwarding current gameState to newly ready engine');
             iframe.contentWindow.postMessage({
               type: 'gameStateUpdate',
-              state: currentState
+              state: {
+                ...currentState,
+                balls: toPixels(currentState.balls)
+              }
             }, '*');
           }
 
@@ -513,9 +598,13 @@ const SpeedArena = () => {
           if (matchStartReceivedRef.current) {
             console.log('[SpeedArena] Replaying matchStart to newly ready engine');
             const matchData = matchStartDataRef.current;
+            const matchState = matchData?.gameState || currentState;
             iframe.contentWindow.postMessage({
               type: 'matchStart',
-              state: matchData?.gameState || currentState
+              state: matchState ? {
+                ...matchState,
+                balls: toPixels(matchState.balls)
+              } : matchState
             }, '*');
           }
         }
@@ -561,7 +650,7 @@ const SpeedArena = () => {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [isGameStarted, userId, gameState, soundEnabled]);
+  }, [isGameStarted, userId, gameState, soundEnabled, playTickSound]);
 
   if (!gameState) {
     return <LoadingSpinner text="Finding opponent..." />;
@@ -595,13 +684,14 @@ const SpeedArena = () => {
       />
 
       {/* Header Settings Button - Top Center */}
-      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[9999] pointer-events-auto flex items-center gap-3 mt-14">
+      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[9999] pointer-events-auto flex items-center justify-center mt-14">
         <button 
           onClick={() => setShowPauseMenu(true)}
-          className="bg-slate-900/90 hover:bg-slate-800 border border-white/10 hover:border-white/20 px-4 py-2 rounded-xl shadow-lg transition-all active:scale-95 flex items-center gap-1.5 font-bold uppercase tracking-wider text-[10px]"
+          title="Menu & Settings"
+          className="bg-slate-900/90 hover:bg-slate-800 border border-white/10 hover:border-white/20 px-3 sm:px-4 py-2 rounded-2xl shadow-lg transition-all active:scale-95 flex items-center gap-2 font-bold uppercase tracking-wider text-[10px]"
         >
-          <Settings size={12} />
-          <span>Menu & Settings</span>
+          <Settings size={14} />
+          <span className="hidden sm:inline">Menu & Settings</span>
         </button>
       </div>
 
@@ -617,7 +707,7 @@ const SpeedArena = () => {
               transition={{ duration: 1.2, ease: 'easeOut' }}
               className="absolute bg-gradient-to-r from-yellow-500 to-amber-500 border border-yellow-300 text-white font-black font-sans px-6 py-3 rounded-full flex items-center gap-2 shadow-2xl shadow-yellow-500/20"
             >
-              <span className="text-sm">🎱</span>
+              <CircleDot className="w-4 h-4" />
               <span className="text-sm tracking-tight uppercase">Ball {toast.ball} pocketed!</span>
             </motion.div>
           ))}
@@ -634,8 +724,8 @@ const SpeedArena = () => {
               exit={{ opacity: 0, y: -20, scale: 0.95 }}
               className="bg-red-950/90 border border-red-500/35 backdrop-blur-xl rounded-2xl px-6 py-4 shadow-[0_0_30px_rgba(239,68,68,0.25)] flex items-center gap-4 max-w-sm"
             >
-              <div className="w-10 h-10 rounded-full bg-red-600/20 flex items-center justify-center text-red-500 font-bold text-lg animate-pulse border border-red-500/30">
-                ⚠️
+              <div className="w-10 h-10 rounded-full bg-red-600/20 flex items-center justify-center text-red-500 animate-pulse border border-red-500/30">
+                <AlertTriangle className="w-6 h-6" />
               </div>
               <div>
                 <h4 className="text-red-400 font-black text-sm uppercase tracking-wider">{foulNotification.reason}</h4>
@@ -751,10 +841,72 @@ const SpeedArena = () => {
       {!isConnected && !gameState && (
         <div className="absolute top-20 left-1/2 -translate-x-1/2 z-[9999] pointer-events-none">
           <div className="bg-red-500/95 backdrop-blur-sm rounded-lg px-4 py-2 shadow-xl border border-white/20">
-            <div className="text-white font-bold text-sm">⚠️ Reconnecting...</div>
+            <div className="flex items-center gap-2 text-white font-bold text-sm"><AlertTriangle className="w-4 h-4" /> Reconnecting...</div>
           </div>
         </div>
       )}
+
+      {/* In-game Chat Button */}
+      <div className="fixed bottom-4 right-4 z-[10001] flex flex-col items-end gap-3">
+        <button
+          onClick={() => setChatOpen((open) => !open)}
+          className="flex items-center gap-2 rounded-full bg-slate-950/95 border border-white/10 px-4 py-3 shadow-2xl shadow-slate-950/40 text-white hover:bg-slate-900 transition-all"
+          aria-label="Toggle chat panel"
+        >
+          <MessageSquare className="w-4 h-4" />
+          <span className="hidden sm:inline text-xs uppercase tracking-widest">Chat</span>
+        </button>
+
+        <AnimatePresence>
+          {chatOpen && (
+            <motion.div
+              initial={{ opacity: 0, y: 20, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 20, scale: 0.95 }}
+              className="w-[min(100vw-2rem,360px)] bg-slate-950/95 border border-white/10 rounded-3xl shadow-2xl shadow-slate-950/50 backdrop-blur-xl overflow-hidden"
+            >
+              <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 bg-slate-900/95">
+                <div>
+                  <p className="text-xs uppercase tracking-widest text-slate-400">Match Chat</p>
+                  <p className="text-sm font-semibold text-white">Quick notes with your opponent</p>
+                </div>
+                <button onClick={() => setChatOpen(false)} className="text-slate-400 hover:text-white">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+              <div className="max-h-64 overflow-y-auto space-y-2 p-4 text-sm text-slate-200">
+                {chatMessages.map((message) => (
+                  <div
+                    key={message.id}
+                    className={`rounded-2xl p-3 ${message.sender === 'You' ? 'bg-blue-500/15 self-end text-white' : 'bg-slate-800/70 text-slate-200'}`}
+                  >
+                    <div className="font-semibold text-xs uppercase tracking-[0.2em] text-slate-400 mb-1">{message.sender}</div>
+                    <div>{message.text}</div>
+                  </div>
+                ))}
+                <div ref={chatEndRef} />
+              </div>
+              <div className="border-t border-white/10 bg-slate-900/95 p-3">
+                <div className="flex items-center gap-2">
+                  <input
+                    value={chatInput}
+                    onChange={(e) => setChatInput(e.target.value)}
+                    onKeyDown={handleChatKeyDown}
+                    className="flex-1 rounded-2xl border border-white/10 bg-slate-950/90 px-3 py-2 text-sm text-white outline-none focus:border-blue-400"
+                    placeholder="Type a quick note..."
+                  />
+                  <button
+                    onClick={handleSendChat}
+                    className="rounded-2xl bg-blue-600 px-3 py-2 text-white text-sm font-bold hover:bg-blue-500 transition-all"
+                  >
+                    <Send className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
 
       {/* Embed the 8 Ball Pro game engine */}
       <PoolGameEngineEmbed

@@ -1,3 +1,5 @@
+var s_oCoordinateLogger = null;
+
 function CTable(oParentContainer, oCpuDifficultyParams) {
         var _bHoldStick;
         var _bReadyForShot;
@@ -468,6 +470,10 @@ function CTable(oParentContainer, oCpuDifficultyParams) {
                 this.setInitBallsPosition();
                 _aBallsInHoles = new Array();
 
+                if (typeof CCoordinateLogger !== 'undefined' && !s_oCoordinateLogger) {
+                        s_oCoordinateLogger = new CCoordinateLogger();
+                        s_oCoordinateLogger.verifyConstants();
+                }
                 //_bInitBalls = true;
         };
 
@@ -602,9 +608,34 @@ function CTable(oParentContainer, oCpuDifficultyParams) {
                                 var bState = serverBalls[key];
 
                                 if (_aBalls[ballId]) {
-                                        // Convert percentage to pixels
-                                        var pixelX = (bState.x / 100) * 1280;
-                                        var pixelY = (bState.y / 100) * 770;
+                                        // Convert percentage to pixels, supporting both raw percentages and pre-scaled pixels
+                                        var pixelX, pixelY;
+                                        var serverX = bState.x;
+                                        var serverY = bState.y;
+
+                                        if (bState.x > 100 || bState.y > 100) {
+                                                // Already in pixels (e.g. from React wrapper)
+                                                pixelX = bState.x;
+                                                pixelY = bState.y;
+                                                // Calculate percentages for the CoordinateLogger
+                                                serverX = (pixelX / 1280) * 100;
+                                                serverY = (pixelY / 770) * 100;
+                                        } else {
+                                                // Raw percentages from server
+                                                pixelX = (bState.x / 100) * 1280;
+                                                pixelY = (bState.y / 100) * 770;
+                                        }
+
+                                        // Log conversion if logger exists
+                                        if (s_oCoordinateLogger) {
+                                                s_oCoordinateLogger.logConversion(
+                                                        ballId,
+                                                        serverX,
+                                                        serverY,
+                                                        pixelX,
+                                                        pixelY
+                                                );
+                                        }
 
                                         _aBalls[ballId].setPos(pixelX, pixelY);
                                         _aBalls[ballId].setFlagOnTable(bState.onTable);

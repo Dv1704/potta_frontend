@@ -362,7 +362,7 @@ var s_oLocalStorage;
 
 var s_bFullscreen = false;
 var s_bStorageAvailable = true;
-var s_bInteractiveHelp = true;
+var s_bInteractiveHelp = false;
 var s_aSoundsInfo;
 var s_iGameMode = GAME_MODE_EIGHT;
 var s_iPlayerMode = GAME_MODE_TWO;

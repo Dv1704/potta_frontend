@@ -87,7 +87,7 @@ const PoolGameEngineEmbed = ({
             )}
             <iframe
                 ref={iframeRef}
-                src={`/game-engine/index.html?mode=${mode}`}
+                src={`/game-engine/index.html?mode=${mode}&userId=${localStorage.getItem('userId') || ''}`}
                 style={{
                     width: '100%',
                     height: '100%',

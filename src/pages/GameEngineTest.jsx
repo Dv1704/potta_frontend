@@ -1,5 +1,6 @@
 import React from 'react';
 import PoolGameEngineEmbed from '../components/PoolGameEngineEmbed';
+import '../utils/pvpTestSuite';
 
 /**
  * PlayerInfoOverlay - Mock overlay for testing
@@ -65,6 +66,23 @@ const PlayerInfoOverlay = () => {
                     <div className="text-white font-bold text-sm">🎱 TEST MODE - PVP Overlay Demo</div>
                 </div>
             </div>
+
+            {/* Test Controls */}
+            <div className="absolute top-32 left-1/2 -translate-x-1/2 z-[9999] pointer-events-auto flex gap-2">
+                <button
+                    onClick={async () => {
+                        if (window.runAutomatedPVPTests) {
+                            const results = await window.runAutomatedPVPTests();
+                            alert("Tests Executed! Check console logs.\n\nResult:\n" + JSON.stringify(results, null, 2));
+                        } else {
+                            alert("PVP Test Suite not loaded yet.");
+                        }
+                    }}
+                    className="bg-green-600 hover:bg-green-500 text-white font-bold px-4 py-2 rounded-lg shadow-lg border border-white/20 transition-all text-xs"
+                >
+                    🧪 Run PVP Sync Tests
+                </button>
+            </div>
         </>
     );
 };
@@ -108,6 +126,7 @@ const GameEngineTest = () => {
 
             {/* Embed the 8 Ball Pro game engine */}
             <PoolGameEngineEmbed
+                mode="local"
                 onStartSession={handleStartSession}
                 onEndSession={handleEndSession}
                 onSaveScore={handleSaveScore}

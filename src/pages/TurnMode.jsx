@@ -4,8 +4,9 @@ import { socket, connectSocket } from '../socket';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { useToast } from '../context/ToastContext';
 import PoolGameEngineEmbed from '../components/PoolGameEngineEmbed';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Settings, Volume2, VolumeX, Eye, EyeOff, Sliders, RotateCcw, X, List, Trophy } from 'lucide-react';
+import { AnimatePresence } from 'framer-motion';
+import { Settings, Volume2, VolumeX, Eye, EyeOff, Sliders, RotateCcw, X, List, Trophy, AlertTriangle, CircleDot, MessageSquare, Send } from 'lucide-react';
+import '../utils/pvpTestSuite';
 
 /**
  * PlayerInfoOverlay - Shows player names and game stats on top of the game
@@ -16,23 +17,23 @@ const PlayerInfoOverlay = ({ player1, player2, myId, currentTurn, entryFee, time
   return (
     <>
       {/* Player 1 Info - Top Left */}
-      <div className="absolute top-4 left-4 z-[9999] pointer-events-none">
-        <div className={`backdrop-blur-sm rounded-lg px-4 py-3 shadow-xl border transition-all duration-300 ${
+      <div className="absolute top-3 left-2 sm:top-4 sm:left-4 z-[9999] pointer-events-none">
+        <div className={`backdrop-blur-sm rounded-2xl px-3 py-2 sm:px-4 sm:py-3 shadow-xl border transition-all duration-300 max-w-[220px] sm:max-w-[260px] ${
           currentTurn === player1?.id 
-            ? 'bg-gradient-to-r from-purple-600/90 to-blue-600/90 border-purple-400 scale-105 shadow-[0_0_15px_rgba(168,85,247,0.4)]' 
-            : 'bg-slate-800/80 border-slate-700 opacity-80'
+            ? 'bg-gradient-to-r from-purple-600/95 to-blue-600/95 border-purple-400 scale-105 shadow-[0_0_15px_rgba(168,85,247,0.4)]' 
+            : 'bg-slate-800/85 border-slate-700 opacity-90'
         }`}>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             {currentTurn === player1?.id && (
-              <div className="w-3 h-3 rounded-full bg-green-400 animate-pulse"></div>
+              <div className="w-2.5 h-2.5 rounded-full bg-green-400 animate-pulse"></div>
             )}
-            <div className="text-white font-bold text-sm">
+            <div className="text-white font-bold text-xs sm:text-sm leading-tight">
               {player1?.name || 'Player 1'} {player1?.id === myId && '(YOU)'}
             </div>
           </div>
-          <div className="mt-2 text-xs flex flex-col gap-1">
-            <div className="text-white/80">
-              Group:{' '}
+          <div className="mt-2 flex flex-col gap-1 text-[11px] sm:text-xs text-white/80">
+            <div>
+              Group: {' '}
               {groupAssigned ? (
                 <span className={`font-bold uppercase ${playerGroups[player1?.id] === 'solids' ? 'text-red-400 font-black' : 'text-yellow-400 font-black'}`}>
                   {playerGroups[player1?.id]}
@@ -46,23 +47,23 @@ const PlayerInfoOverlay = ({ player1, player2, myId, currentTurn, entryFee, time
       </div>
 
       {/* Player 2 Info - Top Right */}
-      <div className="absolute top-4 right-4 z-[9999] pointer-events-none">
-        <div className={`backdrop-blur-sm rounded-lg px-4 py-3 shadow-xl border transition-all duration-300 ${
+      <div className="absolute top-3 right-2 sm:top-4 sm:right-4 z-[9999] pointer-events-none">
+        <div className={`backdrop-blur-sm rounded-2xl px-3 py-2 sm:px-4 sm:py-3 shadow-xl border transition-all duration-300 max-w-[220px] sm:max-w-[260px] ${
           currentTurn === player2?.id 
-            ? 'bg-gradient-to-r from-orange-600/90 to-red-600/90 border-orange-400 scale-105 shadow-[0_0_15px_rgba(249,115,22,0.4)]' 
-            : 'bg-slate-800/80 border-slate-700 opacity-80'
+            ? 'bg-gradient-to-r from-orange-600/95 to-red-600/95 border-orange-400 scale-105 shadow-[0_0_15px_rgba(249,115,22,0.4)]' 
+            : 'bg-slate-800/85 border-slate-700 opacity-90'
         }`}>
-          <div className="flex items-center gap-3 justify-end">
-            <div className="text-white font-bold text-sm text-right">
+          <div className="flex items-center gap-2 sm:gap-3 justify-end">
+            <div className="text-white font-bold text-xs sm:text-sm leading-tight text-right">
               {player2?.name || 'Player 2'} {player2?.id === myId && '(YOU)'}
             </div>
             {currentTurn === player2?.id && (
-              <div className="w-3 h-3 rounded-full bg-green-400 animate-pulse"></div>
+              <div className="w-2.5 h-2.5 rounded-full bg-green-400 animate-pulse"></div>
             )}
           </div>
-          <div className="mt-2 text-xs flex flex-col gap-1 text-right">
-            <div className="text-white/80">
-              Group:{' '}
+          <div className="mt-2 flex flex-col gap-1 text-[11px] sm:text-xs text-white/80 text-right">
+            <div>
+              Group: {' '}
               {groupAssigned ? (
                 <span className={`font-bold uppercase ${playerGroups[player2?.id] === 'solids' ? 'text-red-400 font-black' : 'text-yellow-400 font-black'}`}>
                   {playerGroups[player2?.id]}
@@ -92,31 +93,45 @@ const PlayerInfoOverlay = ({ player1, player2, myId, currentTurn, entryFee, time
         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-[9999] pointer-events-none">
           <div className="flex flex-col items-center gap-2">
             {isMyTurn ? (
-              <div className={`${isAnimating ? 'bg-yellow-500/90' : canTakeShot ? 'bg-green-500/90 shadow-[0_0_15px_rgba(34,197,94,0.4)]' : 'bg-gray-500/90'} backdrop-blur-sm rounded-full px-6 py-2 shadow-xl border border-white/30 transition-all duration-300 ${canTakeShot ? 'animate-pulse' : ''}`}>
-                <div className="text-white font-bold text-sm">
-                  {isAnimating ? '⏳ ANIMATING...' : canTakeShot ? 'YOUR TURN' : 'WAIT...'}
+              <div className={`${isAnimating ? 'bg-yellow-500/90' : canTakeShot ? 'bg-green-500/90 shadow-[0_0_15px_rgba(34,197,94,0.4)]' : 'bg-gray-500/90'} backdrop-blur-sm rounded-full px-4 py-2 sm:px-6 sm:py-2 shadow-xl border border-white/30 transition-all duration-300 ${canTakeShot ? 'animate-pulse' : ''}`}>
+                <div className="text-white font-bold text-xs sm:text-sm leading-tight flex items-center justify-center gap-2">
+                  {isAnimating ? <><CircleDot className="h-3.5 w-3.5" /> ANIMATING...</> : canTakeShot ? 'YOUR TURN' : 'WAIT...'}
                 </div>
               </div>
             ) : (
-              <div className={`${isAnimating ? 'bg-yellow-500/90' : 'bg-red-600/90 border-red-500/40'} backdrop-blur-sm rounded-full px-6 py-2 shadow-xl border border-white/30 transition-all duration-300`}>
-                <div className="text-white font-bold text-sm">
-                  {isAnimating ? '⏳ OPPONENT ANIMATING...' : 'OPPONENT\'S TURN'}
+              <div className={`${isAnimating ? 'bg-yellow-500/90' : 'bg-red-600/90 border-red-500/40'} backdrop-blur-sm rounded-full px-4 py-2 sm:px-6 sm:py-2 shadow-xl border border-white/30 transition-all duration-300`}>
+                <div className="text-white font-bold text-xs sm:text-sm leading-tight flex items-center justify-center gap-2">
+                  {isAnimating ? <><CircleDot className="h-3.5 w-3.5" /> OPPONENT ANIMATING...</> : 'OPPONENT\'S TURN'}
                 </div>
               </div>
             )}
 
             {timeRemaining !== undefined && (
-              <div className={`${timeRemaining < 10 ? 'bg-red-500/90 border-red-400 shadow-[0_0_15px_rgba(239,68,68,0.5)] animate-pulse' : 'bg-blue-600/90 border-blue-400'} backdrop-blur-sm rounded-lg px-4 py-1 shadow-lg border min-w-[80px] text-center transition-all duration-300`}>
-                <div className="text-white font-mono font-bold text-lg">
+              <div className={`${timeRemaining < 10 ? 'bg-red-500/90 border-red-400 shadow-[0_0_15px_rgba(239,68,68,0.5)] animate-pulse' : 'bg-blue-600/90 border-blue-400'} backdrop-blur-sm rounded-lg px-3 py-1.5 sm:px-4 sm:py-2 shadow-lg border min-w-[72px] text-center transition-all duration-300`}>
+                <div className="text-white font-mono font-bold text-xl sm:text-lg">
                   {Math.floor(timeRemaining / 60)}:{(timeRemaining % 60).toString().padStart(2, '0')}
                 </div>
-                <div className="text-[10px] text-blue-100 font-bold uppercase tracking-wider">Time Left</div>
+                <div className="text-[9px] sm:text-[10px] text-blue-100 font-bold uppercase tracking-wider">Time Left</div>
               </div>
             )}
           </div>
         </div>
       )}
     </>
+  );
+};
+
+const toPixels = (balls) => {
+  if (!balls) return balls;
+  return Object.fromEntries(
+    Object.entries(balls).map(([id, pos]) => [
+      id,
+      {
+        x: (pos.x / 100) * 1280,
+        y: (pos.y / 100) * 770,
+        onTable: pos.onTable
+      }
+    ])
   );
 };
 
@@ -134,6 +149,11 @@ const TurnMode = () => {
   const [showPauseMenu, setShowPauseMenu] = useState(false);
   const [foulNotification, setFoulNotification] = useState({ show: false, reason: '', description: '' });
   const [pottedToasts, setPottedToasts] = useState([]); // Array of { id, ball }
+  const [chatOpen, setChatOpen] = useState(false);
+  const [chatInput, setChatInput] = useState('');
+  const [chatMessages, setChatMessages] = useState([
+    { id: 'welcome', sender: 'System', text: 'Match chat is available while you play. Keep it concise.' }
+  ]);
 
   // Game state
   const [gameState, setGameState] = useState(null);
@@ -150,6 +170,32 @@ const TurnMode = () => {
   const matchStartDataRef = useRef(null);
   const gameStateRef = useRef(null);
   const logEndRef = useRef(null);
+  const chatEndRef = useRef(null);
+
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [chatMessages]);
+
+  const handleSendChat = () => {
+    const trimmed = chatInput.trim();
+    if (!trimmed || !userId || !gameId) return;
+
+    const messageId = Date.now().toString();
+    socket.emit('gameChat', {
+      gameId,
+      userId,
+      messageId,
+      text: trimmed,
+    });
+    setChatInput('');
+  };
+
+  const handleChatKeyDown = (event) => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      handleSendChat();
+    }
+  };
 
   const userId = localStorage.getItem('userId');
 
@@ -227,15 +273,19 @@ const TurnMode = () => {
       if (data.gameState?.timer !== undefined) {
         setTimeRemaining(data.gameState.timer);
       }
-      setShotLogs(['🎱 Match Started! Take the break shot.']);
+      setShotLogs(['Match Started! Take the break shot.']);
       showToast('Game started!', 'success');
 
       // Forward to game iframe (try immediately + retry after delay for race condition)
       const sendMatchStart = () => {
         const iframe = document.querySelector('iframe');
         if (iframe && iframe.contentWindow) {
-          iframe.contentWindow.postMessage({ type: 'matchStart', state: data.gameState }, '*');
-          iframe.contentWindow.postMessage({ type: 'gameStateUpdate', state: data.gameState }, '*');
+          const convertedGameState = data.gameState ? {
+            ...data.gameState,
+            balls: toPixels(data.gameState.balls)
+          } : data.gameState;
+          iframe.contentWindow.postMessage({ type: 'matchStart', state: convertedGameState }, '*');
+          iframe.contentWindow.postMessage({ type: 'gameStateUpdate', state: convertedGameState }, '*');
           
           // Apply active settings too
           iframe.contentWindow.postMessage({
@@ -265,13 +315,8 @@ const TurnMode = () => {
         const oldTurnId = gameStateRef.current.turn;
         const oldPlayer = player1?.id === oldTurnId ? player1 : player2;
         const oldPlayerName = oldTurnId === userId ? 'You' : (oldPlayer?.name || 'Opponent');
-        setShotLogs(prev => [...prev, `⏳ ${oldPlayerName} timed out! Turn passed.`]);
+        setShotLogs(prev => [...prev, `${oldPlayerName} timed out! Turn passed.`]);
       }
-
-      setGameState(state);
-      gameStateRef.current = state;
-
-      // Update timer from gameState
       if (state.timer !== undefined) {
         setTimeRemaining(state.timer);
       }
@@ -286,9 +331,20 @@ const TurnMode = () => {
 
         iframe.contentWindow.postMessage({
           type: 'gameStateUpdate',
-          state: state
+          state: state ? {
+            ...state,
+            balls: toPixels(state.balls)
+          } : state
         }, '*');
       }
+    };
+
+    const handleGameChat = (data) => {
+      setChatMessages((prev) => [...prev, {
+        id: data.messageId,
+        sender: data.userId === userId ? 'You' : data.senderName,
+        text: data.text,
+      }] );
     };
 
     const handleShotResult = async (data) => {
@@ -305,15 +361,15 @@ const TurnMode = () => {
       if (shotResult) {
         let logMsg = '';
         if (shotResult.cueBallScratched) {
-          logMsg = `🔴 ${shooterName} scratched! (Foul)`;
+          logMsg = `${shooterName} scratched! (Foul)`;
         } else if (shotResult.firstBallCollided === null) {
-          logMsg = `⚪ ${shooterName} missed all balls! (Foul)`;
+          logMsg = `${shooterName} missed all balls! (Foul)`;
         } else {
           const objectBalls = shotResult.pocketedBalls.filter(id => id !== 0);
           if (objectBalls.length > 0) {
-            logMsg = `🎱 ${shooterName} pocketed ball(s): ${objectBalls.join(', ')}`;
+            logMsg = `${shooterName} pocketed ball(s): ${objectBalls.join(', ')}`;
           } else {
-            logMsg = `⚪ ${shooterName} shot (No balls pocketed)`;
+            logMsg = `${shooterName} shot (No balls pocketed)`;
           }
         }
         setShotLogs(prev => [...prev, logMsg]);
@@ -375,11 +431,20 @@ const TurnMode = () => {
       // Send to game engine (starts animation)
       const iframe = document.querySelector('iframe');
       if (iframe && iframe.contentWindow) {
+        const convertedData = {
+          ...data,
+          gameState: data.gameState ? {
+            ...data.gameState,
+            balls: toPixels(data.gameState.balls)
+          } : data.gameState
+        };
         iframe.contentWindow.postMessage({
           type: 'shotResult',
-          data: data
+          data: convertedData,
+          payload: data.shotResult
         }, '*');
       }
+
 
       if (shooterId !== userId) {
         showToast('Opponent took their shot', 'info');
@@ -393,10 +458,11 @@ const TurnMode = () => {
       if (iframe && iframe.contentWindow) {
         iframe.contentWindow.postMessage({
           type: 'opponentShot',
-          data: data
+          data: data.vector || data
         }, '*');
       }
     };
+
 
     const handleGameEnded = (data) => {
       showToast(data.message || 'Game Over', 'success');
@@ -418,6 +484,7 @@ const TurnMode = () => {
 
     socket.on('gameState', handleGameState);
     socket.on('startMatch', handleStartMatch);
+    socket.on('gameChat', handleGameChat);
     socket.on('shotResult', handleShotResult);
     socket.on('opponentShotStart', handleOpponentShotStart);
     socket.on('gameEnded', handleGameEnded);
@@ -430,12 +497,13 @@ const TurnMode = () => {
       socket.off('disconnect');
       socket.off('gameState');
       socket.off('startMatch');
+      socket.off('gameChat');
       socket.off('shotResult');
       socket.off('opponentShotStart');
       socket.off('gameEnded');
       socket.off('error');
     };
-  }, [gameId, userId, navigate, showToast]);
+  }, [gameId, userId, navigate, showToast, difficulty, guideLineEnabled, soundEnabled, isEngineAnimating, gameState]);
 
   // Listen for messages from the game iframe
   useEffect(() => {
@@ -462,6 +530,12 @@ const TurnMode = () => {
         // Unlock input
         setIsEngineAnimating(false);
 
+        // Emit animationComplete to backend
+        socket.emit('animationComplete', {
+          gameId,
+          ballPositions: event.data.payload?.ballPositions || event.data.ballPositions
+        });
+
         // Apply pending turn update NOW (after animation finished)
         if (pendingTurnUpdate) {
           console.log('[TurnMode] Applying pending turn update:', pendingTurnUpdate);
@@ -469,6 +543,7 @@ const TurnMode = () => {
           setPendingTurnUpdate(null);
         }
       }
+
 
       // Sync engine once it is ready
       if (event.data.type === 'engineReady') {
@@ -486,7 +561,10 @@ const TurnMode = () => {
             console.log('[TurnMode] Forwarding current gameState to newly ready engine:', currentState);
             iframe.contentWindow.postMessage({
               type: 'gameStateUpdate',
-              state: currentState
+              state: {
+                ...currentState,
+                balls: toPixels(currentState.balls)
+              }
             }, '*');
           }
 
@@ -504,9 +582,13 @@ const TurnMode = () => {
           if (matchStartReceivedRef.current) {
             console.log('[TurnMode] Replaying matchStart to newly ready engine');
             const matchData = matchStartDataRef.current;
+            const matchState = matchData?.gameState || currentState;
             iframe.contentWindow.postMessage({
               type: 'matchStart',
-              state: matchData?.gameState || currentState
+              state: matchState ? {
+                ...matchState,
+                balls: toPixels(matchState.balls)
+              } : matchState
             }, '*');
           }
         }
@@ -560,18 +642,19 @@ const TurnMode = () => {
       />
 
       {/* Header Menu Button - Top Center */}
-      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[9999] pointer-events-auto flex items-center gap-3 mt-14">
+      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[9999] pointer-events-auto flex items-center justify-center mt-14">
         <button 
           onClick={() => setShowPauseMenu(true)}
-          className="bg-slate-900/90 hover:bg-slate-800 border border-white/10 hover:border-white/20 px-4 py-2 rounded-xl shadow-lg transition-all active:scale-95 flex items-center gap-1.5 font-bold uppercase tracking-wider text-[10px]"
+          title="Menu & Settings"
+          className="bg-slate-900/90 hover:bg-slate-800 border border-white/10 hover:border-white/20 px-3 sm:px-4 py-2 rounded-2xl shadow-lg transition-all active:scale-95 flex items-center gap-2 font-bold uppercase tracking-wider text-[10px]"
         >
-          <Settings size={12} />
-          <span>Menu & Settings</span>
+          <Settings size={14} />
+          <span className="hidden sm:inline">Menu & Settings</span>
         </button>
       </div>
 
       {/* Turn History / Shot Log Drawer - Bottom Left */}
-      <div className="absolute bottom-4 left-4 z-[9999] w-64 max-h-40 bg-slate-950/85 backdrop-blur-md border border-white/10 rounded-xl p-3 shadow-2xl flex flex-col gap-2 pointer-events-auto">
+      <div className="absolute bottom-4 left-2 sm:left-4 z-[9999] w-[calc(100vw-1rem)] max-w-[280px] sm:w-64 max-h-40 bg-slate-950/85 backdrop-blur-md border border-white/10 rounded-xl p-3 shadow-2xl flex flex-col gap-2 pointer-events-auto">
         <div className="text-white/40 text-[9px] font-black uppercase tracking-widest border-b border-white/10 pb-1 flex justify-between">
           <span>Match Log</span>
           <span className="text-blue-400 font-bold">8-BALL</span>
@@ -598,7 +681,7 @@ const TurnMode = () => {
               transition={{ duration: 1.2, ease: 'easeOut' }}
               className="absolute bg-gradient-to-r from-yellow-500 to-amber-500 border border-yellow-300 text-white font-black font-sans px-6 py-3 rounded-full flex items-center gap-2 shadow-2xl shadow-yellow-500/20"
             >
-              <span className="text-sm">🎱</span>
+              <CircleDot className="h-4 w-4" />
               <span className="text-sm tracking-tight uppercase">Ball {toast.ball} pocketed!</span>
             </motion.div>
           ))}
@@ -616,7 +699,7 @@ const TurnMode = () => {
               className="bg-red-950/90 border border-red-500/35 backdrop-blur-xl rounded-2xl px-6 py-4 shadow-[0_0_30px_rgba(239,68,68,0.25)] flex items-center gap-4 max-w-sm"
             >
               <div className="w-10 h-10 rounded-full bg-red-600/20 flex items-center justify-center text-red-500 font-bold text-lg animate-pulse border border-red-500/30">
-                ⚠️
+                <AlertTriangle className="h-5 w-5" />
               </div>
               <div>
                 <h4 className="text-red-400 font-black text-sm uppercase tracking-wider">{foulNotification.reason}</h4>
@@ -732,10 +815,72 @@ const TurnMode = () => {
       {!isConnected && !gameState && (
         <div className="absolute top-20 left-1/2 -translate-x-1/2 z-[9999] pointer-events-none">
           <div className="bg-red-500/90 backdrop-blur-sm rounded-lg px-4 py-2 shadow-xl border border-white/20">
-            <div className="text-white font-bold text-sm">⚠️ Reconnecting...</div>
+            <div className="flex items-center gap-2 text-white font-bold text-sm"><AlertTriangle className="h-4 w-4" /> Reconnecting...</div>
           </div>
         </div>
       )}
+
+      {/* In-game Chat Button */}
+      <div className="fixed bottom-4 right-4 z-[10001] flex flex-col items-end gap-3">
+        <button
+          onClick={() => setChatOpen((open) => !open)}
+          className="flex items-center gap-2 rounded-full bg-slate-950/95 border border-white/10 px-4 py-3 shadow-2xl shadow-slate-950/40 text-white hover:bg-slate-900 transition-all"
+          aria-label="Toggle chat panel"
+        >
+          <MessageSquare className="w-4 h-4" />
+          <span className="hidden sm:inline text-xs uppercase tracking-widest">Chat</span>
+        </button>
+
+        <AnimatePresence>
+          {chatOpen && (
+            <motion.div
+              initial={{ opacity: 0, y: 20, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 20, scale: 0.95 }}
+              className="w-[min(100vw-2rem,360px)] bg-slate-950/95 border border-white/10 rounded-3xl shadow-2xl shadow-slate-950/50 backdrop-blur-xl overflow-hidden"
+            >
+              <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 bg-slate-900/95">
+                <div>
+                  <p className="text-xs uppercase tracking-widest text-slate-400">Match Chat</p>
+                  <p className="text-sm font-semibold text-white">Quick notes with your opponent</p>
+                </div>
+                <button onClick={() => setChatOpen(false)} className="text-slate-400 hover:text-white">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+              <div className="max-h-64 overflow-y-auto space-y-2 p-4 text-sm text-slate-200">
+                {chatMessages.map((message) => (
+                  <div
+                    key={message.id}
+                    className={`rounded-2xl p-3 ${message.sender === 'You' ? 'bg-blue-500/15 self-end text-white' : 'bg-slate-800/70 text-slate-200'}`}
+                  >
+                    <div className="font-semibold text-xs uppercase tracking-[0.2em] text-slate-400 mb-1">{message.sender}</div>
+                    <div>{message.text}</div>
+                  </div>
+                ))}
+                <div ref={chatEndRef} />
+              </div>
+              <div className="border-t border-white/10 bg-slate-900/95 p-3">
+                <div className="flex items-center gap-2">
+                  <input
+                    value={chatInput}
+                    onChange={(e) => setChatInput(e.target.value)}
+                    onKeyDown={handleChatKeyDown}
+                    className="flex-1 rounded-2xl border border-white/10 bg-slate-950/90 px-3 py-2 text-sm text-white outline-none focus:border-blue-400"
+                    placeholder="Type a quick note..."
+                  />
+                  <button
+                    onClick={handleSendChat}
+                    className="rounded-2xl bg-blue-600 px-3 py-2 text-white text-sm font-bold hover:bg-blue-500 transition-all"
+                  >
+                    <Send className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
 
       {/* Embed the 8 Ball Pro game engine */}
       <PoolGameEngineEmbed

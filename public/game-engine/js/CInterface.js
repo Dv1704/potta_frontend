@@ -56,6 +56,7 @@ function CInterface(oParentContainer){
         
         var oSprite = s_oSpriteLibrary.getSprite('but_settings');
         _oGUIExpandible = new CGUIExpandible(_pStartPosExit.x, _pStartPosExit.y, oSprite, _oContainer);
+        _oGUIExpandible.setVisible(false); // Hide standard game settings panel
         _oGUIExpandible.addButton(_oButExit);
         
         if(DISABLE_SOUND_MOBILE === false || s_bMobile === false){

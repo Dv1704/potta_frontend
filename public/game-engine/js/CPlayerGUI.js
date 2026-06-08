@@ -92,5 +92,9 @@ function CPlayerGUI(iX, iY, szName, oParentContainer) {
         _oTextName.refreshText(_szName);
     };
 
+    this.setVisible = function (bVisible) {
+        _oContainer.visible = bVisible;
+    };
+
     this._init(iX, iY, szName);
 }

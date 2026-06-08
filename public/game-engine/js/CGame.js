@@ -37,8 +37,8 @@ function CGame() {
         _bHoldStickCommand = false;
         _iDirStickCommand = 1;
 
-        // Default ready for CPU mode, wait for match start in multiplayer
-        if (s_iPlayerMode === GAME_MODE_CPU) {
+        // Default ready for CPU mode or local offline mode, wait for match start in multiplayer
+        if (s_iPlayerMode === GAME_MODE_CPU || s_szMode === 'local') {
             _bGameReady = true;
         } else {
             _bGameReady = false;
@@ -86,6 +86,8 @@ function CGame() {
 
         _oPlayer1 = new CPlayerGUI(CANVAS_WIDTH / 2 - 400, iY, TEXT_PLAYER1, s_oStage);
         _oPlayer2 = new CPlayerGUI(CANVAS_WIDTH / 2 + 400, iY, TEXT_PLAYER2, s_oStage);
+        _oPlayer1.setVisible(false);
+        _oPlayer2.setVisible(false);
         if (s_iPlayerMode === GAME_MODE_CPU) {
             _oScoreGUI = new CScoreGUI(CANVAS_WIDTH / 2, iY, s_oStage);
         }
@@ -678,6 +680,7 @@ function CGame() {
 }
 
 var s_oGame = null;
-var s_szUserId = null;
+var s_szUserId = typeof getParamValue !== 'undefined' ? getParamValue('userId') : null;
+var s_szMode = typeof getParamValue !== 'undefined' ? getParamValue('mode') : 'local';
 var s_bIsMyTurn = true;
 var s_bShowGuideLine = true;
