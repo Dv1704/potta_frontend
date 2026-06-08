@@ -19,10 +19,15 @@ const PlayerInfoOverlay = ({ player1, player2, currentTurn, entryFee, timeRemain
 
   return (
     <>
-      {/* Player names and scores at top center with spacing */}
-      <div className="fixed inset-x-0 top-8 z-[9999] flex items-center justify-center pointer-events-none px-4">
-        <div className="rounded-2xl bg-slate-950/50 border border-white/10 px-5 py-3 backdrop-blur-xl shadow-[0_0_30px_rgba(0,0,0,0.35)]">
-          <div className="flex items-center gap-4 text-[11px] uppercase tracking-[0.35em] font-semibold text-slate-300">
+      {/* Dot indicator at very top */}
+      <div className="fixed inset-x-0 top-2 md:top-4 z-[9999] flex items-center justify-center pointer-events-none">
+        <div className="w-2 h-2 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 shadow-lg shadow-blue-500/50"></div>
+      </div>
+
+      {/* Player names and scores at top center */}
+      <div className="fixed inset-x-0 top-4 md:top-8 z-[9999] flex items-center justify-center pointer-events-none px-4">
+        <div className="rounded-2xl bg-slate-950/50 border border-white/10 px-3 md:px-5 py-2 md:py-3 backdrop-blur-xl shadow-[0_0_30px_rgba(0,0,0,0.35)]">
+          <div className="flex items-center gap-2 md:gap-4 text-[10px] md:text-[11px] uppercase tracking-[0.35em] font-semibold text-slate-300">
             <span className={`${isGameStarted && currentTurn === player1?.id ? 'text-white font-black' : 'text-slate-400'}`}>{player1?.name?.toUpperCase() || 'PLAYER 1'} <span className="ml-1">{player1Score}</span></span>
             <span className="text-slate-500">—</span>
             <span className={`${isGameStarted && currentTurn === player2?.id ? 'text-white font-black' : 'text-slate-400'}`}>{player2?.name?.toUpperCase() || 'PLAYER 2'} <span className="ml-1">{player2Score}</span></span>
@@ -40,13 +45,13 @@ const PlayerInfoOverlay = ({ player1, player2, currentTurn, entryFee, timeRemain
       </div>
 
       {/* Settings button at top left beside home icon */}
-      <div className="fixed top-6 left-6 z-[9999] pointer-events-auto">
+      <div className="fixed top-3 md:top-6 left-3 md:left-6 z-[9999] pointer-events-auto">
         <button
           onClick={onMenuClick}
           title="Menu & Settings"
-          className="flex h-11 w-11 items-center justify-center rounded-full bg-black/70 border border-white/10 text-white shadow-lg shadow-black/50 transition hover:bg-black/90 active:scale-95"
+          className="flex h-9 md:h-11 w-9 md:w-11 items-center justify-center rounded-full bg-black/70 border border-white/10 text-white shadow-lg shadow-black/50 transition hover:bg-black/90 active:scale-95"
         >
-          <span className="text-xl">⚙️</span>
+          <span className="text-lg md:text-xl">⚙️</span>
         </button>
       </div>
     </>
@@ -117,6 +122,11 @@ const TurnMode = () => {
   const gameStateRef = useRef(null);
   const logEndRef = useRef(null);
   const chatEndRef = useRef(null);
+  const chatOpenRef = useRef(false);
+
+  useEffect(() => {
+    chatOpenRef.current = chatOpen;
+  }, [chatOpen]);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -302,7 +312,7 @@ const TurnMode = () => {
         text: data.text,
       }] );
 
-      if (!chatOpen && data.userId !== userId) {
+      if (!chatOpenRef.current && data.userId !== userId) {
         setUnreadChatCount((count) => Math.min(99, count + 1));
       }
     };
@@ -462,7 +472,7 @@ const TurnMode = () => {
       socket.off('gameEnded');
       socket.off('error');
     };
-  }, [gameId, userId, navigate, showToast, chatOpen]);
+  }, [gameId, userId, navigate, showToast]);
 
   // Listen for messages from the game iframe
   useEffect(() => {
