@@ -18,26 +18,32 @@ const PlayerInfoOverlay = ({ player1, player2, entryFee, overallTimeRemaining = 
 
   return (
     <>
-      <div className="fixed inset-x-0 top-4 z-[9999] flex items-center justify-center pointer-events-none px-4">
-        <div className="flex flex-col items-center gap-2 rounded-full bg-slate-950/40 border border-white/10 px-4 py-2 backdrop-blur-xl shadow-[0_0_30px_rgba(0,0,0,0.4)]">
-          <div className="text-[10px] uppercase tracking-[0.35em] text-slate-300 font-semibold whitespace-nowrap">
+      {/* Player names and scores at top center with spacing */}
+      <div className="fixed inset-x-0 top-8 z-[9999] flex items-center justify-center pointer-events-none px-4">
+        <div className="rounded-2xl bg-slate-950/50 border border-white/10 px-5 py-3 backdrop-blur-xl shadow-[0_0_30px_rgba(0,0,0,0.35)]">
+          <div className="text-[11px] uppercase tracking-[0.35em] text-slate-300 font-semibold whitespace-nowrap">
             {player1Label} — {player2Label}
-          </div>
-          <div className="inline-flex items-center gap-2 rounded-full bg-slate-900/70 border border-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.35em] text-white/90 shadow-sm">
-            <span>{timerLabel}</span>
-            <span className="text-slate-400">|</span>
-            <span>{prizeLabel}</span>
           </div>
         </div>
       </div>
 
-      <div className="fixed top-4 right-4 z-[9999] pointer-events-auto">
+      {/* Timer and prize at bottom right corner */}
+      <div className="fixed bottom-6 right-6 z-[9999] pointer-events-none">
+        <div className="inline-flex items-center gap-3 rounded-full bg-slate-900/85 border border-white/10 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.35em] text-white/90 shadow-lg shadow-slate-950/50">
+          <span>{timerLabel}</span>
+          <span className="text-slate-500">|</span>
+          <span>{prizeLabel}</span>
+        </div>
+      </div>
+
+      {/* Settings button at top left beside home icon */}
+      <div className="fixed top-6 left-6 z-[9999] pointer-events-auto">
         <button
           onClick={onMenuClick}
           title="Menu & Settings"
-          className="flex h-10 w-10 items-center justify-center rounded-full bg-black/50 border border-white/10 text-white shadow-lg shadow-black/40 transition hover:bg-black/70 active:scale-95"
+          className="flex h-11 w-11 items-center justify-center rounded-full bg-black/70 border border-white/10 text-white shadow-lg shadow-black/50 transition hover:bg-black/90 active:scale-95"
         >
-          <span className="text-lg">⚙️</span>
+          <span className="text-xl">⚙️</span>
         </button>
       </div>
     </>
@@ -618,7 +624,7 @@ const SpeedArena = () => {
   const shotTimerProgress = Math.max(0, Math.min(1, (timeRemaining ?? 0) / 15));
 
   return (
-    <div className="relative w-full h-screen bg-black overflow-hidden select-none">
+    <div className="relative w-full h-screen bg-black overflow-hidden select-none pointer-events-none">
       {/* Visual warning (red pulsing edge overlay) when timer is low on user's turn */}
       {isMyTurn && timeRemaining !== null && timeRemaining <= 5 && timeRemaining > 0 && (
         <div 
@@ -631,7 +637,6 @@ const SpeedArena = () => {
       <PlayerInfoOverlay
         player1={player1}
         player2={player2}
-        myId={userId}
         entryFee={entryFee}
         overallTimeRemaining={overallTimeRemaining}
         scores={gameState?.scores || {}}
@@ -767,11 +772,10 @@ const SpeedArena = () => {
                 </button>
                 <button 
                   onClick={() => {
-                    if (window.confirm('Forfeit this match and return to the dashboard? This will count as a loss.')) {
-                      setShowPauseMenu(false);
-                      socket.emit('leaveGame', { gameId });
-                      navigate('/dashboard');
-                    }
+                    setShowPauseMenu(false);
+                    socket.emit('leaveGame', { gameId });
+                    showToast('Match forfeited. You will lose this game.', 'error');
+                    setTimeout(() => navigate('/dashboard'), 2000);
                   }}
                   className="w-full py-4.5 bg-red-950/80 hover:bg-red-900 border border-red-800/30 rounded-2xl font-black text-sm uppercase italic tracking-wide text-red-400 hover:text-red-200 transition-all flex items-center justify-center gap-1.5 active:scale-95 shadow-xl shadow-red-950/20"
                 >
@@ -859,13 +863,15 @@ const SpeedArena = () => {
         </AnimatePresence>
       </div>
 
-      {/* Embed the 8 Ball Pro game engine */}
-      <PoolGameEngineEmbed
-        mode="speed"
-        onStartSession={() => console.log('Game started')}
-        onEndSession={() => console.log('Game ended')}
-        onSaveScore={(score) => console.log('Score:', score)}
-      />
+      {/* Embed the 8 Ball Pro game engine - ensure pointer events for interaction */}
+      <div className="pointer-events-auto">
+        <PoolGameEngineEmbed
+          mode="speed"
+          onStartSession={() => console.log('Game started')}
+          onEndSession={() => console.log('Game ended')}
+          onSaveScore={(score) => console.log('Score:', score)}
+        />
+      </div>
 
       {/* Waiting Overlay */}
       {!isGameStarted && gameState && (
