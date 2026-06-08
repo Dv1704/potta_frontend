@@ -63,7 +63,7 @@ const PoolGameEngineEmbed = ({
     };
 
     return (
-        <div className="fixed inset-x-0 top-16 sm:top-20 h-[calc(100%-4rem)] sm:h-[calc(100%-5rem)] overflow-hidden bg-black">
+        <div className="fixed inset-0 overflow-hidden bg-black">
             {!isLoaded && (
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white text-2xl font-sans">
                     Loading Game...

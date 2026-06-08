@@ -4,119 +4,42 @@ import { socket, connectSocket } from '../socket';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { useToast } from '../context/ToastContext';
 import PoolGameEngineEmbed from '../components/PoolGameEngineEmbed';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 import { Settings, Volume2, VolumeX, Eye, EyeOff, Sliders, X, List, Trophy, Zap, AlertTriangle, CircleDot, MessageSquare, Send } from 'lucide-react';
 
 /**
  * PlayerInfoOverlay - Shows player names and game stats on top of the game
  */
-const PlayerInfoOverlay = ({ player1, player2, myId, entryFee, timeRemaining, overallTimeRemaining = 180, scores = {}, streaks = {}, turn, isGameStarted, onMenuClick }) => {
+const PlayerInfoOverlay = ({ player1, player2, entryFee, overallTimeRemaining = 180, scores = {}, onMenuClick }) => {
+  const player1Label = `${player1?.name?.toUpperCase() || 'PLAYER 1'} ${scores[player1?.id] || 0}`;
+  const player2Label = `${player2?.name?.toUpperCase() || 'PLAYER 2'} ${scores[player2?.id] || 0}`;
+  const timerLabel = `${Math.floor(overallTimeRemaining / 60)}:${(overallTimeRemaining % 60).toString().padStart(2, '0')}`;
+  const prizeLabel = entryFee > 0 ? `GH¢${(entryFee * 1.8).toLocaleString()}` : 'FREE MATCH';
+
   return (
     <>
-      {/* Unified Top Header Bar */}
-      <div className="fixed top-0 left-0 right-0 z-[9999] w-full pointer-events-auto h-16 sm:h-20 bg-slate-950/80 backdrop-blur-md border-b border-white/10 px-3 sm:px-6">
-        <div className="mx-auto grid h-full max-w-[1200px] w-full grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2">
-          <div className="min-w-0 flex items-center">
-            <div className={`min-w-0 flex items-center gap-2 sm:gap-3 px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl border transition-all duration-300 ${
-              isGameStarted && turn === player1?.id
-                ? 'bg-purple-600/20 border-purple-500 shadow-[0_0_10px_rgba(168,85,247,0.3)]'
-                : 'bg-slate-900/60 border-slate-800'
-            }`}>
-              <div className="min-w-0 flex flex-col">
-                <span className="text-white font-black text-[11px] sm:text-xs tracking-tight uppercase truncate max-w-[80px] sm:max-w-[120px]">
-                  {player1?.name || 'Player 1'} {player1?.id === myId && '(YOU)'}
-                </span>
-                <div className="flex items-center gap-1.5 mt-0.5 sm:mt-1">
-                  <span className="text-[10px] sm:text-xs text-yellow-300 font-bold truncate max-w-[90px] sm:max-w-[120px]">
-                    Score: <span className="font-mono font-black">{scores[player1?.id] || 0}</span>
-                  </span>
-                  {isGameStarted && (streaks[player1?.id] || 0) >= 2 && (
-                    <span className="inline-flex items-center gap-0.5 text-[8px] sm:text-[9px] bg-yellow-500/20 text-yellow-300 font-black px-1.5 py-0.5 rounded border border-yellow-500/30">
-                      <Zap className="w-2.5 h-2.5 text-yellow-300" />
-                      {streaks[player1?.id]}x
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
+      <div className="fixed inset-x-0 top-4 z-[9999] flex items-center justify-center pointer-events-none px-4">
+        <div className="flex flex-col items-center gap-2 rounded-full bg-slate-950/40 border border-white/10 px-4 py-2 backdrop-blur-xl shadow-[0_0_30px_rgba(0,0,0,0.4)]">
+          <div className="text-[10px] uppercase tracking-[0.35em] text-slate-300 font-semibold whitespace-nowrap">
+            {player1Label} — {player2Label}
           </div>
-
-          <div className="min-w-0 flex flex-wrap items-center justify-center gap-2 sm:gap-3">
-            {/* Settings Button */}
-            <button
-              onClick={onMenuClick}
-              title="Menu & Settings"
-              className="relative bg-slate-900/80 hover:bg-slate-800 border border-white/10 hover:border-white/20 p-2 sm:p-2.5 rounded-xl shadow-lg transition-all active:scale-95 text-white flex items-center justify-center"
-            >
-              <Settings size={16} />
-            </button>
-
-            {/* Match Time (Overall Clock) */}
-            {isGameStarted && (
-              <div className="bg-gradient-to-r from-blue-700/30 to-indigo-900/30 border border-blue-500/25 rounded-xl px-2.5 py-1 sm:px-4 sm:py-1.5 text-center min-w-[70px] sm:min-w-[95px] flex flex-col justify-center">
-                <div className="hidden sm:block text-[8px] sm:text-[9px] text-blue-300 font-bold uppercase tracking-wider">Match Time</div>
-                <div className="text-white font-mono font-black text-xs sm:text-sm">
-                  {Math.floor(overallTimeRemaining / 60)}:{(overallTimeRemaining % 60).toString().padStart(2, '0')}
-                </div>
-              </div>
-            )}
-
-            {/* Prize Pool */}
-            {entryFee > 0 && (
-              <div className="hidden sm:flex bg-gradient-to-r from-yellow-600/30 to-amber-600/30 border border-yellow-500/30 rounded-xl px-2.5 py-1.5 text-center min-w-[70px] sm:min-w-[95px] flex-col justify-center">
-                <div className="text-[8px] sm:text-[9px] text-yellow-300 font-bold uppercase tracking-wider items-center justify-center gap-0.5">
-                  <Trophy size={10} />
-                  <span>Prize</span>
-                </div>
-                <div className="text-white font-black text-[10px] sm:text-xs">GH₵{(entryFee * 1.8).toLocaleString()}</div>
-              </div>
-            )}
-          </div>
-
-          <div className="min-w-0 flex items-center justify-end">
-            <div className={`min-w-0 flex items-center gap-2 sm:gap-3 px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl border transition-all duration-300 ${
-              isGameStarted && turn === player2?.id
-                ? 'bg-purple-600/20 border-purple-500 shadow-[0_0_10px_rgba(168,85,247,0.3)]'
-                : 'bg-slate-900/60 border-slate-800'
-            }`}>
-              <div className="min-w-0 flex flex-col text-right">
-                <span className="text-white font-black text-[11px] sm:text-xs tracking-tight uppercase truncate max-w-[80px] sm:max-w-[120px]">
-                  {player2?.name || 'Player 2'} {player2?.id === myId && '(YOU)'}
-                </span>
-                <div className="flex items-center justify-end gap-1.5 mt-0.5 sm:mt-1">
-                  {isGameStarted && (streaks[player2?.id] || 0) >= 2 && (
-                    <span className="inline-flex items-center gap-0.5 text-[8px] sm:text-[9px] bg-yellow-500/20 text-yellow-300 font-black px-1.5 py-0.5 rounded border border-yellow-500/30">
-                      <Zap className="w-2.5 h-2.5 text-yellow-300" />
-                      {streaks[player2?.id]}x
-                    </span>
-                  )}
-                  <span className="text-[10px] sm:text-xs text-yellow-300 font-bold truncate max-w-[90px] sm:max-w-[120px]">
-                    Score: <span className="font-mono font-black">{scores[player2?.id] || 0}</span>
-                  </span>
-                </div>
-              </div>
-            </div>
+          <div className="inline-flex items-center gap-2 rounded-full bg-slate-900/70 border border-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.35em] text-white/90 shadow-sm">
+            <span>{timerLabel}</span>
+            <span className="text-slate-400">|</span>
+            <span>{prizeLabel}</span>
           </div>
         </div>
       </div>
 
-      {/* Shot Timer - Bottom Center (for Speed Mode) */}
-      {isGameStarted && timeRemaining !== undefined && timeRemaining !== null && (
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-[9999] pointer-events-none">
-          <div className="flex flex-col items-center gap-2">
-            <div className={`${
-              timeRemaining <= 5 
-                ? 'bg-red-600/95 border-red-400 shadow-[0_0_20px_rgba(239,68,68,0.6)] animate-pulse scale-110' 
-                : 'bg-blue-600/90 border-blue-400 shadow-lg'
-            } backdrop-blur-sm rounded-full px-6 py-2 border min-w-[120px] text-center transition-all duration-300`}>
-              <div className="text-[10px] text-white/90 font-bold uppercase tracking-wider mb-0.5">Shot Timer</div>
-              <div className="text-white font-mono font-black text-2xl">
-                {timeRemaining}s
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <div className="fixed top-4 right-4 z-[9999] pointer-events-auto">
+        <button
+          onClick={onMenuClick}
+          title="Menu & Settings"
+          className="flex h-10 w-10 items-center justify-center rounded-full bg-black/50 border border-white/10 text-white shadow-lg shadow-black/40 transition hover:bg-black/70 active:scale-95"
+        >
+          <span className="text-lg">⚙️</span>
+        </button>
+      </div>
     </>
   );
 };
@@ -691,6 +614,8 @@ const SpeedArena = () => {
   const player1 = gameState.players?.[0];
   const player2 = gameState.players?.[1];
   const entryFee = gameState.stake || gameState.betAmount || 0;
+  const cueBallPosition = gameState.balls?.['0'];
+  const shotTimerProgress = Math.max(0, Math.min(1, (timeRemaining ?? 0) / 15));
 
   return (
     <div className="relative w-full h-screen bg-black overflow-hidden select-none">
@@ -708,30 +633,39 @@ const SpeedArena = () => {
         player2={player2}
         myId={userId}
         entryFee={entryFee}
-        timeRemaining={timeRemaining}
         overallTimeRemaining={overallTimeRemaining}
         scores={gameState?.scores || {}}
-        streaks={gameState?.streaks || {}}
-        turn={gameState?.turn}
-        isGameStarted={isGameStarted}
         onMenuClick={() => setShowPauseMenu(true)}
       />
+
+      {isGameStarted && cueBallPosition && timeRemaining !== null && timeRemaining !== undefined && (
+        <div className="absolute inset-0 pointer-events-none z-[9997]">
+          <div
+            className="absolute h-12 w-12 -translate-x-1/2 -translate-y-1/2 rounded-full"
+            style={{ left: `${cueBallPosition.x}%`, top: `${cueBallPosition.y}%` }}
+          >
+            <div
+              className="absolute inset-0 rounded-full"
+              style={{
+                background: `conic-gradient(from -90deg, rgba(59,130,246,0.85) ${shotTimerProgress * 100}%, rgba(255,255,255,0.08) ${shotTimerProgress * 100}% 100%)`
+              }}
+            />
+            <div className="absolute inset-1 rounded-full border border-sky-400/30 bg-slate-950/30" />
+          </div>
+        </div>
+      )}
 
       {/* --- POTTED BALL TOAST FLOATER --- */}
       <div className="absolute inset-0 pointer-events-none z-[1000] flex items-center justify-center">
         <AnimatePresence>
           {pottedToasts.map((toast) => (
-            <motion.div
+            <div
               key={toast.id}
-              initial={{ opacity: 0, scale: 0.5, y: 50 }}
-              animate={{ opacity: 1, scale: 1.2, y: -80 }}
-              exit={{ opacity: 0, scale: 0.8, y: -150 }}
-              transition={{ duration: 1.2, ease: 'easeOut' }}
               className="absolute bg-gradient-to-r from-yellow-500 to-amber-500 border border-yellow-300 text-white font-black font-sans px-6 py-3 rounded-full flex items-center gap-2 shadow-2xl shadow-yellow-500/20"
             >
               <CircleDot className="w-4 h-4" />
               <span className="text-sm tracking-tight uppercase">Ball {toast.ball} pocketed!</span>
-            </motion.div>
+            </div>
           ))}
         </AnimatePresence>
       </div>
@@ -740,12 +674,7 @@ const SpeedArena = () => {
       <div className="absolute top-24 left-1/2 -translate-x-1/2 z-[9999] pointer-events-none">
         <AnimatePresence>
           {foulNotification.show && (
-            <motion.div
-              initial={{ opacity: 0, y: -50, scale: 0.9 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -20, scale: 0.95 }}
-              className="bg-red-950/90 border border-red-500/35 backdrop-blur-xl rounded-2xl px-6 py-4 shadow-[0_0_30px_rgba(239,68,68,0.25)] flex items-center gap-4 max-w-sm"
-            >
+            <div className="bg-red-950/90 border border-red-500/35 backdrop-blur-xl rounded-2xl px-6 py-4 shadow-[0_0_30px_rgba(239,68,68,0.25)] flex items-center gap-4 max-w-sm">
               <div className="w-10 h-10 rounded-full bg-red-600/20 flex items-center justify-center text-red-500 animate-pulse border border-red-500/30">
                 <AlertTriangle className="w-6 h-6" />
               </div>
@@ -754,7 +683,7 @@ const SpeedArena = () => {
                 <p className="text-red-200/90 text-xs font-semibold mt-0.5 leading-relaxed">{foulNotification.description}</p>
                 <p className="text-slate-400 text-[10px] uppercase font-bold tracking-widest mt-1">Opponent gets ball-in-hand</p>
               </div>
-            </motion.div>
+            </div>
           )}
         </AnimatePresence>
       </div>
@@ -763,13 +692,8 @@ const SpeedArena = () => {
       <AnimatePresence>
         {showPauseMenu && (
           <div className="fixed inset-0 z-[100000] flex items-center justify-center p-4">
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowPauseMenu(false)} className="absolute inset-0 bg-black/85 backdrop-blur-md" />
-            <motion.div 
-              initial={{ scale: 0.95, opacity: 0, y: 10 }} 
-              animate={{ scale: 1, opacity: 1, y: 0 }} 
-              exit={{ scale: 0.95, opacity: 0, y: 10 }}
-              className="bg-[#0c111d]/95 w-full max-w-md rounded-[3rem] border border-white/10 p-10 shadow-2xl relative z-10"
-            >
+            <div onClick={() => setShowPauseMenu(false)} className="absolute inset-0 bg-black/85 backdrop-blur-md" />
+            <div className="bg-[#0c111d]/95 w-full max-w-md rounded-[3rem] border border-white/10 p-10 shadow-2xl relative z-10">
               <div className="text-center mb-8">
                 <h3 className="text-3xl font-black uppercase italic tracking-tighter">Match Menu</h3>
                 <p className="text-gray-400 text-xs font-medium mt-1">Configure parameters or leave the match session</p>
@@ -854,7 +778,7 @@ const SpeedArena = () => {
                   <X size={14} /> Forfeit & Exit
                 </button>
               </div>
-            </motion.div>
+            </div>
           </div>
         )}
       </AnimatePresence>
@@ -878,11 +802,10 @@ const SpeedArena = () => {
               return nextOpen;
             });
           }}
-          className="relative flex items-center gap-2 rounded-full bg-slate-950/95 border border-white/10 px-4 py-3 shadow-2xl shadow-slate-950/40 text-white hover:bg-slate-900 transition-all"
+          className="relative flex h-11 w-11 items-center justify-center rounded-full bg-slate-950/90 border border-white/10 text-white shadow-2xl shadow-slate-950/40 transition-all hover:bg-slate-900 active:scale-95"
           aria-label="Toggle chat panel"
         >
-          <MessageSquare className="w-4 h-4" />
-          <span className="hidden sm:inline text-xs uppercase tracking-widest">Chat</span>
+          <span className="text-base">💬</span>
           {unreadChatCount > 0 && (
             <span className="absolute -top-1 -right-1 inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-red-500 px-1.5 text-[10px] font-black text-white shadow-lg">
               {unreadChatCount > 9 ? '9+' : unreadChatCount}
@@ -892,12 +815,7 @@ const SpeedArena = () => {
 
         <AnimatePresence>
           {chatOpen && (
-            <motion.div
-              initial={{ opacity: 0, y: 20, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 20, scale: 0.95 }}
-              className="w-[min(100vw-2rem,360px)] bg-slate-950/95 border border-white/10 rounded-3xl shadow-2xl shadow-slate-950/50 backdrop-blur-xl overflow-hidden"
-            >
+            <div className="w-[min(100vw-2rem,360px)] bg-slate-950/95 border border-white/10 rounded-3xl shadow-2xl shadow-slate-950/50 backdrop-blur-xl overflow-hidden">
               <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 bg-slate-900/95">
                 <div>
                   <p className="text-xs uppercase tracking-widest text-slate-400">Match Chat</p>
@@ -936,7 +854,7 @@ const SpeedArena = () => {
                   </button>
                 </div>
               </div>
-            </motion.div>
+            </div>
           )}
         </AnimatePresence>
       </div>
