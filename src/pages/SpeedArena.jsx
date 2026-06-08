@@ -14,89 +14,90 @@ const PlayerInfoOverlay = ({ player1, player2, myId, entryFee, timeRemaining, ov
   return (
     <>
       {/* Unified Top Header Bar */}
-      <div className="fixed top-0 left-0 right-0 z-[9999] w-full pointer-events-auto h-16 sm:h-20 bg-slate-950/80 backdrop-blur-md border-b border-white/10 flex items-center justify-between px-3 sm:px-6">
-        
-        {/* Player 1 (Left) */}
-        <div className={`min-w-0 flex items-center gap-2 sm:gap-3 px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl border transition-all duration-300 ${
-          isGameStarted && turn === player1?.id
-            ? 'bg-purple-600/20 border-purple-500 shadow-[0_0_10px_rgba(168,85,247,0.3)]'
-            : 'bg-slate-900/60 border-slate-800'
-        }`}>
-          <div className="min-w-0 flex flex-col">
-            <span className="text-white font-black text-[11px] sm:text-xs tracking-tight uppercase truncate max-w-[80px] sm:max-w-[120px]">
-              {player1?.name || 'Player 1'} {player1?.id === myId && '(YOU)'}
-            </span>
-            <div className="flex items-center gap-1.5 mt-0.5 sm:mt-1">
-              <span className="text-[10px] sm:text-xs text-yellow-300 font-bold truncate max-w-[90px] sm:max-w-[120px]">
-                Score: <span className="font-mono font-black">{scores[player1?.id] || 0}</span>
-              </span>
-              {isGameStarted && (streaks[player1?.id] || 0) >= 2 && (
-                <span className="inline-flex items-center gap-0.5 text-[8px] sm:text-[9px] bg-yellow-500/20 text-yellow-300 font-black px-1.5 py-0.5 rounded border border-yellow-500/30">
-                  <Zap className="w-2.5 h-2.5 text-yellow-300" />
-                  {streaks[player1?.id]}x
+      <div className="fixed top-0 left-0 right-0 z-[9999] w-full pointer-events-auto h-16 sm:h-20 bg-slate-950/80 backdrop-blur-md border-b border-white/10 px-3 sm:px-6">
+        <div className="mx-auto grid h-full max-w-[1200px] w-full grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2">
+          <div className="min-w-0 flex items-center">
+            <div className={`min-w-0 flex items-center gap-2 sm:gap-3 px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl border transition-all duration-300 ${
+              isGameStarted && turn === player1?.id
+                ? 'bg-purple-600/20 border-purple-500 shadow-[0_0_10px_rgba(168,85,247,0.3)]'
+                : 'bg-slate-900/60 border-slate-800'
+            }`}>
+              <div className="min-w-0 flex flex-col">
+                <span className="text-white font-black text-[11px] sm:text-xs tracking-tight uppercase truncate max-w-[80px] sm:max-w-[120px]">
+                  {player1?.name || 'Player 1'} {player1?.id === myId && '(YOU)'}
                 </span>
-              )}
+                <div className="flex items-center gap-1.5 mt-0.5 sm:mt-1">
+                  <span className="text-[10px] sm:text-xs text-yellow-300 font-bold truncate max-w-[90px] sm:max-w-[120px]">
+                    Score: <span className="font-mono font-black">{scores[player1?.id] || 0}</span>
+                  </span>
+                  {isGameStarted && (streaks[player1?.id] || 0) >= 2 && (
+                    <span className="inline-flex items-center gap-0.5 text-[8px] sm:text-[9px] bg-yellow-500/20 text-yellow-300 font-black px-1.5 py-0.5 rounded border border-yellow-500/30">
+                      <Zap className="w-2.5 h-2.5 text-yellow-300" />
+                      {streaks[player1?.id]}x
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="min-w-0 flex flex-wrap items-center justify-center gap-2 sm:gap-3">
+            {/* Settings Button */}
+            <button
+              onClick={onMenuClick}
+              title="Menu & Settings"
+              className="relative bg-slate-900/80 hover:bg-slate-800 border border-white/10 hover:border-white/20 p-2 sm:p-2.5 rounded-xl shadow-lg transition-all active:scale-95 text-white flex items-center justify-center"
+            >
+              <Settings size={16} />
+            </button>
+
+            {/* Match Time (Overall Clock) */}
+            {isGameStarted && (
+              <div className="bg-gradient-to-r from-blue-700/30 to-indigo-900/30 border border-blue-500/25 rounded-xl px-2.5 py-1 sm:px-4 sm:py-1.5 text-center min-w-[70px] sm:min-w-[95px] flex flex-col justify-center">
+                <div className="hidden sm:block text-[8px] sm:text-[9px] text-blue-300 font-bold uppercase tracking-wider">Match Time</div>
+                <div className="text-white font-mono font-black text-xs sm:text-sm">
+                  {Math.floor(overallTimeRemaining / 60)}:{(overallTimeRemaining % 60).toString().padStart(2, '0')}
+                </div>
+              </div>
+            )}
+
+            {/* Prize Pool */}
+            {entryFee > 0 && (
+              <div className="hidden sm:flex bg-gradient-to-r from-yellow-600/30 to-amber-600/30 border border-yellow-500/30 rounded-xl px-2.5 py-1.5 text-center min-w-[70px] sm:min-w-[95px] flex-col justify-center">
+                <div className="text-[8px] sm:text-[9px] text-yellow-300 font-bold uppercase tracking-wider items-center justify-center gap-0.5">
+                  <Trophy size={10} />
+                  <span>Prize</span>
+                </div>
+                <div className="text-white font-black text-[10px] sm:text-xs">GH₵{(entryFee * 1.8).toLocaleString()}</div>
+              </div>
+            )}
+          </div>
+
+          <div className="min-w-0 flex items-center justify-end">
+            <div className={`min-w-0 flex items-center gap-2 sm:gap-3 px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl border transition-all duration-300 ${
+              isGameStarted && turn === player2?.id
+                ? 'bg-purple-600/20 border-purple-500 shadow-[0_0_10px_rgba(168,85,247,0.3)]'
+                : 'bg-slate-900/60 border-slate-800'
+            }`}>
+              <div className="min-w-0 flex flex-col text-right">
+                <span className="text-white font-black text-[11px] sm:text-xs tracking-tight uppercase truncate max-w-[80px] sm:max-w-[120px]">
+                  {player2?.name || 'Player 2'} {player2?.id === myId && '(YOU)'}
+                </span>
+                <div className="flex items-center justify-end gap-1.5 mt-0.5 sm:mt-1">
+                  {isGameStarted && (streaks[player2?.id] || 0) >= 2 && (
+                    <span className="inline-flex items-center gap-0.5 text-[8px] sm:text-[9px] bg-yellow-500/20 text-yellow-300 font-black px-1.5 py-0.5 rounded border border-yellow-500/30">
+                      <Zap className="w-2.5 h-2.5 text-yellow-300" />
+                      {streaks[player2?.id]}x
+                    </span>
+                  )}
+                  <span className="text-[10px] sm:text-xs text-yellow-300 font-bold truncate max-w-[90px] sm:max-w-[120px]">
+                    Score: <span className="font-mono font-black">{scores[player2?.id] || 0}</span>
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
-
-        {/* Center Panel (Actions & Match Clock) */}
-        <div className="min-w-0 flex items-center justify-center gap-2 sm:gap-3">
-          {/* Settings Button */}
-          <button
-            onClick={onMenuClick}
-            title="Menu & Settings"
-            className="bg-slate-900/80 hover:bg-slate-800 border border-white/10 hover:border-white/20 p-2 sm:p-2.5 rounded-xl shadow-lg transition-all active:scale-95 text-white flex items-center justify-center"
-          >
-            <Settings size={16} />
-          </button>
-
-          {/* Match Time (Overall Clock) */}
-          {isGameStarted && (
-            <div className="bg-gradient-to-r from-blue-700/30 to-indigo-900/30 border border-blue-500/25 rounded-xl px-2.5 py-1 sm:px-4 sm:py-1.5 text-center min-w-[70px] sm:min-w-[95px] flex flex-col justify-center">
-              <div className="hidden sm:block text-[8px] sm:text-[9px] text-blue-300 font-bold uppercase tracking-wider">Match Time</div>
-              <div className="text-white font-mono font-black text-xs sm:text-sm">
-                {Math.floor(overallTimeRemaining / 60)}:{(overallTimeRemaining % 60).toString().padStart(2, '0')}
-              </div>
-            </div>
-          )}
-
-          {/* Prize Pool */}
-          {entryFee > 0 && (
-            <div className="bg-gradient-to-r from-yellow-600/30 to-amber-600/30 border border-yellow-500/30 rounded-xl px-2.5 py-1 sm:px-4 sm:py-1.5 text-center min-w-[70px] sm:min-w-[95px] flex flex-col justify-center">
-              <div className="hidden sm:flex text-[8px] sm:text-[9px] text-yellow-300 font-bold uppercase tracking-wider items-center justify-center gap-0.5">
-                <Trophy size={10} />
-                <span>Prize</span>
-              </div>
-              <div className="text-white font-black text-[10px] sm:text-xs">GH₵{(entryFee * 1.8).toLocaleString()}</div>
-            </div>
-          )}
-        </div>
-
-        {/* Player 2 (Right) */}
-        <div className={`min-w-0 flex items-center gap-2 sm:gap-3 px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl border transition-all duration-300 ${
-          isGameStarted && turn === player2?.id
-            ? 'bg-purple-600/20 border-purple-500 shadow-[0_0_10px_rgba(168,85,247,0.3)]'
-            : 'bg-slate-900/60 border-slate-800'
-        }`}>
-          <div className="min-w-0 flex flex-col text-right">
-            <span className="text-white font-black text-[11px] sm:text-xs tracking-tight uppercase truncate max-w-[80px] sm:max-w-[120px]">
-              {player2?.name || 'Player 2'} {player2?.id === myId && '(YOU)'}
-            </span>
-            <div className="flex items-center justify-end gap-1.5 mt-0.5 sm:mt-1">
-              {isGameStarted && (streaks[player2?.id] || 0) >= 2 && (
-                <span className="inline-flex items-center gap-0.5 text-[8px] sm:text-[9px] bg-yellow-500/20 text-yellow-300 font-black px-1.5 py-0.5 rounded border border-yellow-500/30">
-                  <Zap className="w-2.5 h-2.5 text-yellow-300" />
-                  {streaks[player2?.id]}x
-                </span>
-              )}
-              <span className="text-[10px] sm:text-xs text-yellow-300 font-bold truncate max-w-[90px] sm:max-w-[120px]">
-                Score: <span className="font-mono font-black">{scores[player2?.id] || 0}</span>
-              </span>
-            </div>
-          </div>
-        </div>
-
       </div>
 
       {/* Shot Timer - Bottom Center (for Speed Mode) */}
@@ -157,6 +158,7 @@ const SpeedArena = () => {
 
   const [isGameStarted, setIsGameStarted] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
+  const [unreadChatCount, setUnreadChatCount] = useState(0);
   const [chatInput, setChatInput] = useState('');
   const [chatMessages, setChatMessages] = useState([
     { id: 'welcome', sender: 'System', text: 'Quick chat is available during gameplay. Keep it short and slick.' }
@@ -367,6 +369,10 @@ const SpeedArena = () => {
         sender: data.userId === userId ? 'You' : data.senderName,
         text: data.text,
       }]);
+
+      if (!chatOpen && data.userId !== userId) {
+        setUnreadChatCount((count) => Math.min(99, count + 1));
+      }
     };
 
     const handleShotResult = async (data) => {
@@ -541,7 +547,7 @@ const SpeedArena = () => {
       socket.off('gameEnded');
       socket.off('error');
     };
-  }, [gameId, userId, navigate, showToast]);
+  }, [gameId, userId, navigate, showToast, chatOpen]);
 
   // Listen for messages from the game iframe
   useEffect(() => {
@@ -865,12 +871,23 @@ const SpeedArena = () => {
       {/* In-game Chat Button */}
       <div className="fixed bottom-4 right-4 z-[10001] flex flex-col items-end gap-3">
         <button
-          onClick={() => setChatOpen((open) => !open)}
-          className="flex items-center gap-2 rounded-full bg-slate-950/95 border border-white/10 px-4 py-3 shadow-2xl shadow-slate-950/40 text-white hover:bg-slate-900 transition-all"
+          onClick={() => {
+            setChatOpen((open) => {
+              const nextOpen = !open;
+              if (nextOpen) setUnreadChatCount(0);
+              return nextOpen;
+            });
+          }}
+          className="relative flex items-center gap-2 rounded-full bg-slate-950/95 border border-white/10 px-4 py-3 shadow-2xl shadow-slate-950/40 text-white hover:bg-slate-900 transition-all"
           aria-label="Toggle chat panel"
         >
           <MessageSquare className="w-4 h-4" />
           <span className="hidden sm:inline text-xs uppercase tracking-widest">Chat</span>
+          {unreadChatCount > 0 && (
+            <span className="absolute -top-1 -right-1 inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-red-500 px-1.5 text-[10px] font-black text-white shadow-lg">
+              {unreadChatCount > 9 ? '9+' : unreadChatCount}
+            </span>
+          )}
         </button>
 
         <AnimatePresence>

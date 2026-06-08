@@ -63,37 +63,16 @@ const PoolGameEngineEmbed = ({
     };
 
     return (
-        <div style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-            overflow: 'hidden',
-            backgroundColor: '#000'
-        }}>
+        <div className="fixed inset-x-0 top-16 sm:top-20 h-[calc(100%-4rem)] sm:h-[calc(100%-5rem)] overflow-hidden bg-black">
             {!isLoaded && (
-                <div style={{
-                    position: 'absolute',
-                    top: '50%',
-                    left: '50%',
-                    transform: 'translate(-50%, -50%)',
-                    color: '#fff',
-                    fontSize: '24px',
-                    fontFamily: 'Arial, sans-serif'
-                }}>
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white text-2xl font-sans">
                     Loading Game...
                 </div>
             )}
             <iframe
                 ref={iframeRef}
                 src={`/game-engine/index.html?mode=${mode}&userId=${localStorage.getItem('userId') || ''}`}
-                style={{
-                    width: '100%',
-                    height: '100%',
-                    border: 'none',
-                    display: 'block'
-                }}
+                className="w-full h-full border-0 block"
                 title="8 Ball Pro Game"
                 onLoad={handleIframeLoad}
                 allow="autoplay; fullscreen"
