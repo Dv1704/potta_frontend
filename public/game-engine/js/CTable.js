@@ -1292,18 +1292,26 @@ function CTable(oParentContainer, oCpuDifficultyParams) {
 
         //re-spot the cue ball after a foul
         this.respotCueBall = function () {
-                _oCueBall.setDragging(true);
-                _iState = STATE_TABLE_PLACE_CUE_BALL;
                 _oContainerUpperBumper.visible = false;
                 _oContainerDownBumper.visible = true;
 
                 var bIsCpu = ((s_iPlayerMode === GAME_MODE_CPU) && (s_oGame.getCurTurn() === 2));
-                if (!bIsCpu) {
+                if (bIsCpu) {
+                        // CPU game: keep original drag behaviour
+                        _oCueBall.setDragging(true);
+                        _iState = STATE_TABLE_PLACE_CUE_BALL;
                         _iPrevState = _iState;
                         _oCueBall.setPos(CUE_BALL_POS.x, CUE_BALL_POS.y);
-                        _oStick.setVisible(true);
                         _oHandCueBallDrag.setPos(_oCueBall.getX(), _oCueBall.getY(0));
                         _oHandCueBallDrag.show();
+                } else {
+                        // PvP (Speed & Turn mode): auto-place at head spot, no drag needed
+                        _oCueBall.setPos(CUE_BALL_POS.x, CUE_BALL_POS.y);
+                        _oCueBall.setDragging(false);
+                        _oHandCueBallDrag.hide();
+                        _oStick.setVisible(true);
+                        _iPrevState = _iState = STATE_TABLE_MOVE_STICK;
+                        this.updateStick();
                 }
         };
 
