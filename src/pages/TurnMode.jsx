@@ -11,30 +11,78 @@ import '../utils/pvpTestSuite';
 /**
  * PlayerInfoOverlay - Shows player names and game stats on top of the game
  */
-const PlayerInfoOverlay = ({ player1, player2, entryFee, overallTimeRemaining = 180, scores = {}, onMenuClick }) => {
-  const player1Label = `${player1?.name?.toUpperCase() || 'PLAYER 1'} ${scores[player1?.id] || 0}`;
-  const player2Label = `${player2?.name?.toUpperCase() || 'PLAYER 2'} ${scores[player2?.id] || 0}`;
-  const timerLabel = `${Math.floor(overallTimeRemaining / 60)}:${(overallTimeRemaining % 60).toString().padStart(2, '0')}`;
-  const prizeLabel = entryFee > 0 ? `GH¢${(entryFee * 1.8).toLocaleString()}` : 'FREE MATCH';
+const PlayerInfoOverlay = ({ player1, player2, entryFee, timeRemaining, currentTurn, isGameStarted, scores = {}, onMenuClick }) => {
+  const player1Score = scores[player1?.id] ?? 0;
+  const player2Score = scores[player2?.id] ?? 0;
+  const isP1Turn = currentTurn === player1?.id;
+  const isP2Turn = currentTurn === player2?.id;
+  const shotSecs = timeRemaining ?? 15;
+  const isLow = shotSecs <= 5;
+  const prizeLabel = entryFee > 0 ? `GH¢${(entryFee * 1.8).toLocaleString()}` : 'FREE';
 
   return (
     <div className="fixed inset-x-0 top-0 z-[9999] pointer-events-none">
-      <div className="mx-auto flex h-14 max-w-7xl items-center justify-between gap-4 bg-slate-950/80 border-b border-white/10 px-4 backdrop-blur-xl text-white">
+      <div className="flex items-center gap-2 bg-slate-950/95 border-b border-white/10 px-3 py-2 backdrop-blur-xl text-white">
+
+        {/* Settings button */}
         <button
           onClick={onMenuClick}
-          className="pointer-events-auto flex h-10 w-10 items-center justify-center rounded-full bg-black/60 border border-white/10 text-white transition hover:bg-black/80"
-          title="Menu & Settings"
+          className="pointer-events-auto flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/5 border border-white/10 text-white transition hover:bg-white/10 active:scale-95"
         >
-          <span className="text-lg">⚙️</span>
+          <Settings className="w-4 h-4" />
         </button>
-        <div className="flex-1 text-center text-xs uppercase tracking-[0.35em] font-semibold text-slate-200">
-          {player1Label} — {player2Label}
+
+        {/* Player 1 */}
+        <div className={`flex flex-1 items-center gap-2 rounded-2xl px-3 py-1.5 min-w-0 border transition-all duration-300 ${
+          isP1Turn
+            ? 'bg-blue-500/20 border-blue-400/50 shadow-[0_0_12px_rgba(59,130,246,0.25)]'
+            : 'bg-blue-500/5 border-blue-500/15 opacity-60'
+        }`}>
+          <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full font-black text-sm border ${
+            isP1Turn ? 'bg-blue-500/30 text-blue-300 border-blue-400/50' : 'bg-blue-500/10 text-blue-500/60 border-blue-500/20'
+          }`}>
+            {(player1?.name || 'P1').charAt(0).toUpperCase()}
+          </div>
+          <div className="min-w-0">
+            <p className={`text-[9px] uppercase tracking-widest leading-none ${isP1Turn ? 'text-blue-300' : 'text-blue-400/40'}`}>
+              {isP1Turn ? '▶ Your turn' : 'You'}
+            </p>
+            <p className="text-xs font-black text-white truncate leading-tight">{player1?.name?.toUpperCase() || 'PLAYER 1'}</p>
+          </div>
+          <p className={`ml-auto text-2xl font-black tabular-nums shrink-0 ${isP1Turn ? 'text-blue-300' : 'text-blue-500/50'}`}>{player1Score}</p>
         </div>
-        <div className="flex items-center gap-3 text-xs uppercase tracking-[0.35em] font-semibold text-slate-200">
-          <span>{timerLabel}</span>
-          <span className="text-slate-500">|</span>
-          <span>{prizeLabel}</span>
+
+        {/* Center: turn timer + mode label */}
+        <div className="flex shrink-0 flex-col items-center px-2">
+          <p className="text-[8px] uppercase tracking-[0.3em] text-slate-500 leading-none mb-0.5">Turn</p>
+          <p className={`text-xl font-black tabular-nums leading-none ${isLow && isGameStarted ? 'text-red-400 animate-pulse' : 'text-white'}`}>
+            {shotSecs}s
+          </p>
+          {entryFee > 0 && (
+            <p className="text-[8px] uppercase tracking-widest text-amber-400/80 leading-none mt-0.5">{prizeLabel}</p>
+          )}
         </div>
+
+        {/* Player 2 */}
+        <div className={`flex flex-1 items-center gap-2 rounded-2xl px-3 py-1.5 min-w-0 border flex-row-reverse transition-all duration-300 ${
+          isP2Turn
+            ? 'bg-rose-500/20 border-rose-400/50 shadow-[0_0_12px_rgba(244,63,94,0.25)]'
+            : 'bg-rose-500/5 border-rose-500/15 opacity-60'
+        }`}>
+          <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full font-black text-sm border ${
+            isP2Turn ? 'bg-rose-500/30 text-rose-300 border-rose-400/50' : 'bg-rose-500/10 text-rose-500/60 border-rose-500/20'
+          }`}>
+            {(player2?.name || 'P2').charAt(0).toUpperCase()}
+          </div>
+          <div className="min-w-0 text-right">
+            <p className={`text-[9px] uppercase tracking-widest leading-none ${isP2Turn ? 'text-rose-300' : 'text-rose-400/40'}`}>
+              {isP2Turn ? 'Their turn ▶' : 'Opponent'}
+            </p>
+            <p className="text-xs font-black text-white truncate leading-tight">{player2?.name?.toUpperCase() || 'PLAYER 2'}</p>
+          </div>
+          <p className={`mr-auto text-2xl font-black tabular-nums shrink-0 ${isP2Turn ? 'text-rose-300' : 'text-rose-500/50'}`}>{player2Score}</p>
+        </div>
+
       </div>
     </div>
   );
@@ -829,7 +877,7 @@ const TurnMode = () => {
         {/* Potta center logo watermark */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
           <img
-            src="/home/victor/projects/potta/frontend/public/potta_logo.webp"
+            src="/potta_logo.webp"
             alt="Potta"
             className="w-20 h-20 opacity-15 select-none"
           />
