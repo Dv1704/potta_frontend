@@ -200,7 +200,7 @@ const QuickMatch = () => {
           <motion.div
             initial={{ scale: 0.5, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-blue-500/10 rounded-full border border-blue-500/20 text-blue-400 font-black text-xs uppercase tracking-widest mb-4"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-blue-500/10 rounded-full border border-blue-500/20 text-blue-400 font-black text-xs uppercase tracking-widest mb-6"
           >
             <Timer size={14} className="animate-pulse" />
             <span>Waiting Time: {formatTime(waitingTime)}</span>
@@ -347,15 +347,15 @@ const QuickMatch = () => {
         )}
       </div>
 
-      {/* Settings Gear Button - Top Right */}
+      {/* Settings Gear Button - Top Left */}
       {!foundTriggered && (
-        <div className="absolute top-8 right-8 z-50 pointer-events-auto">
+        <div className="fixed top-4 left-4 z-50 pointer-events-auto">
           <button 
             onClick={() => setShowSettingsMenu(true)}
-            className="bg-slate-900/90 hover:bg-slate-800 border border-white/10 hover:border-white/20 p-3.5 rounded-2xl shadow-lg transition-all active:scale-95 flex items-center justify-center text-white"
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-black/70 border border-white/10 text-white shadow-lg hover:bg-black/90 active:scale-95 transition"
             title="Settings"
           >
-            <Settings size={20} className="animate-spin-slow" />
+            <Settings size={18} />
           </button>
         </div>
       )}

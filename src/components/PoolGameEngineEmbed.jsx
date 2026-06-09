@@ -63,7 +63,7 @@ const PoolGameEngineEmbed = ({
     };
 
     return (
-        <div className="fixed inset-0 overflow-hidden bg-black">
+        <div className="fixed inset-0 overflow-hidden bg-black pt-10">
             {!isLoaded && (
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white text-2xl font-sans">
                     Loading Game...
@@ -77,6 +77,13 @@ const PoolGameEngineEmbed = ({
                 onLoad={handleIframeLoad}
                 allow="autoplay; fullscreen"
             />
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+              <img
+                src="/potta-logo.png"
+                alt=""
+                className="w-20 h-20 opacity-10 select-none"
+              />
+            </div>
         </div>
     );
 };

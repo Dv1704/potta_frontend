@@ -11,50 +11,32 @@ import '../utils/pvpTestSuite';
 /**
  * PlayerInfoOverlay - Shows player names and game stats on top of the game
  */
-const PlayerInfoOverlay = ({ player1, player2, currentTurn, entryFee, timeRemaining, isGameStarted, onMenuClick, scores = {} }) => {
-  const player1Score = player1?.id ? scores[player1.id] ?? 0 : 0;
-  const player2Score = player2?.id ? scores[player2.id] ?? 0 : 0;
-  const timerLabel = timeRemaining !== undefined && timeRemaining !== null ? `${Math.floor(timeRemaining / 60)}:${(timeRemaining % 60).toString().padStart(2, '0')}` : '00:00';
+const PlayerInfoOverlay = ({ player1, player2, entryFee, overallTimeRemaining = 180, scores = {}, onMenuClick }) => {
+  const player1Label = `${player1?.name?.toUpperCase() || 'PLAYER 1'} ${scores[player1?.id] || 0}`;
+  const player2Label = `${player2?.name?.toUpperCase() || 'PLAYER 2'} ${scores[player2?.id] || 0}`;
+  const timerLabel = `${Math.floor(overallTimeRemaining / 60)}:${(overallTimeRemaining % 60).toString().padStart(2, '0')}`;
   const prizeLabel = entryFee > 0 ? `GH¢${(entryFee * 1.8).toLocaleString()}` : 'FREE MATCH';
 
   return (
-    <>
-      {/* Dot indicator at very top */}
-      <div className="fixed inset-x-0 top-2 md:top-4 z-[9999] flex items-center justify-center pointer-events-none">
-        <div className="w-2 h-2 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 shadow-lg shadow-blue-500/50"></div>
-      </div>
-
-      {/* Player names and scores at top center */}
-      <div className="fixed inset-x-0 top-4 md:top-8 z-[9999] flex items-center justify-center pointer-events-none px-4">
-        <div className="rounded-2xl bg-slate-950/50 border border-white/10 px-3 md:px-5 py-2 md:py-3 backdrop-blur-xl shadow-[0_0_30px_rgba(0,0,0,0.35)]">
-          <div className="flex items-center gap-2 md:gap-4 text-[10px] md:text-[11px] uppercase tracking-[0.35em] font-semibold text-slate-300">
-            <span className={`${isGameStarted && currentTurn === player1?.id ? 'text-white font-black' : 'text-slate-400'}`}>{player1?.name?.toUpperCase() || 'PLAYER 1'} <span className="ml-1">{player1Score}</span></span>
-            <span className="text-slate-500">—</span>
-            <span className={`${isGameStarted && currentTurn === player2?.id ? 'text-white font-black' : 'text-slate-400'}`}>{player2?.name?.toUpperCase() || 'PLAYER 2'} <span className="ml-1">{player2Score}</span></span>
-          </div>
+    <div className="fixed inset-x-0 top-0 z-[9999] pointer-events-none">
+      <div className="mx-auto flex h-14 max-w-7xl items-center justify-between gap-4 bg-slate-950/80 border-b border-white/10 px-4 backdrop-blur-xl text-white">
+        <button
+          onClick={onMenuClick}
+          className="pointer-events-auto flex h-10 w-10 items-center justify-center rounded-full bg-black/60 border border-white/10 text-white transition hover:bg-black/80"
+          title="Menu & Settings"
+        >
+          <span className="text-lg">⚙️</span>
+        </button>
+        <div className="flex-1 text-center text-xs uppercase tracking-[0.35em] font-semibold text-slate-200">
+          {player1Label} — {player2Label}
         </div>
-      </div>
-
-      {/* Timer and prize at bottom right corner */}
-      <div className="fixed bottom-6 right-6 z-[9999] pointer-events-none">
-        <div className="inline-flex items-center gap-3 rounded-full bg-slate-900/85 border border-white/10 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.35em] text-white/90 shadow-lg shadow-slate-950/50">
+        <div className="flex items-center gap-3 text-xs uppercase tracking-[0.35em] font-semibold text-slate-200">
           <span>{timerLabel}</span>
           <span className="text-slate-500">|</span>
           <span>{prizeLabel}</span>
         </div>
       </div>
-
-      {/* Settings button at top left beside home icon */}
-      <div className="fixed top-3 md:top-6 left-3 md:left-6 z-[9999] pointer-events-auto">
-        <button
-          onClick={onMenuClick}
-          title="Menu & Settings"
-          className="flex h-9 md:h-11 w-9 md:w-11 items-center justify-center rounded-full bg-black/70 border border-white/10 text-white shadow-lg shadow-black/50 transition hover:bg-black/90 active:scale-95"
-        >
-          <span className="text-lg md:text-xl">⚙️</span>
-        </button>
-      </div>
-    </>
+    </div>
   );
 };
 
@@ -770,7 +752,7 @@ const TurnMode = () => {
       )}
 
       {/* In-game Chat Button */}
-      <div className="fixed bottom-4 right-4 z-[10001] flex flex-col items-end gap-3">
+      <div className="fixed bottom-4 left-4 z-[10001] flex flex-col items-end gap-3 pointer-events-auto">
         <button
           onClick={() => {
             setChatOpen((open) => {
@@ -837,13 +819,21 @@ const TurnMode = () => {
       </div>
 
       {/* Embed the 8 Ball Pro game engine - ensure pointer events for interaction */}
-      <div className="pointer-events-auto">
+      <div className="pointer-events-auto relative">
         <PoolGameEngineEmbed
           mode="turn"
           onStartSession={() => console.log('Game started')}
           onEndSession={() => console.log('Game ended')}
           onSaveScore={(score) => console.log('Score:', score)}
         />
+        {/* Potta center logo watermark */}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+          <img
+            src="/home/victor/projects/potta/frontend/public/potta_logo.webp"
+            alt="Potta"
+            className="w-20 h-20 opacity-15 select-none"
+          />
+        </div>
       </div>
 
       {/* Waiting Overlay */}

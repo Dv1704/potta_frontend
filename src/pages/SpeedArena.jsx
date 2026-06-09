@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { socket, connectSocket } from '../socket';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -10,48 +10,46 @@ import { Settings, Volume2, VolumeX, Eye, EyeOff, Sliders, X, List, Trophy, Zap,
 /**
  * PlayerInfoOverlay - Shows player names and game stats on top of the game
  */
-const PlayerInfoOverlay = ({ player1, player2, entryFee, overallTimeRemaining = 180, scores = {}, onMenuClick }) => {
-  const player1Label = `${player1?.name?.toUpperCase() || 'PLAYER 1'} ${scores[player1?.id] || 0}`;
-  const player2Label = `${player2?.name?.toUpperCase() || 'PLAYER 2'} ${scores[player2?.id] || 0}`;
+const PlayerInfoOverlay = ({ player1, player2, entryFee, overallTimeRemaining = 60, scores = {}, onMenuClick }) => {
+  const player1Score = scores[player1?.id] ?? 0;
+  const player2Score = scores[player2?.id] ?? 0;
   const timerLabel = `${Math.floor(overallTimeRemaining / 60)}:${(overallTimeRemaining % 60).toString().padStart(2, '0')}`;
   const prizeLabel = entryFee > 0 ? `GH¢${(entryFee * 1.8).toLocaleString()}` : 'FREE MATCH';
 
   return (
-    <>
-      {/* Dot indicator at very top */}
-      <div className="fixed inset-x-0 top-2 md:top-4 z-[9999] flex items-center justify-center pointer-events-none">
-        <div className="w-2 h-2 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 shadow-lg shadow-blue-500/50"></div>
-      </div>
-
-      {/* Player names and scores at top center */}
-      <div className="fixed inset-x-0 top-4 md:top-8 z-[9999] flex items-center justify-center pointer-events-none px-4">
-        <div className="rounded-2xl bg-slate-950/50 border border-white/10 px-3 md:px-5 py-2 md:py-3 backdrop-blur-xl shadow-[0_0_30px_rgba(0,0,0,0.35)]">
-          <div className="text-[10px] md:text-[11px] uppercase tracking-[0.35em] text-slate-300 font-semibold whitespace-nowrap">
-            {player1Label} — {player2Label}
+    <div className="fixed inset-x-0 top-0 z-[9999] pointer-events-none">
+      <div className="mx-auto flex max-w-7xl flex-col gap-3 bg-slate-950/90 border-b border-white/10 px-4 py-4 backdrop-blur-xl text-white">
+        <div className="flex items-center justify-between gap-4">
+          <button
+            onClick={onMenuClick}
+            className="pointer-events-auto flex h-10 w-10 items-center justify-center rounded-full bg-black/60 border border-white/10 text-white transition hover:bg-black/80"
+            title="Menu & Settings"
+          >
+            <span className="text-lg">⚙️</span>
+          </button>
+          <div className="flex-1 text-center">
+            <p className="text-[10px] uppercase tracking-[0.4em] text-slate-500">Speed Mode</p>
+            <p className="text-3xl md:text-4xl font-black uppercase tracking-[0.2em] text-white">{timerLabel}</p>
+          </div>
+          <div className="text-right text-xs uppercase tracking-[0.35em] font-semibold text-slate-400">
+            {prizeLabel}
+          </div>
+        </div>
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-center md:gap-6 text-center">
+          <div className="min-w-[11rem] rounded-3xl bg-slate-900/80 border border-white/10 px-4 py-3">
+            <p className="text-[10px] uppercase tracking-[0.35em] text-slate-500">YOU</p>
+            <p className="text-xl font-black uppercase tracking-[0.1em] text-white mt-1">{player1?.name?.toUpperCase() || 'PLAYER 1'}</p>
+            <p className="text-4xl font-black text-blue-400 mt-2">{player1Score}</p>
+          </div>
+          <div className="text-slate-500 text-sm font-black uppercase tracking-[0.35em]">VS</div>
+          <div className="min-w-[11rem] rounded-3xl bg-slate-900/80 border border-white/10 px-4 py-3">
+            <p className="text-[10px] uppercase tracking-[0.35em] text-slate-500">OPPONENT</p>
+            <p className="text-xl font-black uppercase tracking-[0.1em] text-white mt-1">{player2?.name?.toUpperCase() || 'PLAYER 2'}</p>
+            <p className="text-4xl font-black text-rose-400 mt-2">{player2Score}</p>
           </div>
         </div>
       </div>
-
-      {/* Timer and prize at bottom right corner */}
-      <div className="fixed bottom-6 right-6 z-[9999] pointer-events-none">
-        <div className="inline-flex items-center gap-3 rounded-full bg-slate-900/85 border border-white/10 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.35em] text-white/90 shadow-lg shadow-slate-950/50">
-          <span>{timerLabel}</span>
-          <span className="text-slate-500">|</span>
-          <span>{prizeLabel}</span>
-        </div>
-      </div>
-
-      {/* Settings button at top left beside home icon */}
-      <div className="fixed top-3 md:top-6 left-3 md:left-6 z-[9999] pointer-events-auto">
-        <button
-          onClick={onMenuClick}
-          title="Menu & Settings"
-          className="flex h-9 md:h-11 w-9 md:w-11 items-center justify-center rounded-full bg-black/70 border border-white/10 text-white shadow-lg shadow-black/50 transition hover:bg-black/90 active:scale-95"
-        >
-          <span className="text-lg md:text-xl">⚙️</span>
-        </button>
-      </div>
-    </>
+    </div>
   );
 };
 
@@ -87,8 +85,7 @@ const SpeedArena = () => {
   // Game state
   const [gameState, setGameState] = useState(null);
   const [isConnected, setIsConnected] = useState(socket.connected);
-  const [timeRemaining, setTimeRemaining] = useState(null);
-  const [overallTimeRemaining, setOverallTimeRemaining] = useState(180);
+  const [overallTimeRemaining, setOverallTimeRemaining] = useState(60);
 
   const [isGameStarted, setIsGameStarted] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
@@ -129,44 +126,7 @@ const SpeedArena = () => {
     }
   };
 
-  const audioContextRef = useRef(null);
-
-  const playTickSound = useCallback((frequency = 800, duration = 0.05) => {
-    // Only play audio alarm if sound is enabled in Settings
-    if (!soundEnabled) return;
-    try {
-      if (!audioContextRef.current) {
-        audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
-      }
-      const ctx = audioContextRef.current;
-      if (ctx.state === 'suspended') {
-        ctx.resume();
-      }
-      
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      
-      osc.type = 'sine';
-      osc.frequency.value = frequency;
-      
-      gain.gain.setValueAtTime(0.15, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration);
-      
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      
-      osc.start();
-      osc.stop(ctx.currentTime + duration);
-    } catch (e) {
-      console.warn('Web Audio API is not supported or blocked:', e);
-    }
-  }, [soundEnabled]);
-
   const userId = localStorage.getItem('userId');
-
-  const isMyTurn = useMemo(() => {
-    return gameState?.turn === userId;
-  }, [gameState, userId]);
 
   // Animation lock state (same pattern as TurnMode)
   const [isEngineAnimating, setIsEngineAnimating] = useState(false);
@@ -188,11 +148,11 @@ const SpeedArena = () => {
     settingsRef.current = { soundEnabled, guideLineEnabled, difficulty };
   }, [soundEnabled, guideLineEnabled, difficulty]);
 
-  // Computed: who can actually take a shot (blocks during animation)
+  // Computed: who can actually take a shot (blocks during animation only)
   const canTakeShot = useMemo(() => {
-    if (!gameState || isEngineAnimating) return false;
-    return gameState.turn === userId;
-  }, [gameState, isEngineAnimating, userId]);
+    if (!gameState || isEngineAnimating || !isGameStarted) return false;
+    return true;
+  }, [gameState, isEngineAnimating, isGameStarted]);
 
   // Sync settings helper
   const applySettingsToIframe = (sound, guide, diff) => {
@@ -263,10 +223,6 @@ const SpeedArena = () => {
       setGameState(state);
       gameStateRef.current = state;
 
-      // Update timer from gameState
-      if (state.timer !== undefined) {
-        setTimeRemaining(state.timer);
-      }
       if (state.overallTimeRemaining !== undefined) {
         setOverallTimeRemaining(state.overallTimeRemaining);
       }
@@ -419,7 +375,6 @@ const SpeedArena = () => {
       setIsGameStarted(true);
       setGameState(data.gameState);
       gameStateRef.current = data.gameState;
-      setTimeRemaining(data.gameState.timer);
       if (data.gameState.overallTimeRemaining !== undefined) {
         setOverallTimeRemaining(data.gameState.overallTimeRemaining);
       }
@@ -586,42 +541,16 @@ const SpeedArena = () => {
     return () => window.removeEventListener('message', handleMessage);
   }, [gameId, userId, canTakeShot, pendingTurnUpdate]);
 
-  // Local countdown timer effect
+  // Local countdown timer effect for the overall match clock
   useEffect(() => {
     if (!isGameStarted) return;
 
     const timer = setInterval(() => {
-      let isTimerLow = false;
-      let remaining = 0;
-
-      // 1. Decrement shot timer
-      setTimeRemaining(prev => {
-        if (prev === null || prev <= 0) return 0;
-        const nextVal = prev - 1;
-        if (nextVal <= 5 && nextVal > 0) {
-          isTimerLow = true;
-          remaining = nextVal;
-        }
-        return nextVal;
-      });
-
-      // 2. Decrement overall match timer
-      setOverallTimeRemaining(prev => {
-        if (prev === null || prev <= 0) return 0;
-        return prev - 1;
-      });
-
-      // 3. Play audio warning if shot timer is low (< 5 seconds) and it's my turn
-      const currentTurn = gameStateRef.current?.turn || (gameState?.turn);
-      if (isTimerLow && currentTurn === userId) {
-        const pitches = { 5: 500, 4: 600, 3: 700, 2: 800, 1: 900 };
-        const freq = pitches[remaining] || 800;
-        playTickSound(freq, 0.08);
-      }
+      setOverallTimeRemaining(prev => Math.max(0, (prev || 0) - 1));
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [isGameStarted, userId, gameState, soundEnabled, playTickSound]);
+  }, [isGameStarted]);
 
   if (!gameState) {
     return <LoadingSpinner text="Finding opponent..." />;
@@ -631,18 +560,9 @@ const SpeedArena = () => {
   const player2 = gameState.players?.[1];
   const entryFee = gameState.stake || gameState.betAmount || 0;
   const cueBallPosition = gameState.balls?.['0'];
-  const shotTimerProgress = Math.max(0, Math.min(1, (timeRemaining ?? 0) / 15));
 
   return (
     <div className="relative w-full h-screen bg-black overflow-hidden select-none pointer-events-none">
-      {/* Visual warning (red pulsing edge overlay) when timer is low on user's turn */}
-      {isMyTurn && timeRemaining !== null && timeRemaining <= 5 && timeRemaining > 0 && (
-        <div 
-          className="absolute inset-0 border-[6px] border-red-500/35 animate-pulse pointer-events-none z-[9998] transition-all duration-300 animate-duration-500" 
-          style={{ boxShadow: 'inset 0 0 50px rgba(239, 68, 68, 0.45)' }} 
-        />
-      )}
-
       {/* Player Info Overlay */}
       <PlayerInfoOverlay
         player1={player1}
@@ -653,20 +573,12 @@ const SpeedArena = () => {
         onMenuClick={() => setShowPauseMenu(true)}
       />
 
-      {isGameStarted && cueBallPosition && timeRemaining !== null && timeRemaining !== undefined && (
+      {isGameStarted && cueBallPosition && (
         <div className="absolute inset-0 pointer-events-none z-[9997]">
           <div
-            className="absolute h-12 w-12 -translate-x-1/2 -translate-y-1/2 rounded-full"
+            className="absolute h-12 w-12 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-sky-500/60 bg-sky-500/10"
             style={{ left: `${cueBallPosition.x}%`, top: `${cueBallPosition.y}%` }}
-          >
-            <div
-              className="absolute inset-0 rounded-full"
-              style={{
-                background: `conic-gradient(from -90deg, rgba(59,130,246,0.85) ${shotTimerProgress * 100}%, rgba(255,255,255,0.08) ${shotTimerProgress * 100}% 100%)`
-              }}
-            />
-            <div className="absolute inset-1 rounded-full border border-sky-400/30 bg-slate-950/30" />
-          </div>
+          />
         </div>
       )}
 
@@ -807,7 +719,7 @@ const SpeedArena = () => {
       )}
 
       {/* In-game Chat Button */}
-      <div className="fixed bottom-4 right-4 z-[10001] flex flex-col items-end gap-3">
+      <div className="fixed bottom-4 left-4 z-[10001] flex flex-col items-end gap-3 pointer-events-auto">
         <button
           onClick={() => {
             setChatOpen((open) => {
@@ -874,13 +786,21 @@ const SpeedArena = () => {
       </div>
 
       {/* Embed the 8 Ball Pro game engine - ensure pointer events for interaction */}
-      <div className="pointer-events-auto">
+      <div className="pointer-events-auto relative">
         <PoolGameEngineEmbed
           mode="speed"
           onStartSession={() => console.log('Game started')}
           onEndSession={() => console.log('Game ended')}
           onSaveScore={(score) => console.log('Score:', score)}
         />
+        {/* Potta center logo watermark */}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+          <img
+            src="/home/victor/projects/potta/frontend/public/potta_logo.webp"
+            alt="Potta"
+            className="w-20 h-20 opacity-15 select-none"
+          />
+        </div>
       </div>
 
       {/* Waiting Overlay */}
