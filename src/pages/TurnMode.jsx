@@ -707,7 +707,7 @@ const TurnMode = () => {
       {/* --- MENU & SETTINGS MODAL --- */}
       <AnimatePresence>
         {showPauseMenu && (
-          <div className="fixed inset-0 z-[100000] flex items-center justify-center p-4">
+          <div className="pointer-events-auto fixed inset-0 z-[100000] flex items-center justify-center p-4">
             <div onClick={() => setShowPauseMenu(false)} className="absolute inset-0 bg-black/85 backdrop-blur-md" />
             <div className="bg-[#0c111d]/95 w-full max-w-md rounded-[3rem] border border-white/10 p-10 shadow-2xl relative z-10">
               <div className="text-center mb-8">

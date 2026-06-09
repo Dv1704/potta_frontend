@@ -84,6 +84,9 @@ const toPixels = (balls) => {
   );
 };
 
+// Speed Mode: always inject userId as the active turn so the engine never hides the stick
+const forSpeed = (state, userId) => state ? { ...state, turn: userId } : state;
+
 const SpeedArena = () => {
   const { id: gameId } = useParams();
   const navigate = useNavigate();
@@ -258,10 +261,7 @@ const SpeedArena = () => {
 
         iframe.contentWindow.postMessage({
           type: 'gameStateUpdate',
-          state: state ? {
-            ...state,
-            balls: toPixels(state.balls)
-          } : state
+          state: state ? { ...forSpeed(state, userId), balls: toPixels(state.balls) } : state
         }, '*');
 
         // Send player names to game engine
@@ -358,7 +358,7 @@ const SpeedArena = () => {
         const convertedData = {
           ...data,
           gameState: data.gameState ? {
-            ...data.gameState,
+            ...forSpeed(data.gameState, userId),
             balls: toPixels(data.gameState.balls)
           } : data.gameState
         };
@@ -410,7 +410,7 @@ const SpeedArena = () => {
         const iframe = document.querySelector('iframe');
         if (iframe && iframe.contentWindow) {
           const convertedGameState = data.gameState ? {
-            ...data.gameState,
+            ...forSpeed(data.gameState, userId),
             balls: toPixels(data.gameState.balls)
           } : data.gameState;
           iframe.contentWindow.postMessage({ type: 'matchStart', state: convertedGameState }, '*');
@@ -528,10 +528,7 @@ const SpeedArena = () => {
             console.log('[SpeedArena] Forwarding current gameState to newly ready engine');
             iframe.contentWindow.postMessage({
               type: 'gameStateUpdate',
-              state: {
-                ...currentState,
-                balls: toPixels(currentState.balls)
-              }
+              state: { ...forSpeed(currentState, userId), balls: toPixels(currentState.balls) }
             }, '*');
           }
 
@@ -552,10 +549,7 @@ const SpeedArena = () => {
             const matchState = matchData?.gameState || currentState;
             iframe.contentWindow.postMessage({
               type: 'matchStart',
-              state: matchState ? {
-                ...matchState,
-                balls: toPixels(matchState.balls)
-              } : matchState
+              state: matchState ? { ...forSpeed(matchState, userId), balls: toPixels(matchState.balls) } : matchState
             }, '*');
           }
         }
@@ -643,7 +637,7 @@ const SpeedArena = () => {
       {/* --- MENU & SETTINGS MODAL --- */}
       <AnimatePresence>
         {showPauseMenu && (
-          <div className="fixed inset-0 z-[100000] flex items-center justify-center p-4">
+          <div className="pointer-events-auto fixed inset-0 z-[100000] flex items-center justify-center p-4">
             <div onClick={() => setShowPauseMenu(false)} className="absolute inset-0 bg-black/85 backdrop-blur-md" />
             <div className="bg-[#0c111d]/95 w-full max-w-md rounded-[3rem] border border-white/10 p-10 shadow-2xl relative z-10">
               <div className="text-center mb-8">
