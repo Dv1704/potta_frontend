@@ -20,7 +20,7 @@ const PlayerInfoOverlay = ({ player1, player2, entryFee, overallTimeRemaining = 
 
   return (
     <div className="fixed inset-x-0 top-0 z-[9999] pointer-events-none">
-      <div className="flex items-center gap-2 bg-slate-950/95 border-b border-white/10 px-3 py-2 backdrop-blur-xl text-white">
+      <div className="pointer-events-auto flex items-center gap-2 bg-slate-950/95 border-b border-white/10 px-3 py-2 backdrop-blur-xl text-white">
 
         {/* Settings button */}
         <button
@@ -340,6 +340,14 @@ const SpeedArena = () => {
       // Lock input during animation
       console.log('[SpeedArena] Locking input for animation');
       setIsEngineAnimating(true);
+
+      // Safety: unlock after 7s if animationComplete never arrives from iframe
+      setTimeout(() => {
+        if (isEngineAnimatingRef.current) {
+          console.warn('[SpeedArena] Animation timeout — force-unlocking cue stick');
+          setIsEngineAnimating(false);
+        }
+      }, 7000);
 
       // Store pending state (don't apply until animation completes)
       setPendingTurnUpdate(newGameState);
