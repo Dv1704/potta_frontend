@@ -10,18 +10,18 @@ export const socket = io(sanitizedUrl, {
 });
 
 export const connectSocket = (userId) => {
-    if (socket.connected) return;
-
     const token = localStorage.getItem('token');
 
-    console.log('[Socket] Connecting to:', sanitizedUrl);
-
-    // Pass both userId and JWT token for server-side authentication
+    // Always update auth before connecting/reconnecting
+    socket.auth = { token };
     socket.io.opts.query = { userId };
-    if (token) {
-        socket.io.opts.auth = { token };
+
+    if (socket.connected) {
+        // Already connected — disconnect first so new auth takes effect
+        socket.disconnect();
     }
 
+    console.log('[Socket] Connecting to:', sanitizedUrl);
     socket.connect();
 };
 
