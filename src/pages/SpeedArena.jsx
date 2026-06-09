@@ -13,41 +13,58 @@ import { Settings, Volume2, VolumeX, Eye, EyeOff, Sliders, X, List, Trophy, Zap,
 const PlayerInfoOverlay = ({ player1, player2, entryFee, overallTimeRemaining = 60, scores = {}, onMenuClick }) => {
   const player1Score = scores[player1?.id] ?? 0;
   const player2Score = scores[player2?.id] ?? 0;
-  const timerLabel = `${Math.floor(overallTimeRemaining / 60)}:${(overallTimeRemaining % 60).toString().padStart(2, '0')}`;
-  const prizeLabel = entryFee > 0 ? `GH¢${(entryFee * 1.8).toLocaleString()}` : 'FREE MATCH';
+  const mins = Math.floor(overallTimeRemaining / 60);
+  const secs = (overallTimeRemaining % 60).toString().padStart(2, '0');
+  const isLow = overallTimeRemaining <= 10;
+  const prizeLabel = entryFee > 0 ? `GH¢${(entryFee * 1.8).toLocaleString()}` : 'FREE';
 
   return (
     <div className="fixed inset-x-0 top-0 z-[9999] pointer-events-none">
-      <div className="mx-auto flex max-w-7xl flex-col gap-3 bg-slate-950/90 border-b border-white/10 px-4 py-4 backdrop-blur-xl text-white">
-        <div className="flex items-center justify-between gap-4">
-          <button
-            onClick={onMenuClick}
-            className="pointer-events-auto flex h-10 w-10 items-center justify-center rounded-full bg-black/60 border border-white/10 text-white transition hover:bg-black/80"
-            title="Menu & Settings"
-          >
-            <span className="text-lg">⚙️</span>
-          </button>
-          <div className="flex-1 text-center">
-            <p className="text-[10px] uppercase tracking-[0.4em] text-slate-500">Speed Mode</p>
-            <p className="text-3xl md:text-4xl font-black uppercase tracking-[0.2em] text-white">{timerLabel}</p>
+      <div className="flex items-center gap-2 bg-slate-950/95 border-b border-white/10 px-3 py-2 backdrop-blur-xl text-white">
+
+        {/* Settings button */}
+        <button
+          onClick={onMenuClick}
+          className="pointer-events-auto flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/5 border border-white/10 text-white transition hover:bg-white/10 active:scale-95"
+        >
+          <Settings className="w-4 h-4" />
+        </button>
+
+        {/* Player 1 */}
+        <div className="flex flex-1 items-center gap-2 rounded-2xl bg-blue-500/10 border border-blue-500/20 px-3 py-1.5 min-w-0">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-500/20 text-blue-400 font-black text-sm border border-blue-500/30">
+            {(player1?.name || 'P1').charAt(0).toUpperCase()}
           </div>
-          <div className="text-right text-xs uppercase tracking-[0.35em] font-semibold text-slate-400">
-            {prizeLabel}
+          <div className="min-w-0">
+            <p className="text-[9px] uppercase tracking-widest text-blue-400/70 leading-none">You</p>
+            <p className="text-xs font-black text-white truncate leading-tight">{player1?.name?.toUpperCase() || 'PLAYER 1'}</p>
           </div>
+          <p className="ml-auto text-2xl font-black text-blue-400 tabular-nums shrink-0">{player1Score}</p>
         </div>
-        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-center md:gap-6 text-center">
-          <div className="min-w-[11rem] rounded-3xl bg-slate-900/80 border border-white/10 px-4 py-3">
-            <p className="text-[10px] uppercase tracking-[0.35em] text-slate-500">YOU</p>
-            <p className="text-xl font-black uppercase tracking-[0.1em] text-white mt-1">{player1?.name?.toUpperCase() || 'PLAYER 1'}</p>
-            <p className="text-4xl font-black text-blue-400 mt-2">{player1Score}</p>
-          </div>
-          <div className="text-slate-500 text-sm font-black uppercase tracking-[0.35em]">VS</div>
-          <div className="min-w-[11rem] rounded-3xl bg-slate-900/80 border border-white/10 px-4 py-3">
-            <p className="text-[10px] uppercase tracking-[0.35em] text-slate-500">OPPONENT</p>
-            <p className="text-xl font-black uppercase tracking-[0.1em] text-white mt-1">{player2?.name?.toUpperCase() || 'PLAYER 2'}</p>
-            <p className="text-4xl font-black text-rose-400 mt-2">{player2Score}</p>
-          </div>
+
+        {/* Timer + mode */}
+        <div className="flex shrink-0 flex-col items-center px-2">
+          <p className="text-[8px] uppercase tracking-[0.3em] text-slate-500 leading-none mb-0.5">Speed</p>
+          <p className={`text-xl font-black tabular-nums leading-none ${isLow ? 'text-red-400 animate-pulse' : 'text-white'}`}>
+            {mins}:{secs}
+          </p>
+          {entryFee > 0 && (
+            <p className="text-[8px] uppercase tracking-widest text-amber-400/80 leading-none mt-0.5">{prizeLabel}</p>
+          )}
         </div>
+
+        {/* Player 2 */}
+        <div className="flex flex-1 items-center gap-2 rounded-2xl bg-rose-500/10 border border-rose-500/20 px-3 py-1.5 min-w-0 flex-row-reverse">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-rose-500/20 text-rose-400 font-black text-sm border border-rose-500/30">
+            {(player2?.name || 'P2').charAt(0).toUpperCase()}
+          </div>
+          <div className="min-w-0 text-right">
+            <p className="text-[9px] uppercase tracking-widest text-rose-400/70 leading-none">Opponent</p>
+            <p className="text-xs font-black text-white truncate leading-tight">{player2?.name?.toUpperCase() || 'PLAYER 2'}</p>
+          </div>
+          <p className="mr-auto text-2xl font-black text-rose-400 tabular-nums shrink-0">{player2Score}</p>
+        </div>
+
       </div>
     </div>
   );
@@ -796,7 +813,7 @@ const SpeedArena = () => {
         {/* Potta center logo watermark */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
           <img
-            src="/home/victor/projects/potta/frontend/public/potta_logo.webp"
+            src="/potta_logo.webp"
             alt="Potta"
             className="w-20 h-20 opacity-15 select-none"
           />
