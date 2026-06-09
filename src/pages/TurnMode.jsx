@@ -549,6 +549,15 @@ const TurnMode = () => {
           setGameState(pendingTurnUpdate);
           gameStateRef.current = pendingTurnUpdate;
           setPendingTurnUpdate(null);
+
+          // Forward to engine so it can respot cue ball if foulOccurred
+          const iframe = document.querySelector('iframe');
+          if (iframe && iframe.contentWindow) {
+            iframe.contentWindow.postMessage({
+              type: 'gameStateUpdate',
+              state: { ...pendingTurnUpdate, balls: toPixels(pendingTurnUpdate.balls) }
+            }, '*');
+          }
         }
       }
 
