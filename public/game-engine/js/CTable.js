@@ -85,16 +85,17 @@ function CTable(oParentContainer, oCpuDifficultyParams) {
                 var oBg = createBitmap(oSpriteBg);
                 _oContainer.addChild(oBg);
 
-                // Potta watermark on the cloth
+                // Potta watermark — screen blend makes black transparent, only white logo text shows
                 var oLogoImg = new Image();
                 var oLogoBmp = new createjs.Bitmap(oLogoImg);
-                oLogoBmp.alpha = 0.13;
+                oLogoBmp.alpha = 0.55;
+                oLogoBmp.compositeOperation = "screen";
                 oLogoBmp.x = oSpriteBg.width / 2;
-                oLogoBmp.y = oSpriteBg.height / 2;
+                oLogoBmp.y = oSpriteBg.height * 0.78;
                 oLogoImg.onload = function () {
                     var fScale = Math.min(
-                        (oSpriteBg.width * 0.38) / oLogoImg.width,
-                        (oSpriteBg.height * 0.38) / oLogoImg.height
+                        (oSpriteBg.width * 0.28) / oLogoImg.width,
+                        (oSpriteBg.height * 0.28) / oLogoImg.height
                     );
                     oLogoBmp.scaleX = oLogoBmp.scaleY = fScale;
                     oLogoBmp.regX = oLogoImg.width / 2;
