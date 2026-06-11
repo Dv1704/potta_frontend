@@ -102,7 +102,7 @@ function CTable(oParentContainer, oCpuDifficultyParams) {
                     oLogoBmp.regY = oLogoImg.height / 2;
                 };
                 _oContainer.addChild(oLogoBmp);
-                oLogoImg.src = "../potta_logo.webp";
+                oLogoImg.src = "../potta_logo.svg";
 
                 TABLE_CENTER_COORDINATE = new CVector2(CANVAS_WIDTH / 2 - oSpriteBg.width / 4, CANVAS_HEIGHT / 2 - oSpriteBg.height / 4);
                 if (DEBUG_SHOW_TABLE_CENTER_SHAPE) {
