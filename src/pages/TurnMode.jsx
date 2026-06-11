@@ -147,6 +147,8 @@ const TurnMode = () => {
     settingsRef.current = { soundEnabled, guideLineEnabled, difficulty };
   }, [soundEnabled, guideLineEnabled, difficulty]);
 
+  const joinAndReadyRef = useRef(null);
+
   // Refs to track match start data and latest game state (avoids stale closures)
   const matchStartReceivedRef = useRef(false);
   const matchStartDataRef = useRef(null);
@@ -232,21 +234,23 @@ const TurnMode = () => {
 
     connectSocket(userId);
 
+    const joinAndReady = () => {
+      socket.emit('joinGame', { gameId }, () => {
+        if (isEngineReadyRef.current || gameStateRef.current?.isGameStarted) {
+          socket.emit('playerReady', { gameId, userId });
+        }
+      });
+    };
+    joinAndReadyRef.current = joinAndReady;
+
     if (socket.connected) {
       setIsConnected(true);
-      socket.emit('joinGame', { gameId });
-      // Signal we are ready ONLY if the engine is ready, or if game has already started on the server
-      if (isEngineReadyRef.current || gameStateRef.current?.isGameStarted) {
-        socket.emit('playerReady', { gameId, userId });
-      }
+      joinAndReady();
     }
 
     socket.on('connect', () => {
       setIsConnected(true);
-      socket.emit('joinGame', { gameId });
-      if (isEngineReadyRef.current || gameStateRef.current?.isGameStarted) {
-        socket.emit('playerReady', { gameId, userId });
-      }
+      joinAndReadyRef.current?.();
     });
 
     socket.on('disconnect', () => {
@@ -568,8 +572,8 @@ const TurnMode = () => {
         console.log('[TurnMode] Game engine reported ready, sending initial state');
         isEngineReadyRef.current = true;
 
-        // Signal we are ready now that engine is loaded
-        socket.emit('playerReady', { gameId, userId });
+        // joinAndReady ensures we are in the room before playerReady is sent (ack-gated)
+        joinAndReadyRef.current?.();
 
         const iframe = document.querySelector('iframe');
         if (iframe && iframe.contentWindow) {

@@ -45,6 +45,10 @@ function CStick(oParentContainer){
     this.getY = function(){
         return _oContainer.y;
     };
-    
+
+    this.setAlpha = function(fAlpha){
+        _oContainer.alpha = fAlpha;
+    };
+
     this._init();
 }

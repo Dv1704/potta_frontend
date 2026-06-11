@@ -173,6 +173,9 @@ const SpeedArena = () => {
     settingsRef.current = { soundEnabled, guideLineEnabled, difficulty };
   }, [soundEnabled, guideLineEnabled, difficulty]);
 
+  // Stable ref so the message handler can call joinAndReady without being in its dependency array
+  const joinAndReadyRef = useRef(null);
+
   // Computed: who can actually take a shot (blocks during animation only)
   const canTakeShot = useMemo(() => {
     if (!gameState || isEngineAnimating || !isGameStarted) return false;
@@ -221,21 +224,24 @@ const SpeedArena = () => {
 
     connectSocket(userId);
 
+    const joinAndReady = () => {
+      // Use ack so playerReady is only sent after the server has added us to the room
+      socket.emit('joinGame', { gameId }, () => {
+        if (isEngineReadyRef.current || gameStateRef.current?.isGameStarted) {
+          socket.emit('playerReady', { gameId, userId });
+        }
+      });
+    };
+    joinAndReadyRef.current = joinAndReady;
+
     if (socket.connected) {
       setIsConnected(true);
-      socket.emit('joinGame', { gameId });
-      // Signal we are ready ONLY if the engine is ready, or if game has already started on the server
-      if (isEngineReadyRef.current || gameStateRef.current?.isGameStarted) {
-        socket.emit('playerReady', { gameId, userId });
-      }
+      joinAndReady();
     }
 
     socket.on('connect', () => {
       setIsConnected(true);
-      socket.emit('joinGame', { gameId });
-      if (isEngineReadyRef.current || gameStateRef.current?.isGameStarted) {
-        socket.emit('playerReady', { gameId, userId });
-      }
+      joinAndReadyRef.current?.();
     });
 
     socket.on('disconnect', () => {
@@ -533,8 +539,8 @@ const SpeedArena = () => {
         console.log('[SpeedArena] Game engine reported ready, sending initial state');
         isEngineReadyRef.current = true;
 
-        // Signal we are ready now that engine is loaded
-        socket.emit('playerReady', { gameId, userId });
+        // joinAndReady ensures we are in the room before playerReady is sent (ack-gated)
+        joinAndReadyRef.current?.();
 
         const iframe = document.querySelector('iframe');
         if (iframe && iframe.contentWindow) {

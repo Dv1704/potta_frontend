@@ -1081,7 +1081,11 @@ function CTable(oParentContainer, oCpuDifficultyParams) {
 
                                         vEffectForce.add(_vStickDirection);
 
-                                        //_oStick.setVisible(false); // Kept visible for speed mode
+                                        // Speed mode: keep stick visible so player sees next aim instantly.
+                                        // Turn mode: hide immediately — opponent's turn begins.
+                                        if (s_szMode !== 'speed') {
+                                                _oStick.setVisible(false);
+                                        }
 
                                         //playSound("shoot", 1,false );
                                         _iState = STATE_TABLE_SHOOTING;
@@ -1269,7 +1273,9 @@ function CTable(oParentContainer, oCpuDifficultyParams) {
                                 }
                         } else {
                                 var bDirByMouse = !s_bMobile && _oCueBall.isBallOnTable() && (typeof s_bIsMyTurn === 'undefined' || s_bIsMyTurn);
-                                var bIsActive = s_szMode === 'speed' || _bAimActive;
+                                // Desktop is always active — mouse aims the stick in all modes.
+                                // Mobile uses _bAimActive (stick appears only after touch).
+                                var bIsActive = s_szMode === 'speed' || _bAimActive || !s_bMobile;
                                 
                                 if (bDirByMouse && bIsActive) {
                                         _vStickDirection.setV(vTmpMouse);
