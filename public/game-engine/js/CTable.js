@@ -85,24 +85,6 @@ function CTable(oParentContainer, oCpuDifficultyParams) {
                 var oBg = createBitmap(oSpriteBg);
                 _oContainer.addChild(oBg);
 
-                // Potta watermark — screen blend makes black transparent, only white logo text shows
-                var oLogoImg = new Image();
-                var oLogoBmp = new createjs.Bitmap(oLogoImg);
-                oLogoBmp.alpha = 0.75;
-                oLogoBmp.compositeOperation = "multiply";
-                oLogoBmp.x = oSpriteBg.width / 2;
-                oLogoBmp.y = oSpriteBg.height / 2;
-                oLogoImg.onload = function () {
-                    var fScale = Math.min(
-                        (oSpriteBg.width * 0.5) / oLogoImg.width,
-                        (oSpriteBg.height * 0.5) / oLogoImg.height
-                    );
-                    oLogoBmp.scaleX = oLogoBmp.scaleY = fScale;
-                    oLogoBmp.regX = oLogoImg.width / 2;
-                    oLogoBmp.regY = oLogoImg.height / 2;
-                };
-                _oContainer.addChild(oLogoBmp);
-                oLogoImg.src = "../potta_logo.svg";
 
                 TABLE_CENTER_COORDINATE = new CVector2(CANVAS_WIDTH / 2 - oSpriteBg.width / 4, CANVAS_HEIGHT / 2 - oSpriteBg.height / 4);
                 if (DEBUG_SHOW_TABLE_CENTER_SHAPE) {
