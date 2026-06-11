@@ -674,7 +674,8 @@ function CTable(oParentContainer, oCpuDifficultyParams) {
          */
         this.resetShotState = function () {
                 _iState = STATE_TABLE_MOVE_STICK;
-                _bReadyForShot = true;
+                _bReadyForShot = false;
+                _bHoldStick = false;
                 _oStick.setVisible(true);
                 _oCueBall.setCurForce(0, 0);
         };
@@ -976,12 +977,14 @@ function CTable(oParentContainer, oCpuDifficultyParams) {
                 _oCircleShape.x = CANVAS_WIDTH + 100;
                 _oCircleShape.y = CANVAS_HEIGHT + 100;
                 _oCircleShape.visible = false;
+
+                var bShouldDrawGuide = true;
                 if (typeof s_bShowGuideLine !== 'undefined' && !s_bShowGuideLine) {
-                        return;
+                        bShouldDrawGuide = false;
                 }
 
                 if (typeof s_bIsMyTurn !== 'undefined' && !s_bIsMyTurn) {
-                        return;
+                        bShouldDrawGuide = false;
                 }
 
                 /*if ( (_bForceStopStick == true) || (_isMouseInTable() == false && m_oAnimStick.bAnim == false) ) {
@@ -1074,144 +1077,145 @@ function CTable(oParentContainer, oCpuDifficultyParams) {
                         }*/
                                 //draw line for ball directions						
 
+                                if (bShouldDrawGuide) {
+                                        var aCollisionData = new Array();
+                                        var vMousePos = new CVector2();
 
-                                var aCollisionData = new Array();
-                                var vMousePos = new CVector2();
+                                        var vLocalPos = {
+                                                x: _vStickDirection.getX() * 1280 + _oCueBall.getX(),
+                                                y: _vStickDirection.getY() * 1280 + _oCueBall.getY()
+                                        };
 
-                                var vLocalPos = {
-                                        x: _vStickDirection.getX() * 1280 + _oCueBall.getX(),
-                                        y: _vStickDirection.getY() * 1280 + _oCueBall.getY()
-                                };
+                                        vMousePos.set(vLocalPos.x, vLocalPos.y);
+                                        var vCollPoint = new CVector2();
 
-                                vMousePos.set(vLocalPos.x, vLocalPos.y);
-                                var vCollPoint = new CVector2();
+                                        vCollPoint.setV(vMousePos);
+                                        vCollPoint.subtract(_oCueBall.getPos());
+                                        vCollPoint.normalize();
+                                        //find any collision  between cue ball and other balls
 
-                                vCollPoint.setV(vMousePos);
-                                vCollPoint.subtract(_oCueBall.getPos());
-                                vCollPoint.normalize();
-                                //find any collision  between cue ball and other balls
+                                        var bCheckBallCollison = this._checkCpuBallCollision(vMousePos, _oCueBall.getPos(), 0, 0, aCollisionData);
 
-                                var bCheckBallCollison = this._checkCpuBallCollision(vMousePos, _oCueBall.getPos(), 0, 0, aCollisionData);
-
-                                for (var i = 0; i < aCollisionData.length; i++) {
-                                        if (!aCollisionData[i].ball.isBallOnTable()) {
-                                                aCollisionData.splice(i, 1);
-                                                i--;
-                                        }
-                                }
-
-                                bCheckBallCollison = (aCollisionData.length > 0);
-
-                                if (bCheckBallCollison) {
-                                        var iMinDist = distance(_oCueBall.getPos(), (aCollisionData[0].ball).getPos());
-
-                                        var iBallIndex = 0;
-                                        for (var k = 1; k < aCollisionData.length; k++) {
-
-                                                if (!aCollisionData[k].ball.isBallOnTable()) {
-                                                        continue;
-                                                };
-
-                                                var iCurDist = distance(_oCueBall.getPos(), (aCollisionData[k].ball).getPos());
-
-                                                if (iCurDist < iMinDist) {
-                                                        iMinDist = iCurDist;
-                                                        iBallIndex = k;
+                                        for (var i = 0; i < aCollisionData.length; i++) {
+                                                if (!aCollisionData[i].ball.isBallOnTable()) {
+                                                        aCollisionData.splice(i, 1);
+                                                        i--;
                                                 }
                                         }
 
+                                        bCheckBallCollison = (aCollisionData.length > 0);
 
-                                        var oEdgeCueBall = new CEdge();
-                                        oEdgeCueBall.set(_oCueBall.getX(), _oCueBall.getY(), vMousePos.getX(), vMousePos.getY());
+                                        if (bCheckBallCollison) {
+                                                var iMinDist = distance(_oCueBall.getPos(), (aCollisionData[0].ball).getPos());
 
-                                        var vDir = new CVector2();
-                                        vDir.setV(vCollPoint);
-                                        vDir.scalarProduct(1.5);
-                                        var vCueBallPos = new CVector2();
-                                        vCueBallPos.setV(_oCueBall.getPos());
+                                                var iBallIndex = 0;
+                                                for (var k = 1; k < aCollisionData.length; k++) {
 
-                                        while (distance(vCueBallPos, (aCollisionData[iBallIndex].ball).getPos()) > (BALL_DIAMETER + 1)) {
-                                                vCueBallPos.add(vDir);
-                                        }
+                                                        if (!aCollisionData[k].ball.isBallOnTable()) {
+                                                                continue;
+                                                        };
 
-                                        //draw cue ball dir
-                                        var vCueBallNormal = new CVector2();
-                                        vCueBallNormal.setV((aCollisionData[iBallIndex].ball).getPos());
-                                        vCueBallNormal.subtract(vCueBallPos);
-                                        vCueBallNormal.normalize();
+                                                        var iCurDist = distance(_oCueBall.getPos(), (aCollisionData[k].ball).getPos());
 
-                                        var vCueBallDir = new CVector2();
-                                        vCueBallNormal.invert();
-                                        vCueBallDir = reflectVectorV2(vCueBallNormal, vCollPoint);
-                                        vCueBallDir.normalize();
+                                                        if (iCurDist < iMinDist) {
+                                                                iMinDist = iCurDist;
+                                                                iBallIndex = k;
+                                                        }
+                                                }
 
-                                        vCueBallDir.scalarProduct(48);
 
-                                        var vCueBallPoint = new CVector2();
-                                        vCueBallPoint.setV(vCueBallPos);
-                                        vCueBallPoint.add(vCueBallDir);
+                                                var oEdgeCueBall = new CEdge();
+                                                oEdgeCueBall.set(_oCueBall.getX(), _oCueBall.getY(), vMousePos.getX(), vMousePos.getY());
 
-                                        //draw direction of ball hitted by cue ball
-                                        var vDirBallHitted = new CVector2();
-                                        vDirBallHitted.setV((aCollisionData[iBallIndex].ball).getPos());
-                                        vDirBallHitted.subtract(vCueBallPos);
-                                        vDirBallHitted.normalize();
-                                        vDirBallHitted.scalarProduct(72);
-
-                                        var vBallHittedPoint = new CVector2();
-                                        vBallHittedPoint.setV(vCueBallPos);
-                                        vBallHittedPoint.add(vDirBallHitted);
-
-                                        _oCircleShape.visible = true;
-                                        _oCircleShape.x = vCueBallPos.getX();
-                                        _oCircleShape.y = vCueBallPos.getY();
-                                        _oDollyDir.graphics.setStrokeStyle(4)
-                                                .beginStroke(PREVISION_TRAJECTORY_COLORS[0][_iColorCuePrevTrajectory])
-                                                .moveTo(_oCueBall.getX(), _oCueBall.getY())
-                                                .lineTo(vCueBallPos.getX(), vCueBallPos.getY());
-
-                                        _oCueBallDir.graphics.setStrokeStyle(4)
-                                                .beginStroke(PREVISION_TRAJECTORY_COLORS[0][_iColorCuePrevTrajectory])
-                                                .moveTo(vCueBallPos.getX(), vCueBallPos.getY())
-                                                .lineTo(vCueBallPoint.getX(), vCueBallPoint.getY());
-
-                                        _oHittenBallDir.graphics.setStrokeStyle(4)
-                                                .beginStroke(PREVISION_TRAJECTORY_COLORS[1][_iColorCuePrevTrajectory])
-                                                .moveTo(vCueBallPos.getX(), vCueBallPos.getY())
-                                                .lineTo(vBallHittedPoint.getX(), vBallHittedPoint.getY());
-
-                                } else {
-                                        //verify if stick direction collide with edges
-                                        var oEdgeColl = new CEdge();
-                                        oEdgeColl.set(_oCueBall.getX(), _oCueBall.getY(), vMousePos.getX(), vMousePos.getY());
-
-                                        var oHittenEdge = new CEdge();
-                                        oHittenEdge = checkBallCollisionWithEdges(vMousePos, _oCueBall.getPos(), _aFieldEdges);
-
-                                        if (oHittenEdge !== null) {
-                                                var vPosColl = new CVector2();
                                                 var vDir = new CVector2();
                                                 vDir.setV(vCollPoint);
-                                                vDir.scalarProduct(2);
+                                                vDir.scalarProduct(1.5);
+                                                var vCueBallPos = new CVector2();
+                                                vCueBallPos.setV(_oCueBall.getPos());
 
-                                                vPosColl.setV(_oCueBall.getPos());
-
-                                                while (!collideEdgeWithCircle(oHittenEdge, vPosColl, BALL_RADIUS)) {
-                                                        vPosColl.add(vDir);
+                                                while (distance(vCueBallPos, (aCollisionData[iBallIndex].ball).getPos()) > (BALL_DIAMETER + 1)) {
+                                                        vCueBallPos.add(vDir);
                                                 }
 
+                                                //draw cue ball dir
+                                                var vCueBallNormal = new CVector2();
+                                                vCueBallNormal.setV((aCollisionData[iBallIndex].ball).getPos());
+                                                vCueBallNormal.subtract(vCueBallPos);
+                                                vCueBallNormal.normalize();
+
+                                                var vCueBallDir = new CVector2();
+                                                vCueBallNormal.invert();
+                                                vCueBallDir = reflectVectorV2(vCueBallNormal, vCollPoint);
+                                                vCueBallDir.normalize();
+
+                                                vCueBallDir.scalarProduct(48);
+
+                                                var vCueBallPoint = new CVector2();
+                                                vCueBallPoint.setV(vCueBallPos);
+                                                vCueBallPoint.add(vCueBallDir);
+
+                                                //draw direction of ball hitted by cue ball
+                                                var vDirBallHitted = new CVector2();
+                                                vDirBallHitted.setV((aCollisionData[iBallIndex].ball).getPos());
+                                                vDirBallHitted.subtract(vCueBallPos);
+                                                vDirBallHitted.normalize();
+                                                vDirBallHitted.scalarProduct(72);
+
+                                                var vBallHittedPoint = new CVector2();
+                                                vBallHittedPoint.setV(vCueBallPos);
+                                                vBallHittedPoint.add(vDirBallHitted);
+
                                                 _oCircleShape.visible = true;
-                                                _oCircleShape.x = vPosColl.getX();
-                                                _oCircleShape.y = vPosColl.getY();
-                                                _oDollyDir.graphics.beginStroke(PREVISION_TRAJECTORY_COLORS[0][_iColorCuePrevTrajectory]).moveTo(_oCueBall.getX(), _oCueBall.getY()).lineTo(vPosColl.getX(), vPosColl.getY());
+                                                _oCircleShape.x = vCueBallPos.getX();
+                                                _oCircleShape.y = vCueBallPos.getY();
+                                                _oDollyDir.graphics.setStrokeStyle(4)
+                                                        .beginStroke(PREVISION_TRAJECTORY_COLORS[0][_iColorCuePrevTrajectory])
+                                                        .moveTo(_oCueBall.getX(), _oCueBall.getY())
+                                                        .lineTo(vCueBallPos.getX(), vCueBallPos.getY());
+
+                                                _oCueBallDir.graphics.setStrokeStyle(4)
+                                                        .beginStroke(PREVISION_TRAJECTORY_COLORS[0][_iColorCuePrevTrajectory])
+                                                        .moveTo(vCueBallPos.getX(), vCueBallPos.getY())
+                                                        .lineTo(vCueBallPoint.getX(), vCueBallPoint.getY());
+
+                                                _oHittenBallDir.graphics.setStrokeStyle(4)
+                                                        .beginStroke(PREVISION_TRAJECTORY_COLORS[1][_iColorCuePrevTrajectory])
+                                                        .moveTo(vCueBallPos.getX(), vCueBallPos.getY())
+                                                        .lineTo(vBallHittedPoint.getX(), vBallHittedPoint.getY());
 
                                         } else {
-                                                _oCircleShape.visible = false;
+                                                //verify if stick direction collide with edges
+                                                var oEdgeColl = new CEdge();
+                                                oEdgeColl.set(_oCueBall.getX(), _oCueBall.getY(), vMousePos.getX(), vMousePos.getY());
 
-                                                _oDollyDir.graphics.beginStroke(PREVISION_TRAJECTORY_COLORS[0][_iColorCuePrevTrajectory]).moveTo(_oCueBall.getX(), _oCueBall.getY()).
-                                                        lineTo(_oCueBall.getX() + (_vStickDirection.getX() * _iDistFromBlankBall),
-                                                                _oCueBall.getY() + (_vStickDirection.getY() * _iDistFromBlankBall));
+                                                var oHittenEdge = new CEdge();
+                                                oHittenEdge = checkBallCollisionWithEdges(vMousePos, _oCueBall.getPos(), _aFieldEdges);
 
+                                                if (oHittenEdge !== null) {
+                                                        var vPosColl = new CVector2();
+                                                        var vDir = new CVector2();
+                                                        vDir.setV(vCollPoint);
+                                                        vDir.scalarProduct(2);
+
+                                                        vPosColl.setV(_oCueBall.getPos());
+
+                                                        while (!collideEdgeWithCircle(oHittenEdge, vPosColl, BALL_RADIUS)) {
+                                                                vPosColl.add(vDir);
+                                                        }
+
+                                                        _oCircleShape.visible = true;
+                                                        _oCircleShape.x = vPosColl.getX();
+                                                        _oCircleShape.y = vPosColl.getY();
+                                                        _oDollyDir.graphics.beginStroke(PREVISION_TRAJECTORY_COLORS[0][_iColorCuePrevTrajectory]).moveTo(_oCueBall.getX(), _oCueBall.getY()).lineTo(vPosColl.getX(), vPosColl.getY());
+
+                                                } else {
+                                                        _oCircleShape.visible = false;
+
+                                                        _oDollyDir.graphics.beginStroke(PREVISION_TRAJECTORY_COLORS[0][_iColorCuePrevTrajectory]).moveTo(_oCueBall.getX(), _oCueBall.getY()).
+                                                                lineTo(_oCueBall.getX() + (_vStickDirection.getX() * _iDistFromBlankBall),
+                                                                        _oCueBall.getY() + (_vStickDirection.getY() * _iDistFromBlankBall));
+
+                                                }
                                         }
                                 }
                                 //move stick

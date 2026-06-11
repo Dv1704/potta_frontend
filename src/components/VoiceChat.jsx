@@ -17,7 +17,11 @@ const VoiceChat = ({ gameId, userId, players }) => {
 
   const opponentId = useMemo(() => {
     if (!players || !userId) return null;
-    return players.find((player) => player.id !== userId)?.id || null;
+    const found = players.find((p) => {
+      const pid = typeof p === 'string' ? p : p.id;
+      return pid && pid !== userId;
+    });
+    return found ? (typeof found === 'string' ? found : found.id) : null;
   }, [players, userId]);
 
   // Determine politeness for glare (collision) resolution
