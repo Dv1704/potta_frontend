@@ -148,6 +148,7 @@ const TurnMode = () => {
   }, [soundEnabled, guideLineEnabled, difficulty]);
 
   const joinAndReadyRef = useRef(null);
+  const lastStickEmitRef = useRef(0);
 
   // Refs to track match start data and latest game state (avoids stale closures)
   const matchStartReceivedRef = useRef(false);
@@ -469,12 +470,21 @@ const TurnMode = () => {
 
     const handleOpponentShotStart = (data) => {
       console.log('[TurnMode] Opponent shot start:', data);
-      // Relay to game for visualization
       const iframe = document.querySelector('iframe');
       if (iframe && iframe.contentWindow) {
         iframe.contentWindow.postMessage({
           type: 'opponentShot',
           data: data.vector || data
+        }, '*');
+      }
+    };
+
+    const handleOpponentStickMove = (data) => {
+      const iframe = document.querySelector('iframe');
+      if (iframe && iframe.contentWindow) {
+        iframe.contentWindow.postMessage({
+          type: 'opponentStickMove',
+          angle: data.angle
         }, '*');
       }
     };
@@ -503,6 +513,7 @@ const TurnMode = () => {
     socket.on('gameChat', handleGameChat);
     socket.on('shotResult', handleShotResult);
     socket.on('opponentShotStart', handleOpponentShotStart);
+    socket.on('opponentStickMove', handleOpponentStickMove);
     socket.on('gameEnded', handleGameEnded);
     socket.on('error', handleError);
 
@@ -516,6 +527,7 @@ const TurnMode = () => {
       socket.off('gameChat');
       socket.off('shotResult');
       socket.off('opponentShotStart');
+      socket.off('opponentStickMove');
       socket.off('gameEnded');
       socket.off('error');
     };
@@ -524,6 +536,14 @@ const TurnMode = () => {
   // Listen for messages from the game iframe
   useEffect(() => {
     const handleMessage = (event) => {
+      if (event.data.type === 'stickMove') {
+        const now = Date.now();
+        if (now - lastStickEmitRef.current >= 50) {
+          lastStickEmitRef.current = now;
+          socket.emit('stickMove', { gameId, userId, angle: event.data.angle });
+        }
+      }
+
       if (event.data.type === 'takeShot') {
         if (!canTakeShot) {
           console.warn('[TurnMode] Blocked shot - not your turn or animating');

@@ -223,6 +223,11 @@ function CGame() {
                     s_oTable.executeRemoteShot(event.data.data);
                 }
             }
+            if (event.data.type === 'opponentStickMove') {
+                if (s_oTable && event.data.angle !== undefined) {
+                    s_oTable.setOpponentStickAngle(event.data.angle);
+                }
+            }
             if (event.data.type === 'error') {
                 console.warn("[GameEngine] Shot rejected by server:", event.data.message);
                 if (s_oTable) {

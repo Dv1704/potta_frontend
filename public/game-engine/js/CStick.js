@@ -50,5 +50,9 @@ function CStick(oParentContainer){
         _oContainer.alpha = fAlpha;
     };
 
+    this.setForceVisible = function(bVisible){
+        _oContainer.visible = bVisible;
+    };
+
     this._init();
 }

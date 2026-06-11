@@ -613,6 +613,24 @@ function CTable(oParentContainer, oCpuDifficultyParams) {
                 }
         };
 
+        // Show the opponent's current aim angle on our table (view only — can't shoot).
+        this.setOpponentStickAngle = function (fAngleDeg) {
+                if (typeof s_bIsMyTurn !== 'undefined' && s_bIsMyTurn) return;
+                if (!_oStick || !_oCueBall) return;
+
+                var fRad = fAngleDeg * Math.PI / 180;
+                var vDir = new CVector2();
+                vDir.set(Math.cos(fRad), Math.sin(fRad));
+
+                var iAngle = toDegree(angleBetweenVectors(_vStickInitDir, vDir));
+                if (vDir.getY() > 0) {
+                        iAngle = (180 - iAngle) + 180;
+                }
+                _oStick.setRotation(iAngle + 180);
+                _oStick.setPos(_oCueBall.getX(), _oCueBall.getY());
+                _oStick.setForceVisible(true);
+        };
+
         /**
          * Updates ball positions based on server authoritative state
          */
@@ -676,7 +694,8 @@ function CTable(oParentContainer, oCpuDifficultyParams) {
         };
 
         var _oPendingServerState = null;
-        var _vShotFiredPos = null; // cue ball position at the moment the shot was fired
+        var _vShotFiredPos = null;
+        var _iStickBroadcastTimer = 0; // throttle for sending stick angle to opponent
 
         this.setPendingServerState = function (state) {
                 _oPendingServerState = state;
@@ -1291,7 +1310,19 @@ function CTable(oParentContainer, oCpuDifficultyParams) {
                                 if (bDirByMouse && bIsActive) {
                                         _vStickDirection.normalize();
                                 }
-                                
+
+                                // Broadcast aim angle to opponent in Turn Mode (throttled to ~20fps)
+                                if (s_szMode !== 'speed' && typeof s_bIsMyTurn !== 'undefined' && s_bIsMyTurn) {
+                                        _iStickBroadcastTimer += s_iTimeElaps;
+                                        if (_iStickBroadcastTimer >= 50) {
+                                                _iStickBroadcastTimer = 0;
+                                                window.parent.postMessage({
+                                                        type: 'stickMove',
+                                                        angle: radiantsToDegrees(Math.atan2(_vStickDirection.getY(), _vStickDirection.getX()))
+                                                }, '*');
+                                        }
+                                }
+
                                 // Update stick visibility/opacity
                                 if (_iState !== STATE_TABLE_SHOOTING) {
                                         if (bIsActive) {
