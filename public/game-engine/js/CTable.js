@@ -690,12 +690,13 @@ function CTable(oParentContainer, oCpuDifficultyParams) {
                 if (!_oCueBall.isBallOnTable()
                         || (s_iPlayerMode === GAME_MODE_CPU) && (s_oGame.getCurTurn() === 2)
                         || (typeof s_bIsMyTurn !== 'undefined' && !s_bIsMyTurn)
-                        || (s_szMode !== 'speed' && !_oPhysicsController.areBallsStopped())
                         || _bReadyForShot) {
                         return;
                 }
                 if (!s_bMobile) {
-                        s_oTable.startToShot();
+                        if (s_szMode === 'speed' || _oPhysicsController.areBallsStopped()) {
+                                s_oTable.startToShot();
+                        }
                 }
 
                 _oCueBall.setDragging(false);
@@ -1251,7 +1252,7 @@ function CTable(oParentContainer, oCpuDifficultyParams) {
                                         _iTimeAnimStick = _iMaxTimeAnimationStick;
                                 }
                         } else {
-                                var bDirByMouse = !s_bMobile && _oCueBall.isBallOnTable();
+                                var bDirByMouse = !s_bMobile && _oCueBall.isBallOnTable() && (typeof s_bIsMyTurn === 'undefined' || s_bIsMyTurn);
                                 if (bDirByMouse) {
                                         _vStickDirection.setV(vTmpMouse);
                                         _vStickDirection.subtract(_oCueBall.getPos());

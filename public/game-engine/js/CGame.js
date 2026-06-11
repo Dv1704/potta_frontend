@@ -325,12 +325,14 @@ function CGame() {
     this._onMouseDownPowerBar = function () {
         if (!_bGameReady) return;
         if (typeof s_bIsMyTurn !== 'undefined' && !s_bIsMyTurn) return;
+        if (s_szMode !== 'speed' && !s_oTable.areBallsStopped()) return;
         s_oTable.startToShot();
     };
 
     this._onPressMovePowerBar = function (iOffset) {
         if (!_bGameReady) return;
         if (typeof s_bIsMyTurn !== 'undefined' && !s_bIsMyTurn) return;
+        if (s_szMode !== 'speed' && !s_oTable.areBallsStopped()) return;
 
         s_oTable.holdShotStickMovement(iOffset);
     };
@@ -338,7 +340,7 @@ function CGame() {
     this._onPressUpPowerBar = function () {
         if (!_bGameReady) return;
         if (typeof s_bIsMyTurn !== 'undefined' && !s_bIsMyTurn) return;
-
+        if (s_szMode !== 'speed' && !s_oTable.areBallsStopped()) return;
         if (s_oTable.startStickAnimation()) {
             _oShotPowerBar.setInput(false);
         }
