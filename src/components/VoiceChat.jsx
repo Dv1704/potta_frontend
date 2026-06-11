@@ -19,8 +19,9 @@ const VoiceChat = ({ gameId, userId, players }) => {
     return players.find((player) => player.id !== userId)?.id || null;
   }, [players, userId]);
 
-  const isOfferer = useMemo(() => {
-    return !!userId && !!opponentId && userId < opponentId;
+  // Determine politeness for glare (collision) resolution
+  const isPolite = useMemo(() => {
+    return !!userId && !!opponentId && userId > opponentId;
   }, [userId, opponentId]);
 
   const cleanupVoice = () => {
@@ -99,15 +100,15 @@ const VoiceChat = ({ gameId, userId, players }) => {
       });
 
       const pc = createPeerConnection();
-      if (isOfferer) {
-        const offer = await pc.createOffer();
-        await pc.setLocalDescription(offer);
-        socket.emit('voiceOffer', {
-          gameId,
-          senderId: userId,
-          offer: pc.localDescription,
-        });
-      }
+      
+      // Whoever clicks the button initiates the call
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+      socket.emit('voiceOffer', {
+        gameId,
+        senderId: userId,
+        offer: pc.localDescription,
+      });
 
       setStatus('waiting');
     } catch (err) {
@@ -165,7 +166,18 @@ const VoiceChat = ({ gameId, userId, players }) => {
     }
 
     const pc = peerRef.current || createPeerConnection();
+    
+    // Glare (Collision) Resolution
+    const isCollision = pc.signalingState !== 'stable' && pc.signalingState !== 'closed';
+    if (isCollision && !isPolite) {
+      console.log('[VoiceChat] Glare detected. Ignoring incoming offer.');
+      return;
+    }
+
     try {
+      if (isCollision) {
+        await pc.setLocalDescription({ type: 'rollback' });
+      }
       await pc.setRemoteDescription(new RTCSessionDescription(data.offer));
       const answer = await pc.createAnswer();
       await pc.setLocalDescription(answer);

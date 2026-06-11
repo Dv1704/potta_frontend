@@ -86,7 +86,11 @@ const toPixels = (balls) => {
 };
 
 // Speed Mode: always inject userId as the active turn so the engine never hides the stick
-const forSpeed = (state, userId) => state ? { ...state, turn: userId } : state;
+const forSpeed = (state, userId) => {
+  if (!state) return state;
+  const myBalls = state.playerBalls && state.playerBalls[userId] ? state.playerBalls[userId] : state.balls;
+  return { ...state, turn: userId, balls: myBalls };
+};
 
 const SpeedArena = () => {
   const { id: gameId } = useParams();
@@ -262,7 +266,7 @@ const SpeedArena = () => {
 
         iframe.contentWindow.postMessage({
           type: 'gameStateUpdate',
-          state: state ? { ...forSpeed(state, userId), balls: toPixels(state.balls) } : state
+          state: state ? { ...forSpeed(state, userId), balls: toPixels(forSpeed(state, userId).balls) } : state
         }, '*');
 
         // Send player names to game engine
@@ -292,6 +296,16 @@ const SpeedArena = () => {
       console.log('[SpeedArena] Shot result:', data);
       setIsConnected(true);
       const { gameState: newGameState, shooterId, shotResult } = data;
+
+      if (shooterId !== userId) {
+        setGameState(newGameState);
+        gameStateRef.current = newGameState;
+        const objectBalls = shotResult?.pocketedBalls?.filter(id => id !== 0);
+        if (objectBalls && objectBalls.length > 0) {
+          showToast('Opponent scored!', 'info');
+        }
+        return;
+      }
 
       if (shotResult) {
         // 1. Trigger Potted Toasts
@@ -351,7 +365,11 @@ const SpeedArena = () => {
       }, 7000);
 
       // Store pending state (don't apply until animation completes)
-      setPendingTurnUpdate(newGameState);
+      // Inject foulOccurred so the engine respots the cue ball
+      setPendingTurnUpdate({
+        ...newGameState,
+        foulOccurred: isFoul
+      });
 
       // Send to game engine (starts animation)
       const iframe = document.querySelector('iframe');
@@ -360,7 +378,7 @@ const SpeedArena = () => {
           ...data,
           gameState: data.gameState ? {
             ...forSpeed(data.gameState, userId),
-            balls: toPixels(data.gameState.balls)
+            balls: toPixels(forSpeed(data.gameState, userId).balls)
           } : data.gameState
         };
         iframe.contentWindow.postMessage({
@@ -371,21 +389,12 @@ const SpeedArena = () => {
       }
 
 
-      if (shooterId !== userId) {
-        showToast('Opponent scored!', 'info');
-      }
+      // Opponent toast logic handled at the top
     };
 
     const handleOpponentShotStart = (data) => {
       console.log('[SpeedArena] Opponent shot start:', data);
-      // Relay to game for visualization
-      const iframe = document.querySelector('iframe');
-      if (iframe && iframe.contentWindow) {
-        iframe.contentWindow.postMessage({
-          type: 'opponentShot',
-          data: data.vector || data
-        }, '*');
-      }
+      // Independent tables: DO NOT relay opponent shots to the game engine
     };
 
 
@@ -412,7 +421,7 @@ const SpeedArena = () => {
         if (iframe && iframe.contentWindow) {
           const convertedGameState = data.gameState ? {
             ...forSpeed(data.gameState, userId),
-            balls: toPixels(data.gameState.balls)
+            balls: toPixels(forSpeed(data.gameState, userId).balls)
           } : data.gameState;
           iframe.contentWindow.postMessage({ type: 'matchStart', state: convertedGameState }, '*');
           iframe.contentWindow.postMessage({ type: 'gameStateUpdate', state: convertedGameState }, '*');
@@ -511,7 +520,7 @@ const SpeedArena = () => {
           if (iframe && iframe.contentWindow) {
             iframe.contentWindow.postMessage({
               type: 'gameStateUpdate',
-              state: { ...forSpeed(pendingTurnUpdate, userId), balls: toPixels(pendingTurnUpdate.balls) }
+              state: { ...forSpeed(pendingTurnUpdate, userId), balls: toPixels(forSpeed(pendingTurnUpdate, userId).balls) }
             }, '*');
           }
         }
@@ -538,7 +547,7 @@ const SpeedArena = () => {
             console.log('[SpeedArena] Forwarding current gameState to newly ready engine');
             iframe.contentWindow.postMessage({
               type: 'gameStateUpdate',
-              state: { ...forSpeed(currentState, userId), balls: toPixels(currentState.balls) }
+              state: { ...forSpeed(currentState, userId), balls: toPixels(forSpeed(currentState, userId).balls) }
             }, '*');
           }
 
@@ -559,7 +568,7 @@ const SpeedArena = () => {
             const matchState = matchData?.gameState || currentState;
             iframe.contentWindow.postMessage({
               type: 'matchStart',
-              state: matchState ? { ...forSpeed(matchState, userId), balls: toPixels(matchState.balls) } : matchState
+              state: matchState ? { ...forSpeed(matchState, userId), balls: toPixels(forSpeed(matchState, userId).balls) } : matchState
             }, '*');
           }
         }
@@ -588,7 +597,7 @@ const SpeedArena = () => {
   const player1 = gameState.players?.[0];
   const player2 = gameState.players?.[1];
   const entryFee = gameState.stake || gameState.betAmount || 0;
-  const cueBallPosition = gameState.balls?.['0'];
+  const cueBallPosition = forSpeed(gameState, userId)?.balls?.['0'];
 
   return (
     <div className="relative w-full h-screen bg-black overflow-hidden select-none pointer-events-none">
@@ -637,7 +646,7 @@ const SpeedArena = () => {
               <div>
                 <h4 className="text-red-400 font-black text-sm uppercase tracking-wider">{foulNotification.reason}</h4>
                 <p className="text-red-200/90 text-xs font-semibold mt-0.5 leading-relaxed">{foulNotification.description}</p>
-                <p className="text-slate-400 text-[10px] uppercase font-bold tracking-widest mt-1">Opponent gets ball-in-hand</p>
+                <p className="text-slate-400 text-[10px] uppercase font-bold tracking-widest mt-1">Streak reset</p>
               </div>
             </div>
           )}
