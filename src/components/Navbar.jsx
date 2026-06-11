@@ -10,7 +10,8 @@ import {
   FaBars,
   FaTimes,
   FaUserPlus,
-  FaSignOutAlt
+  FaSignOutAlt,
+  FaSignInAlt
 } from 'react-icons/fa';
 
 import { logoBase64 as logo } from '../utils/logoBase64';
@@ -191,6 +192,19 @@ const Navbar = () => {
               </Link>
             </motion.li>
 
+            {!token && (
+              <motion.li whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Link
+                  to="/login"
+                  onClick={handleLinkClick}
+                  className="flex items-center gap-2 px-5 py-3 rounded-xl border border-white/20 text-white font-bold hover:bg-white/10 transition-all duration-300"
+                >
+                  <FaSignInAlt />
+                  <span>Log In</span>
+                </Link>
+              </motion.li>
+            )}
+
             <motion.li
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
@@ -345,14 +359,24 @@ const Navbar = () => {
                         <span>Play Now</span>
                       </Link>
                     ) : (
-                      <Link
-                        to="/signup"
-                        onClick={handleLinkClick}
-                        className="flex items-center justify-center gap-3 bg-gradient-to-r from-blue-600 to-purple-600 p-4 rounded-xl text-white font-bold mt-8 shadow-2xl hover:shadow-purple-500/30"
-                      >
-                        <FaUserPlus />
-                        <span>Join Now</span>
-                      </Link>
+                      <div className="flex flex-col gap-3 mt-8">
+                        <Link
+                          to="/login"
+                          onClick={handleLinkClick}
+                          className="flex items-center justify-center gap-3 border border-white/20 p-4 rounded-xl text-white font-bold hover:bg-white/10 transition-all"
+                        >
+                          <FaSignInAlt />
+                          <span>Log In</span>
+                        </Link>
+                        <Link
+                          to="/signup"
+                          onClick={handleLinkClick}
+                          className="flex items-center justify-center gap-3 bg-gradient-to-r from-blue-600 to-purple-600 p-4 rounded-xl text-white font-bold shadow-2xl hover:shadow-purple-500/30"
+                        >
+                          <FaUserPlus />
+                          <span>Join Now</span>
+                        </Link>
+                      </div>
                     )}
                   </motion.li>
 
