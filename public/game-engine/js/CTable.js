@@ -690,7 +690,7 @@ function CTable(oParentContainer, oCpuDifficultyParams) {
                 if (!_oCueBall.isBallOnTable()
                         || (s_iPlayerMode === GAME_MODE_CPU) && (s_oGame.getCurTurn() === 2)
                         || (typeof s_bIsMyTurn !== 'undefined' && !s_bIsMyTurn)
-                        || !_oPhysicsController.areBallsStopped()
+                        || (s_szMode !== 'speed' && !_oPhysicsController.areBallsStopped())
                         || _bReadyForShot) {
                         return;
                 }
@@ -1064,7 +1064,7 @@ function CTable(oParentContainer, oCpuDifficultyParams) {
 
                                         vEffectForce.add(_vStickDirection);
 
-                                        _oStick.setVisible(false);
+                                        //_oStick.setVisible(false); // Kept visible for speed mode
 
                                         //playSound("shoot", 1,false );
                                         _iState = STATE_TABLE_SHOOTING;
@@ -2765,7 +2765,10 @@ function CTable(oParentContainer, oCpuDifficultyParams) {
                                 break;
                         }
                         case STATE_TABLE_SHOOTING: {
-
+                                if (!bIsCpuTurn) {
+                                        this.updateStick();
+                                        this.renderStickDirection();
+                                }
                                 break;
                         }
                 }
