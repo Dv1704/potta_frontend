@@ -236,6 +236,20 @@ function CGame() {
             }
             if (event.data.type === 'matchStart') {
                 _bGameReady = true;
+                var mState = event.data.state;
+                if (mState && mState.turn && s_szUserId) {
+                    s_bIsMyTurn = (mState.turn === s_szUserId);
+                    if (s_oTable) {
+                        if (s_bIsMyTurn) {
+                            s_oGame.showShotBar();
+                            s_oTable.snapStickToBall();
+                            s_oTable.setStickVisible(true);
+                        } else {
+                            s_oGame.hideShotBar();
+                            s_oTable.setStickVisible(false);
+                        }
+                    }
+                }
             }
             if (event.data.type === 'updatePlayerNames') {
                 if (_oPlayer1) _oPlayer1.setPlayerName(event.data.player1Name);
@@ -690,5 +704,5 @@ function CGame() {
 var s_oGame = null;
 var s_szUserId = typeof getParamValue !== 'undefined' ? getParamValue('userId') : null;
 var s_szMode = typeof getParamValue !== 'undefined' ? getParamValue('mode') : 'local';
-var s_bIsMyTurn = true;
+var s_bIsMyTurn = false;
 var s_bShowGuideLine = true;

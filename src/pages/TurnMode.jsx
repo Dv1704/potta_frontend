@@ -309,6 +309,8 @@ const TurnMode = () => {
             ...data.gameState,
             balls: toPixels(data.gameState.balls)
           } : data.gameState;
+          // initUser must arrive before gameStateUpdate so s_szUserId is set when turn is evaluated
+          iframe.contentWindow.postMessage({ type: 'initUser', userId: userId }, '*');
           iframe.contentWindow.postMessage({ type: 'matchStart', state: convertedGameState }, '*');
           iframe.contentWindow.postMessage({ type: 'gameStateUpdate', state: convertedGameState }, '*');
           
