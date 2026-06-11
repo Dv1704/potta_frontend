@@ -13,6 +13,7 @@ const VoiceChat = ({ gameId, userId, players }) => {
   const peerRef = useRef(null);
   const localStreamRef = useRef(null);
   const audioRef = useRef(null);
+  const pendingCandidatesRef = useRef([]);
 
   const opponentId = useMemo(() => {
     if (!players || !userId) return null;
@@ -39,6 +40,19 @@ const VoiceChat = ({ gameId, userId, players }) => {
     setRemoteConnected(false);
     setStatus('idle');
     setError('');
+    pendingCandidatesRef.current = [];
+  };
+
+  const flushCandidates = async () => {
+    if (!peerRef.current || !peerRef.current.remoteDescription) return;
+    for (const c of pendingCandidatesRef.current) {
+      try {
+        await peerRef.current.addIceCandidate(new RTCIceCandidate(c));
+      } catch (err) {
+        console.error('[VoiceChat] Error adding queued ICE candidate:', err);
+      }
+    }
+    pendingCandidatesRef.current = [];
   };
 
   const createPeerConnection = () => {
@@ -179,6 +193,7 @@ const VoiceChat = ({ gameId, userId, players }) => {
         await pc.setLocalDescription({ type: 'rollback' });
       }
       await pc.setRemoteDescription(new RTCSessionDescription(data.offer));
+      await flushCandidates();
       const answer = await pc.createAnswer();
       await pc.setLocalDescription(answer);
       socket.emit('voiceAnswer', {
@@ -198,6 +213,7 @@ const VoiceChat = ({ gameId, userId, players }) => {
     if (!peerRef.current) return;
     try {
       await peerRef.current.setRemoteDescription(new RTCSessionDescription(data.answer));
+      await flushCandidates();
       setStatus('connecting');
     } catch (err) {
       console.error('[VoiceChat] Error handling answer:', err);
@@ -206,7 +222,13 @@ const VoiceChat = ({ gameId, userId, players }) => {
 
   const handleIceCandidate = async (data) => {
     if (data.gameId !== gameId || data.senderId === userId) return;
-    if (!peerRef.current || !data.candidate) return;
+    if (!data.candidate) return;
+
+    if (!peerRef.current || !peerRef.current.remoteDescription) {
+      pendingCandidatesRef.current.push(data.candidate);
+      return;
+    }
+
     try {
       await peerRef.current.addIceCandidate(new RTCIceCandidate(data.candidate));
     } catch (err) {
