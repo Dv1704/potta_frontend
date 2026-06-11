@@ -674,7 +674,7 @@ function CTable(oParentContainer, oCpuDifficultyParams) {
          */
         this.resetShotState = function () {
                 _iState = STATE_TABLE_MOVE_STICK;
-                _bReadyForShot = true;
+                _bReadyForShot = false;
                 _bHoldStick = false;
                 _oStick.setVisible(true);
                 _oCueBall.setCurForce(0, 0);
