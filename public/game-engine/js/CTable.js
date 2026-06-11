@@ -669,6 +669,7 @@ function CTable(oParentContainer, oCpuDifficultyParams) {
         };
 
         var _oPendingServerState = null;
+        var _vShotFiredPos = null; // cue ball position at the moment the shot was fired
 
         this.setPendingServerState = function (state) {
                 _oPendingServerState = state;
@@ -1081,10 +1082,16 @@ function CTable(oParentContainer, oCpuDifficultyParams) {
 
                                         vEffectForce.add(_vStickDirection);
 
-                                        // Hide stick the instant the shot fires in all modes.
-                                        // It reappears via setStickVisible(true) when the server
-                                        // state is applied and it is this player's turn again.
+                                        // Always hide the stick at impact so it doesn't overlap the moving ball.
                                         _oStick.setVisible(false);
+
+                                        // Speed Mode: freeze the stick at the shot position so the
+                                        // player can pre-aim their next shot while the ball rolls.
+                                        if (s_szMode === 'speed') {
+                                                _vShotFiredPos = { x: _oCueBall.getX(), y: _oCueBall.getY() };
+                                                _oStick.setPos(_vShotFiredPos.x, _vShotFiredPos.y);
+                                                _oStick.setVisible(true);
+                                        }
 
                                         //playSound("shoot", 1,false );
                                         _iState = STATE_TABLE_SHOOTING;
@@ -2733,6 +2740,7 @@ function CTable(oParentContainer, oCpuDifficultyParams) {
                                 }
 
                                 _oPendingServerState = null;
+                                _vShotFiredPos = null;
 
                                 // Notify React that animation is complete
                                 window.parent.postMessage({
@@ -2806,11 +2814,31 @@ function CTable(oParentContainer, oCpuDifficultyParams) {
                                 break;
                         }
                         case STATE_TABLE_SHOOTING: {
-                                // Balls are in motion — do not reposition the stick or redraw the aim guide.
-                                // Clearing the guide graphics prevents stale lines from showing during the roll.
+                                // Always clear the aim guide while balls are moving.
                                 _oDollyDir.graphics.clear();
                                 _oCueBallDir.graphics.clear();
                                 _oHittenBallDir.graphics.clear();
+
+                                // Speed Mode: rotate the stick toward the mouse so the player
+                                // can pre-aim the next shot while the ball rolls. Position stays
+                                // locked at _vShotFiredPos — the stick never chases the moving ball.
+                                if (s_szMode === 'speed' && !s_bMobile && _vShotFiredPos) {
+                                        var vLocalMouse = new CVector2();
+                                        var vRawMouse = _oContainer.globalToLocal(s_oStage.mouseX, s_oStage.mouseY);
+                                        vLocalMouse.set(vRawMouse.x, vRawMouse.y);
+
+                                        var vDir = new CVector2();
+                                        vDir.set(vLocalMouse.getX() - _vShotFiredPos.x, vLocalMouse.getY() - _vShotFiredPos.y);
+
+                                        if (vDir.length() > 1) {
+                                                vDir.normalize();
+                                                var iAngle = toDegree(angleBetweenVectors(_vStickInitDir, vDir));
+                                                if (vLocalMouse.getY() > _vShotFiredPos.y) {
+                                                        iAngle = (180 - iAngle) + 180;
+                                                }
+                                                _oStick.setRotation(iAngle + 180);
+                                        }
+                                }
                                 break;
                         }
                 }
