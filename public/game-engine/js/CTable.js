@@ -85,6 +85,24 @@ function CTable(oParentContainer, oCpuDifficultyParams) {
                 var oBg = createBitmap(oSpriteBg);
                 _oContainer.addChild(oBg);
 
+                // Potta watermark on the cloth
+                var oLogoImg = new Image();
+                var oLogoBmp = new createjs.Bitmap(oLogoImg);
+                oLogoBmp.alpha = 0.13;
+                oLogoBmp.x = oSpriteBg.width / 2;
+                oLogoBmp.y = oSpriteBg.height / 2;
+                oLogoImg.onload = function () {
+                    var fScale = Math.min(
+                        (oSpriteBg.width * 0.38) / oLogoImg.width,
+                        (oSpriteBg.height * 0.38) / oLogoImg.height
+                    );
+                    oLogoBmp.scaleX = oLogoBmp.scaleY = fScale;
+                    oLogoBmp.regX = oLogoImg.width / 2;
+                    oLogoBmp.regY = oLogoImg.height / 2;
+                };
+                _oContainer.addChild(oLogoBmp);
+                oLogoImg.src = "../potta_logo.webp";
+
                 TABLE_CENTER_COORDINATE = new CVector2(CANVAS_WIDTH / 2 - oSpriteBg.width / 4, CANVAS_HEIGHT / 2 - oSpriteBg.height / 4);
                 if (DEBUG_SHOW_TABLE_CENTER_SHAPE) {
                         this._createGraphicCenterTableShape();
