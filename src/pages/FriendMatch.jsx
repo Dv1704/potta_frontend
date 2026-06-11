@@ -43,6 +43,15 @@ const FriendMatch = () => {
 
   const matchedRef = useRef(false);
 
+  const restoreRoom = (code, roomMode, roomStake) => {
+    setRoomCode(code);
+    setRoomLink(`${window.location.origin}/join/${code}`);
+    setMode(roomMode);
+    setStake(String(roomStake));
+    setWaitingForFriend(true);
+    setTab('create');
+  };
+
   useEffect(() => {
     const init = async () => {
       const token = localStorage.getItem('token');
@@ -61,11 +70,14 @@ const FriendMatch = () => {
         setBalance(bal.available ?? 0);
         connectSocket(profile.id);
 
-        // If arrived via link, auto-lookup the room
-        if (urlCode) {
-          socket.once('connect', () => socket.emit('lookupRoom', { code: urlCode }));
-          if (socket.connected) socket.emit('lookupRoom', { code: urlCode });
-        }
+        const askServer = () => {
+          // If arrived via invite link, look up that room
+          if (urlCode) socket.emit('lookupRoom', { code: urlCode });
+          // Always check if we own a pending room (handles browser close/refresh)
+          socket.emit('getMyRoom');
+        };
+        socket.once('connect', askServer);
+        if (socket.connected) askServer();
       } catch {
         showToast('Authentication failed', 'error');
         navigate('/login');
@@ -75,7 +87,16 @@ const FriendMatch = () => {
     };
     init();
 
+    socket.on('myRoom', (data) => {
+      if (data?.found) {
+        restoreRoom(data.code, data.mode, data.stake);
+      } else {
+        localStorage.removeItem('potta_room');
+      }
+    });
+
     socket.on('roomCreated', (data) => {
+      localStorage.setItem('potta_room', JSON.stringify({ code: data.code, mode: data.mode, stake: data.stake }));
       setRoomCode(data.code);
       setRoomLink(`${window.location.origin}/join/${data.code}`);
       setWaitingForFriend(true);
@@ -94,6 +115,7 @@ const FriendMatch = () => {
     socket.on('matchFound', (data) => {
       if (matchedRef.current) return;
       matchedRef.current = true;
+      localStorage.removeItem('potta_room');
       showToast('Friend joined! Starting game...', 'success');
       setTimeout(() => {
         const path = data.mode === 'speed'
@@ -111,6 +133,7 @@ const FriendMatch = () => {
     });
 
     return () => {
+      socket.off('myRoom');
       socket.off('roomCreated');
       socket.off('roomLookup');
       socket.off('matchFound');
@@ -156,6 +179,7 @@ const FriendMatch = () => {
   };
 
   const cancelRoom = () => {
+    localStorage.removeItem('potta_room');
     setWaitingForFriend(false);
     setRoomCode('');
     setRoomLink('');
