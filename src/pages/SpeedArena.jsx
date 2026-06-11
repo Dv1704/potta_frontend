@@ -307,6 +307,7 @@ const SpeedArena = () => {
         return;
       }
 
+      let isFoul = false;
       if (shotResult) {
         // 1. Trigger Potted Toasts
         const objectBalls = shotResult.pocketedBalls.filter(id => id !== 0);
@@ -324,7 +325,7 @@ const SpeedArena = () => {
         }
 
         // 2. Trigger Foul Banner
-        const isFoul = shotResult.cueBallScratched || shotResult.firstBallCollided === null || (newGameState && newGameState.foulOccurred);
+        isFoul = shotResult.cueBallScratched || shotResult.firstBallCollided === null || (newGameState && newGameState.foulOccurred);
         if (isFoul) {
           let foulType = 'Foul';
           let desc = 'A table violation occurred.';
