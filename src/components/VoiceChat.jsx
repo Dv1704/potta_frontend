@@ -4,6 +4,7 @@ import { socket } from '../socket';
 
 const VoiceChat = ({ gameId, userId, players }) => {
   const [isActive, setIsActive] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [status, setStatus] = useState('idle');
   const [remoteConnected, setRemoteConnected] = useState(false);
@@ -140,14 +141,17 @@ const VoiceChat = ({ gameId, userId, players }) => {
     socket.emit('voiceHangup', { gameId, senderId: userId });
     cleanupVoice();
     setIsActive(false);
+    setIsMenuOpen(false);
   };
 
   const toggleVoice = async () => {
     if (isActive) {
-      stopVoice();
+      // Just toggle the menu visibility if it's already active
+      setIsMenuOpen(!isMenuOpen);
       return;
     }
     setIsActive(true);
+    setIsMenuOpen(true);
     await startVoice();
   };
 
@@ -268,18 +272,28 @@ const VoiceChat = ({ gameId, userId, players }) => {
 
   return (
     <div className="flex flex-col items-end gap-3">
-      <button
-        onClick={toggleVoice}
-        className={`relative flex h-11 w-11 items-center justify-center rounded-full border text-white shadow-2xl transition-all ${isActive ? 'bg-emerald-500/90 border-emerald-300' : 'bg-slate-950/90 border-white/10 hover:bg-slate-900'} `}
-        title={isActive ? 'Disable voice chat' : 'Enable voice chat'}
-      >
-        {isActive ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />}
-        {remoteConnected && (
-          <span className="absolute -top-1 -right-1 inline-flex h-4 w-4 items-center justify-center rounded-full bg-emerald-400 text-[10px] font-black text-slate-950">•</span>
-        )}
-      </button>
+        <div className="flex flex-col gap-2">
+          {isMenuOpen && (
+            <button 
+              onClick={stopVoice}
+              className="px-3 py-1 bg-red-500/20 text-red-400 text-xs rounded-full border border-red-500/30 hover:bg-red-500/30 transition-all self-end"
+            >
+              Disconnect Call
+            </button>
+          )}
+          <button
+            onClick={toggleVoice}
+            className={`relative flex h-11 w-11 items-center justify-center rounded-full border text-white shadow-2xl transition-all ${isActive ? 'bg-emerald-500/90 border-emerald-300' : 'bg-slate-950/90 border-white/10 hover:bg-slate-900'} `}
+            title={isActive ? (isMenuOpen ? 'Minimize menu' : 'Open voice menu') : 'Enable voice chat'}
+          >
+            {isActive ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />}
+            {remoteConnected && (
+              <span className="absolute -top-1 -right-1 inline-flex h-4 w-4 items-center justify-center rounded-full bg-emerald-400 text-[10px] font-black text-slate-950">•</span>
+            )}
+          </button>
+        </div>
 
-      {isActive && (
+      {isActive && isMenuOpen && (
         <div className="w-[min(100vw-2rem,300px)] rounded-3xl border border-white/10 bg-slate-950/95 px-4 py-3 text-white shadow-2xl">
           <div className="flex items-center justify-between gap-2">
             <div>
@@ -295,7 +309,7 @@ const VoiceChat = ({ gameId, userId, players }) => {
             </button>
           </div>
           <div className="mt-3 text-[11px] text-slate-400">
-            {error ? error : `Waiting for opponent audio...`}
+            {error ? error : (remoteConnected ? 'Audio linked successfully. You can minimize this menu.' : `Waiting for opponent audio...`)}
           </div>
           <audio ref={audioRef} autoPlay muted={false} />
         </div>
