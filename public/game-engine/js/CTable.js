@@ -1081,11 +1081,10 @@ function CTable(oParentContainer, oCpuDifficultyParams) {
 
                                         vEffectForce.add(_vStickDirection);
 
-                                        // Speed mode: keep stick visible so player sees next aim instantly.
-                                        // Turn mode: hide immediately — opponent's turn begins.
-                                        if (s_szMode !== 'speed') {
-                                                _oStick.setVisible(false);
-                                        }
+                                        // Hide stick the instant the shot fires in all modes.
+                                        // It reappears via setStickVisible(true) when the server
+                                        // state is applied and it is this player's turn again.
+                                        _oStick.setVisible(false);
 
                                         //playSound("shoot", 1,false );
                                         _iState = STATE_TABLE_SHOOTING;
