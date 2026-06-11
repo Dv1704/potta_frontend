@@ -77,13 +77,6 @@ const PoolGameEngineEmbed = ({
                 onLoad={handleIframeLoad}
                 allow="autoplay; fullscreen"
             />
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
-              <img
-                src="/potta-logo.png"
-                alt=""
-                className="w-20 h-20 opacity-10 select-none"
-              />
-            </div>
         </div>
     );
 };

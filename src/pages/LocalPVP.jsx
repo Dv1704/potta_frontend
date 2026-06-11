@@ -654,14 +654,6 @@ export default function LocalPVP() {
                 onStartSession={() => console.log('Local Match started')}
                 onEndSession={() => console.log('Local Match ended')}
               />
-              {/* Potta center logo watermark */}
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
-                <img
-                  src="/home/victor/projects/potta/frontend/public/potta_logo.webp"
-                  alt="Potta"
-                  className="w-20 h-20 opacity-15 select-none"
-                />
-              </div>
             </div>
           </motion.div>
         )}
