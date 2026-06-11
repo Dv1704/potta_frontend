@@ -45,7 +45,7 @@ const Signup = () => {
       }
 
       showToast('Signup successful! Redirecting to login...', 'success');
-      setTimeout(() => navigate('/login'), 1500);
+      setTimeout(() => navigate('/login', { state: location.state }), 1500);
     } catch (err) {
       showToast(err.message, 'error');
       setIsLoading(false);
@@ -111,7 +111,7 @@ const Signup = () => {
 
         <p className="text-sm text-center">
           Already have an account?{' '}
-          <Link to="/login" className="text-blue-400 hover:underline">
+          <Link to="/login" state={location.state} className="text-blue-400 hover:underline">
             Login
           </Link>
         </p>

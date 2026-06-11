@@ -61,7 +61,7 @@ const Login = () => {
         const userData = await profileRes.json();
         login(verifyData.access_token, userData);
         showToast(`Verified! Welcome back, ${userData.name || 'Hustler'}!`, 'success');
-        const from = location.state?.from?.pathname || '/success';
+        const from = location.state?.from ?? { pathname: '/success' };
         navigate(from, { replace: true });
         return;
       }
@@ -112,7 +112,7 @@ const Login = () => {
       const userData = await profileRes.json();
       login(loginData.access_token, userData);
       showToast(`Welcome back, ${userData.name || 'Hustler'}!`, 'success');
-      const from = location.state?.from?.pathname || '/success';
+      const from = location.state?.from ?? { pathname: '/success' };
       navigate(from, { replace: true });
     } catch (err) {
       console.error('🚨 Login error:', err);
@@ -184,7 +184,7 @@ const Login = () => {
 
         <p className="text-sm text-center">
           Don't have an account?{' '}
-          <Link to="/signup" className="text-blue-400 hover:underline">Sign Up</Link>
+          <Link to="/signup" state={location.state} className="text-blue-400 hover:underline">Sign Up</Link>
         </p>
       </form>
     </div>
