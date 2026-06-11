@@ -193,6 +193,7 @@ function CGame() {
                             if (typeof s_bIsMyTurn !== 'undefined') {
                                 if (s_bIsMyTurn) {
                                     s_oGame.showShotBar();
+                                    s_oTable.snapStickToBall();
                                     s_oTable.setStickVisible(true);
                                     if (state.foulOccurred) {
                                         s_oTable.respotCueBall();

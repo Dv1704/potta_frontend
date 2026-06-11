@@ -606,6 +606,13 @@ function CTable(oParentContainer, oCpuDifficultyParams) {
                 }
         };
 
+        this.snapStickToBall = function () {
+                if (_oStick && _oCueBall) {
+                        _oStick.setPos(_oCueBall.getX(), _oCueBall.getY());
+                        _iState = STATE_TABLE_MOVE_STICK;
+                }
+        };
+
         /**
          * Updates ball positions based on server authoritative state
          */
@@ -1082,16 +1089,8 @@ function CTable(oParentContainer, oCpuDifficultyParams) {
 
                                         vEffectForce.add(_vStickDirection);
 
-                                        // Always hide the stick at impact so it doesn't overlap the moving ball.
+                                        // Hide stick at impact so it never overlaps the moving ball.
                                         _oStick.setVisible(false);
-
-                                        // Speed Mode: freeze the stick at the shot position so the
-                                        // player can pre-aim their next shot while the ball rolls.
-                                        if (s_szMode === 'speed') {
-                                                _vShotFiredPos = { x: _oCueBall.getX(), y: _oCueBall.getY() };
-                                                _oStick.setPos(_vShotFiredPos.x, _vShotFiredPos.y);
-                                                _oStick.setVisible(true);
-                                        }
 
                                         //playSound("shoot", 1,false );
                                         _iState = STATE_TABLE_SHOOTING;
@@ -2730,6 +2729,9 @@ function CTable(oParentContainer, oCpuDifficultyParams) {
                                 s_bIsMyTurn = (_oPendingServerState.turn === s_szUserId);
                                 if (s_bIsMyTurn) {
                                         s_oGame.showShotBar();
+                                        // Snap stick to cue ball's new resting position then resume aiming.
+                                        _oStick.setPos(_oCueBall.getX(), _oCueBall.getY());
+                                        _iState = STATE_TABLE_MOVE_STICK;
                                         this.setStickVisible(true);
                                         if (_oPendingServerState.foulOccurred) {
                                                 this.respotCueBall();
@@ -2814,31 +2816,10 @@ function CTable(oParentContainer, oCpuDifficultyParams) {
                                 break;
                         }
                         case STATE_TABLE_SHOOTING: {
-                                // Always clear the aim guide while balls are moving.
+                                // Clear aim guide while balls are moving.
                                 _oDollyDir.graphics.clear();
                                 _oCueBallDir.graphics.clear();
                                 _oHittenBallDir.graphics.clear();
-
-                                // Speed Mode: rotate the stick toward the mouse so the player
-                                // can pre-aim the next shot while the ball rolls. Position stays
-                                // locked at _vShotFiredPos — the stick never chases the moving ball.
-                                if (s_szMode === 'speed' && !s_bMobile && _vShotFiredPos) {
-                                        var vLocalMouse = new CVector2();
-                                        var vRawMouse = _oContainer.globalToLocal(s_oStage.mouseX, s_oStage.mouseY);
-                                        vLocalMouse.set(vRawMouse.x, vRawMouse.y);
-
-                                        var vDir = new CVector2();
-                                        vDir.set(vLocalMouse.getX() - _vShotFiredPos.x, vLocalMouse.getY() - _vShotFiredPos.y);
-
-                                        if (vDir.length() > 1) {
-                                                vDir.normalize();
-                                                var iAngle = toDegree(angleBetweenVectors(_vStickInitDir, vDir));
-                                                if (vLocalMouse.getY() > _vShotFiredPos.y) {
-                                                        iAngle = (180 - iAngle) + 180;
-                                                }
-                                                _oStick.setRotation(iAngle + 180);
-                                        }
-                                }
                                 break;
                         }
                 }
