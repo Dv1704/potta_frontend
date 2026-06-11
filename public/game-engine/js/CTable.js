@@ -88,8 +88,8 @@ function CTable(oParentContainer, oCpuDifficultyParams) {
                 // Potta watermark — screen blend makes black transparent, only white logo text shows
                 var oLogoImg = new Image();
                 var oLogoBmp = new createjs.Bitmap(oLogoImg);
-                oLogoBmp.alpha = 0.85;
-                oLogoBmp.compositeOperation = "screen";
+                oLogoBmp.alpha = 0.75;
+                oLogoBmp.compositeOperation = "multiply";
                 oLogoBmp.x = oSpriteBg.width / 2;
                 oLogoBmp.y = oSpriteBg.height / 2;
                 oLogoImg.onload = function () {
