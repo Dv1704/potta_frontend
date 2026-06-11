@@ -348,6 +348,7 @@ const TurnMode = () => {
 
       setGameState(state);
       gameStateRef.current = state;
+      if (state.scores) setLiveScores(state.scores);
 
       if (state.timer !== undefined) {
         setTimeRemaining(state.timer);

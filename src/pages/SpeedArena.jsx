@@ -287,6 +287,7 @@ const SpeedArena = () => {
       setIsConnected(true);
       setGameState(state);
       gameStateRef.current = state;
+      if (state.scores) setLiveScores(state.scores);
 
       if (state.overallTimeRemaining !== undefined) {
         setOverallTimeRemaining(state.overallTimeRemaining);
