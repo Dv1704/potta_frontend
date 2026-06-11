@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { socket, connectSocket } from '../socket';
 import LoadingSpinner from '../components/LoadingSpinner';
+import VoiceChat from '../components/VoiceChat';
 import { useToast } from '../context/ToastContext';
 import PoolGameEngineEmbed from '../components/PoolGameEngineEmbed';
 import { AnimatePresence } from 'framer-motion';
@@ -748,6 +749,8 @@ const SpeedArena = () => {
 
       {/* In-game Chat Button */}
       <div className="fixed bottom-4 left-4 z-[10001] flex flex-col items-end gap-3 pointer-events-auto">
+        <VoiceChat gameId={gameId} userId={userId} players={gameState?.players || []} />
+
         <button
           onClick={() => {
             setChatOpen((open) => {
