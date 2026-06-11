@@ -92,7 +92,30 @@ const VoiceChat = ({ gameId, userId, players }) => {
     };
 
     pc.onconnectionstatechange = () => {
-      if (['failed', 'disconnected', 'closed'].includes(pc.connectionState)) {
+      const state = pc.connectionState;
+      if (state === 'connected') {
+        setRemoteConnected(true);
+      } else if (state === 'disconnected') {
+        setRemoteConnected(false);
+        // Give the browser ~4 s to auto-recover before we restart ICE
+        setTimeout(() => {
+          if (peerRef.current && peerRef.current.connectionState === 'disconnected') {
+            peerRef.current.restartIce();
+          }
+        }, 4000);
+      } else if (state === 'failed') {
+        setRemoteConnected(false);
+        // Full ICE restart: create a new offer with iceRestart flag
+        if (peerRef.current) {
+          peerRef.current.createOffer({ iceRestart: true }).then((offer) => {
+            return peerRef.current.setLocalDescription(offer);
+          }).then(() => {
+            socket.emit('voiceOffer', { gameId, senderId: userId, offer: peerRef.current.localDescription });
+          }).catch((err) => {
+            console.error('[VoiceChat] ICE restart failed:', err);
+          });
+        }
+      } else if (state === 'closed') {
         setRemoteConnected(false);
       }
     };

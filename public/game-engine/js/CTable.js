@@ -2807,10 +2807,11 @@ function CTable(oParentContainer, oCpuDifficultyParams) {
                                 break;
                         }
                         case STATE_TABLE_SHOOTING: {
-                                if (!bIsCpuTurn) {
-                                        this.updateStick();
-                                        this.renderStickDirection();
-                                }
+                                // Balls are in motion — do not reposition the stick or redraw the aim guide.
+                                // Clearing the guide graphics prevents stale lines from showing during the roll.
+                                _oDollyDir.graphics.clear();
+                                _oCueBallDir.graphics.clear();
+                                _oHittenBallDir.graphics.clear();
                                 break;
                         }
                 }

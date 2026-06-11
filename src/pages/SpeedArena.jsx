@@ -162,6 +162,7 @@ const SpeedArena = () => {
   const matchStartDataRef = useRef(null);
   const gameStateRef = useRef(null);
   const isEngineReadyRef = useRef(false);
+  const isGameOverRef = useRef(false);
 
   const isEngineAnimatingRef = useRef(isEngineAnimating);
   useEffect(() => {
@@ -249,6 +250,7 @@ const SpeedArena = () => {
     });
 
     const handleGameState = (state) => {
+      if (isGameOverRef.current) return;
       console.log('[SpeedArena] Game state received:', state);
       setIsConnected(true);
       setGameState(state);
@@ -299,6 +301,7 @@ const SpeedArena = () => {
     };
 
     const handleShotResult = async (data) => {
+      if (isGameOverRef.current) return;
       console.log('[SpeedArena] Shot result:', data);
       setIsConnected(true);
       const { gameState: newGameState, shooterId, shotResult } = data;
@@ -406,6 +409,7 @@ const SpeedArena = () => {
 
 
     const handleGameEnded = (data) => {
+      isGameOverRef.current = true;
       showToast(data.message || 'Game Over', 'success');
       setTimeout(() => navigate('/dashboard'), 3000);
     };

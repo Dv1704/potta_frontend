@@ -153,6 +153,7 @@ const TurnMode = () => {
   const matchStartReceivedRef = useRef(false);
   const matchStartDataRef = useRef(null);
   const gameStateRef = useRef(null);
+  const isGameOverRef = useRef(false);
   const logEndRef = useRef(null);
   const chatEndRef = useRef(null);
   const chatOpenRef = useRef(false);
@@ -299,6 +300,7 @@ const TurnMode = () => {
     };
 
     const handleGameState = (state) => {
+      if (isGameOverRef.current) return;
       console.log('[TurnMode] Game state received:', state);
       setIsConnected(true);
 
@@ -353,6 +355,7 @@ const TurnMode = () => {
     };
 
     const handleShotResult = async (data) => {
+      if (isGameOverRef.current) return;
       console.log('[TurnMode] Shot result received:', data);
       setIsConnected(true);
       const { gameState: newGameState, shooterId, shotResult } = data;
@@ -477,6 +480,7 @@ const TurnMode = () => {
     };
 
     const handleGameEnded = (data) => {
+      isGameOverRef.current = true;
       showToast(data.message || 'Game Over', 'success');
       setTimeout(() => navigate('/dashboard'), 3000);
     };
