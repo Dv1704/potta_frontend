@@ -12,9 +12,23 @@ import '../utils/pvpTestSuite';
 /**
  * PlayerInfoOverlay - Shows player names and game stats on top of the game
  */
+const BallDots = ({ count, max = 7, filledCls, emptyBorderCls }) => (
+  <div className="flex gap-[3px] mt-0.5">
+    {Array.from({ length: max }).map((_, i) => (
+      <div
+        key={i}
+        className={`w-[6px] h-[6px] rounded-full border transition-all ${
+          i < count ? `${filledCls} border-transparent` : `bg-transparent ${emptyBorderCls}`
+        }`}
+      />
+    ))}
+  </div>
+);
+
 const PlayerInfoOverlay = ({ player1, player2, entryFee, timeRemaining, currentTurn, isGameStarted, scores = {}, onMenuClick }) => {
   const player1Score = scores[player1?.id] ?? 0;
   const player2Score = scores[player2?.id] ?? 0;
+  const ballsRemaining = Math.max(0, 15 - player1Score - player2Score);
   const isP1Turn = currentTurn === player1?.id;
   const isP2Turn = currentTurn === player2?.id;
   const shotSecs = timeRemaining ?? 15;
@@ -44,23 +58,28 @@ const PlayerInfoOverlay = ({ player1, player2, entryFee, timeRemaining, currentT
           }`}>
             {(player1?.name || 'P1').charAt(0).toUpperCase()}
           </div>
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <p className={`text-[9px] uppercase tracking-widest leading-none ${isP1Turn ? 'text-blue-300' : 'text-blue-400/40'}`}>
               {isP1Turn ? '▶ Your turn' : 'You'}
             </p>
             <p className="text-xs font-black text-white truncate leading-tight">{player1?.name?.toUpperCase() || 'PLAYER 1'}</p>
+            <BallDots count={player1Score} filledCls="bg-blue-400" emptyBorderCls="border-blue-400/35" />
           </div>
-          <p className={`ml-auto text-2xl font-black tabular-nums shrink-0 ${isP1Turn ? 'text-blue-300' : 'text-blue-500/50'}`}>{player1Score}</p>
+          <div className="shrink-0 text-right">
+            <p className={`text-xl font-black tabular-nums leading-none ${isP1Turn ? 'text-blue-300' : 'text-blue-500/50'}`}>{player1Score}</p>
+            <p className={`text-[8px] font-bold leading-none ${isP1Turn ? 'text-blue-300/60' : 'text-blue-500/30'}`}>potted</p>
+          </div>
         </div>
 
-        {/* Center: turn timer + mode label */}
-        <div className="flex shrink-0 flex-col items-center px-2">
-          <p className="text-[8px] uppercase tracking-[0.3em] text-slate-500 leading-none mb-0.5">Turn</p>
+        {/* Center: turn timer + balls remaining */}
+        <div className="flex shrink-0 flex-col items-center px-1 gap-0.5">
+          <p className="text-[8px] uppercase tracking-[0.3em] text-slate-500 leading-none">Turn</p>
           <p className={`text-xl font-black tabular-nums leading-none ${isLow && isGameStarted ? 'text-red-400 animate-pulse' : 'text-white'}`}>
             {shotSecs}s
           </p>
+          <p className="text-[9px] font-bold text-slate-400 tabular-nums leading-none">{ballsRemaining} left</p>
           {entryFee > 0 && (
-            <p className="text-[8px] uppercase tracking-widest text-amber-400/80 leading-none mt-0.5">{prizeLabel}</p>
+            <p className="text-[8px] uppercase tracking-widest text-amber-400/80 leading-none">{prizeLabel}</p>
           )}
         </div>
 
@@ -75,13 +94,21 @@ const PlayerInfoOverlay = ({ player1, player2, entryFee, timeRemaining, currentT
           }`}>
             {(player2?.name || 'P2').charAt(0).toUpperCase()}
           </div>
-          <div className="min-w-0 text-right">
+          <div className="min-w-0 flex-1 text-right">
             <p className={`text-[9px] uppercase tracking-widest leading-none ${isP2Turn ? 'text-rose-300' : 'text-rose-400/40'}`}>
               {isP2Turn ? 'Their turn ▶' : 'Opponent'}
             </p>
             <p className="text-xs font-black text-white truncate leading-tight">{player2?.name?.toUpperCase() || 'PLAYER 2'}</p>
+            <div className="flex gap-[3px] mt-0.5 justify-end">
+              {Array.from({ length: 7 }).map((_, i) => (
+                <div key={i} className={`w-[6px] h-[6px] rounded-full border transition-all ${i < player2Score ? 'bg-rose-400 border-transparent' : 'bg-transparent border-rose-400/35'}`} />
+              ))}
+            </div>
           </div>
-          <p className={`mr-auto text-2xl font-black tabular-nums shrink-0 ${isP2Turn ? 'text-rose-300' : 'text-rose-500/50'}`}>{player2Score}</p>
+          <div className="shrink-0 text-left">
+            <p className={`text-xl font-black tabular-nums leading-none ${isP2Turn ? 'text-rose-300' : 'text-rose-500/50'}`}>{player2Score}</p>
+            <p className={`text-[8px] font-bold leading-none ${isP2Turn ? 'text-rose-300/60' : 'text-rose-500/30'}`}>potted</p>
+          </div>
         </div>
 
       </div>
@@ -126,6 +153,7 @@ const TurnMode = () => {
 
   // Game state
   const [gameState, setGameState] = useState(null);
+  const [liveScores, setLiveScores] = useState({});
   const [isConnected, setIsConnected] = useState(socket.connected);
   const [timeRemaining, setTimeRemaining] = useState(null);
   const [shotLogs, setShotLogs] = useState(['Game starting...']);
@@ -265,6 +293,7 @@ const TurnMode = () => {
       matchStartDataRef.current = data;
       setGameState(data.gameState);
       gameStateRef.current = data.gameState;
+      if (data.gameState?.scores) setLiveScores(data.gameState.scores);
       setIsGameStarted(true);
       if (data.gameState?.timer !== undefined) {
         setTimeRemaining(data.gameState.timer);
@@ -360,6 +389,8 @@ const TurnMode = () => {
       console.log('[TurnMode] Shot result received:', data);
       setIsConnected(true);
       const { gameState: newGameState, shooterId, shotResult } = data;
+
+      if (newGameState?.scores) setLiveScores(newGameState.scores);
 
       // Log shot result to history
       const player1 = gameStateRef.current?.players?.[0];
@@ -688,7 +719,7 @@ const TurnMode = () => {
         entryFee={entryFee}
         timeRemaining={timeRemaining}
         isGameStarted={isGameStarted}
-        scores={gameState.scores || {}}
+        scores={liveScores}
         onMenuClick={() => setShowPauseMenu(true)}
       />
 

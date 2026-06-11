@@ -289,6 +289,31 @@ export default function GameDashboard() {
             </motion.div>
           ))}
         </div>
+
+        {/* Play with Friend banner */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="mt-12"
+        >
+          <button
+            onClick={() => navigate('/friend-match')}
+            className="w-full flex items-center justify-between gap-6 bg-[#0c111d] border border-white/[0.05] hover:border-purple-500/40 rounded-[2rem] p-8 transition-all group shadow-xl"
+          >
+            <div className="flex items-center gap-6">
+              <div className="w-14 h-14 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center group-hover:bg-purple-500/20 transition">
+                <Users size={24} className="text-purple-400" />
+              </div>
+              <div className="text-left">
+                <p className="text-[10px] uppercase tracking-[0.3em] text-purple-400/70 font-black mb-1">Private Invite</p>
+                <h3 className="text-2xl font-black italic uppercase tracking-tighter group-hover:text-purple-400 transition">Play with a Friend</h3>
+                <p className="text-gray-500 text-sm font-medium mt-1">Create a room, share the code — your friend joins instantly.</p>
+              </div>
+            </div>
+            <ArrowRight size={24} className="text-gray-600 group-hover:text-purple-400 transition shrink-0" />
+          </button>
+        </motion.div>
       </div>
 
       <AnimatePresence>

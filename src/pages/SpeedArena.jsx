@@ -11,9 +11,25 @@ import { Settings, Volume2, VolumeX, Eye, EyeOff, Sliders, X, List, Trophy, Zap,
 /**
  * PlayerInfoOverlay - Shows player names and game stats on top of the game
  */
+const BallDots = ({ count, max = 7, filledCls, emptyBorderCls }) => (
+  <div className="flex gap-[3px] mt-0.5">
+    {Array.from({ length: max }).map((_, i) => (
+      <div
+        key={i}
+        className={`w-[6px] h-[6px] rounded-full border transition-all ${
+          i < count
+            ? `${filledCls} border-transparent`
+            : `bg-transparent ${emptyBorderCls}`
+        }`}
+      />
+    ))}
+  </div>
+);
+
 const PlayerInfoOverlay = ({ player1, player2, entryFee, overallTimeRemaining = 60, scores = {}, onMenuClick }) => {
   const player1Score = scores[player1?.id] ?? 0;
   const player2Score = scores[player2?.id] ?? 0;
+  const ballsRemaining = Math.max(0, 15 - player1Score - player2Score);
   const mins = Math.floor(overallTimeRemaining / 60);
   const secs = (overallTimeRemaining % 60).toString().padStart(2, '0');
   const isLow = overallTimeRemaining <= 10;
@@ -39,18 +55,25 @@ const PlayerInfoOverlay = ({ player1, player2, entryFee, overallTimeRemaining = 
           <div className="min-w-0">
             <p className="text-[9px] uppercase tracking-widest text-blue-400/70 leading-none">You</p>
             <p className="text-xs font-black text-white truncate leading-tight">{player1?.name?.toUpperCase() || 'PLAYER 1'}</p>
+            <BallDots count={player1Score} filledCls="bg-blue-400" emptyBorderCls="border-blue-400/40" />
           </div>
-          <p className="ml-auto text-2xl font-black text-blue-400 tabular-nums shrink-0">{player1Score}</p>
+          <div className="ml-auto text-right shrink-0">
+            <p className="text-2xl font-black text-blue-400 tabular-nums leading-none">{player1Score}</p>
+            <p className="text-[8px] text-blue-400/50 font-bold leading-none mt-0.5">potted</p>
+          </div>
         </div>
 
-        {/* Timer + mode */}
-        <div className="flex shrink-0 flex-col items-center px-2">
-          <p className="text-[8px] uppercase tracking-[0.3em] text-slate-500 leading-none mb-0.5">Speed</p>
+        {/* Timer + mode + remaining */}
+        <div className="flex shrink-0 flex-col items-center px-2 gap-0.5">
+          <p className="text-[8px] uppercase tracking-[0.3em] text-slate-500 leading-none">Speed</p>
           <p className={`text-xl font-black tabular-nums leading-none ${isLow ? 'text-red-400 animate-pulse' : 'text-white'}`}>
             {mins}:{secs}
           </p>
+          <p className="text-[9px] text-slate-400 font-bold tabular-nums leading-none">
+            {ballsRemaining} left
+          </p>
           {entryFee > 0 && (
-            <p className="text-[8px] uppercase tracking-widest text-amber-400/80 leading-none mt-0.5">{prizeLabel}</p>
+            <p className="text-[8px] uppercase tracking-widest text-amber-400/80 leading-none">{prizeLabel}</p>
           )}
         </div>
 
@@ -62,8 +85,16 @@ const PlayerInfoOverlay = ({ player1, player2, entryFee, overallTimeRemaining = 
           <div className="min-w-0 text-right">
             <p className="text-[9px] uppercase tracking-widest text-rose-400/70 leading-none">Opponent</p>
             <p className="text-xs font-black text-white truncate leading-tight">{player2?.name?.toUpperCase() || 'PLAYER 2'}</p>
+            <div className="flex gap-[3px] mt-0.5 justify-end">
+              {Array.from({ length: 7 }).map((_, i) => (
+                <div key={i} className={`w-[6px] h-[6px] rounded-full border transition-all ${i < player2Score ? 'bg-rose-400 border-transparent' : 'bg-transparent border-rose-400/40'}`} />
+              ))}
+            </div>
           </div>
-          <p className="mr-auto text-2xl font-black text-rose-400 tabular-nums shrink-0">{player2Score}</p>
+          <div className="mr-auto text-left shrink-0">
+            <p className="text-2xl font-black text-rose-400 tabular-nums leading-none">{player2Score}</p>
+            <p className="text-[8px] text-rose-400/50 font-bold leading-none mt-0.5">potted</p>
+          </div>
         </div>
 
       </div>
@@ -109,6 +140,7 @@ const SpeedArena = () => {
 
   // Game state
   const [gameState, setGameState] = useState(null);
+  const [liveScores, setLiveScores] = useState({});
   const [isConnected, setIsConnected] = useState(socket.connected);
   const [overallTimeRemaining, setOverallTimeRemaining] = useState(60);
 
@@ -306,6 +338,9 @@ const SpeedArena = () => {
       setIsConnected(true);
       const { gameState: newGameState, shooterId, shotResult } = data;
 
+      // Update scores immediately — don't wait for animation to complete
+      if (newGameState?.scores) setLiveScores(newGameState.scores);
+
       if (shooterId !== userId) {
         setGameState(newGameState);
         gameStateRef.current = newGameState;
@@ -420,6 +455,7 @@ const SpeedArena = () => {
       matchStartDataRef.current = data;
       setIsGameStarted(true);
       setGameState(data.gameState);
+      if (data.gameState?.scores) setLiveScores(data.gameState.scores);
       gameStateRef.current = data.gameState;
       if (data.gameState.overallTimeRemaining !== undefined) {
         setOverallTimeRemaining(data.gameState.overallTimeRemaining);
@@ -618,7 +654,7 @@ const SpeedArena = () => {
         player2={player2}
         entryFee={entryFee}
         overallTimeRemaining={overallTimeRemaining}
-        scores={gameState?.scores || {}}
+        scores={liveScores}
         onMenuClick={() => setShowPauseMenu(true)}
       />
 
