@@ -51,6 +51,12 @@ function CTable(oParentContainer, oCpuDifficultyParams) {
         var _fPrevStickAngle;
         var _iPrevState;
         var _iColorCuePrevTrajectory;
+        
+        var _bAimActive = false;
+        
+        this.setAimActive = function(bVal) {
+                _bAimActive = bVal;
+        };
 
         var _iCpuShotTurn;
         var _oCpuDifficultyParams;
@@ -118,6 +124,13 @@ function CTable(oParentContainer, oCpuDifficultyParams) {
                 );
 
                 _oListenerPress = _oHitAreaShot.on("mousedown", this._onPressHitArea);
+                
+                if (!s_bMobile) {
+                        s_oStage.on("stagemousemove", function(e) {
+                                // On desktop, any mouse movement wakes up the stick
+                                _bAimActive = true;
+                        });
+                }
                 _oContainer.addChild(_oHitAreaShot);
 
                 this.initBalls();
@@ -713,7 +726,9 @@ function CTable(oParentContainer, oCpuDifficultyParams) {
                 } else if (_fPrevStickAngle > 360) {
                         _fPrevStickAngle -= 360;
                 };
+                
                 if (s_bMobile) {
+                        _bAimActive = true; // Wake up stick on touch
                         _oListenerMove = _oHitAreaShot.on("pressmove", s_oTable._onPressMoveHitArea);
                 }
                 _oListenerRelease = _oHitAreaShot.on("pressup", s_oTable._onReleaseHitArea);
@@ -750,6 +765,7 @@ function CTable(oParentContainer, oCpuDifficultyParams) {
                 if (bToShot) {
                         _bBreakShot = false;
                         _bReadyForShot = true;
+                        _bAimActive = false; // Reset aim active to park the stick
                         _oCueBall.setSideEffect(s_oInterface.getSideSpin());
 
                 } else {
@@ -1253,14 +1269,33 @@ function CTable(oParentContainer, oCpuDifficultyParams) {
                                 }
                         } else {
                                 var bDirByMouse = !s_bMobile && _oCueBall.isBallOnTable() && (typeof s_bIsMyTurn === 'undefined' || s_bIsMyTurn);
-                                if (bDirByMouse) {
+                                var bIsActive = s_szMode === 'speed' || _bAimActive;
+                                
+                                if (bDirByMouse && bIsActive) {
                                         _vStickDirection.setV(vTmpMouse);
                                         _vStickDirection.subtract(_oCueBall.getPos());
                                 }
                                 _iDistFromBlankBall = _vStickDirection.length();
-                                if (bDirByMouse) {
+                                
+                                if (bDirByMouse && bIsActive) {
                                         _vStickDirection.normalize();
                                 }
+                                
+                                // Update stick visibility/opacity
+                                if (_iState !== STATE_TABLE_SHOOTING) {
+                                        if (bIsActive) {
+                                                _oStick.setAlpha(1.0);
+                                                _oStick.setVisible(!(s_iPlayerMode === GAME_MODE_CPU && s_oGame.getCurTurn() === 2));
+                                        } else {
+                                                if (!s_bMobile) {
+                                                        _oStick.setAlpha(0.4);
+                                                        _oStick.setVisible(!(s_iPlayerMode === GAME_MODE_CPU && s_oGame.getCurTurn() === 2));
+                                                } else {
+                                                        _oStick.setVisible(false);
+                                                }
+                                        }
+                                }
+
                                 _vInvStickDirection.setV(_vStickDirection);
                                 _vInvStickDirection.invert();
                         }
